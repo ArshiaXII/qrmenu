@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Menu Management System - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .menu-card {
+            transition: all 0.3s ease;
+        }
+        .menu-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .qr-code {
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            border: 2px dashed #ccc;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-gray-900">Enhanced Menu Management System</h1>
+                    <div class="flex space-x-3">
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                            Create Menu
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-6 py-8">
+            <!-- Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8">
+                    <button class="py-2 px-1 border-b-2 border-purple-500 text-purple-600 font-medium text-sm">
+                        Menus (3)
+                    </button>
+                    <button class="py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                        Archive (1)
+                    </button>
+                </nav>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Menu List -->
+                <div class="lg:col-span-2">
+                    <div class="space-y-4">
+                        <!-- Menu Card 1 -->
+                        <div class="menu-card bg-white rounded-lg border-2 border-purple-500 p-6 shadow-lg">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Main Menu</h3>
+                                    <p class="text-gray-600 text-sm mt-1">Our complete selection of dishes and beverages</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                                    <button class="text-green-600 hover:text-green-800 text-sm font-medium">Duplicate</button>
+                                    <button class="text-yellow-600 hover:text-yellow-800 text-sm font-medium">Archive</button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                                <button class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                                    Preview
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Menu Card 2 -->
+                        <div class="menu-card bg-white rounded-lg border-2 border-gray-200 hover:border-gray-300 p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Lunch Specials</h3>
+                                    <p class="text-gray-600 text-sm mt-1">Quick lunch options available 11 AM - 3 PM</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                                    <button class="text-green-600 hover:text-green-800 text-sm font-medium">Duplicate</button>
+                                    <button class="text-yellow-600 hover:text-yellow-800 text-sm font-medium">Archive</button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                                <button class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                                    Preview
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Menu Card 3 -->
+                        <div class="menu-card bg-white rounded-lg border-2 border-gray-200 hover:border-gray-300 p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Dinner Menu</h3>
+                                    <p class="text-gray-600 text-sm mt-1">Evening dining experience with premium selections</p>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit</button>
+                                    <button class="text-green-600 hover:text-green-800 text-sm font-medium">Duplicate</button>
+                                    <button class="text-yellow-600 hover:text-yellow-800 text-sm font-medium">Archive</button>
+                                    <button class="text-red-600 hover:text-red-800 text-sm font-medium">Delete</button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Active
+                                </span>
+                                <button class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+                                    Preview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selected Menu Preview -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg border border-gray-200 p-6 sticky top-6">
+                        <div class="text-center">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Your digital menu is ready!</h3>
+                            <p class="text-gray-600 text-sm mb-4">
+                                Scan the QR code or use the link to view your brand new menu.
+                            </p>
+                            
+                            <!-- QR Code Placeholder -->
+                            <div class="flex justify-center mb-4">
+                                <div class="qr-code p-4 rounded-lg w-32 h-32 flex items-center justify-center">
+                                    <div class="text-gray-500 text-xs text-center">
+                                        QR Code<br>
+                                        <span class="text-xs">120x120</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <button class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-medium transition-colors">
+                                    Preview
+                                </button>
+                                
+                                <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors">
+                                    Edit Menu
+                                </button>
+                            </div>
+                            
+                            <div class="mt-4 pt-4 border-t border-gray-200">
+                                <p class="text-xs text-gray-500">
+                                    Menu: <span class="font-medium">Main Menu</span>
+                                </p>
+                                <p class="text-xs text-gray-500">
+                                    Status: <span class="font-medium text-green-600">Active</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="mt-12 bg-white rounded-lg border border-gray-200 p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">✨ Enhanced Features Implemented</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="p-4 bg-purple-50 rounded-lg">
+                        <h3 class="font-semibold text-purple-900 mb-2">📋 Menu Listing Dashboard</h3>
+                        <p class="text-sm text-purple-700">Clean interface with Active/Archive tabs, menu cards with actions, and QR code preview</p>
+                    </div>
+                    
+                    <div class="p-4 bg-blue-50 rounded-lg">
+                        <h3 class="font-semibsemibold text-blue-900 mb-2">🎯 Three-Panel Editor</h3>
+                        <p class="text-sm text-blue-700">Categories sidebar, items center panel, and edit form right panel with drag-and-drop support</p>
+                    </div>
+                    
+                    <div class="p-4 bg-green-50 rounded-lg">
+                        <h3 class="font-semibold text-green-900 mb-2">🔄 Menu Operations</h3>
+                        <p class="text-sm text-green-700">Create, duplicate, archive/unarchive, and delete menus with proper API endpoints</p>
+                    </div>
+                    
+                    <div class="p-4 bg-yellow-50 rounded-lg">
+                        <h3 class="font-semibold text-yellow-900 mb-2">📱 QR Code Integration</h3>
+                        <p class="text-sm text-yellow-700">Automatic QR code generation with restaurant slug-based URLs for public menu access</p>
+                    </div>
+                    
+                    <div class="p-4 bg-red-50 rounded-lg">
+                        <h3 class="font-semibold text-red-900 mb-2">🎨 Modern UI/UX</h3>
+                        <p class="text-sm text-red-700">Tailwind CSS styling, hover effects, responsive design, and intuitive user interactions</p>
+                    </div>
+                    
+                    <div class="p-4 bg-indigo-50 rounded-lg">
+                        <h3 class="font-semibold text-indigo-900 mb-2">🔧 Backend Enhancements</h3>
+                        <p class="text-sm text-indigo-700">New API endpoints for menu operations, proper error handling, and database integration</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Technical Implementation -->
+            <div class="mt-8 bg-gray-100 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">🛠️ Technical Implementation</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Backend (Node.js + Express)</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• Enhanced menuController with archive/duplicate endpoints</li>
+                            <li>• Updated routes for new menu operations</li>
+                            <li>• Proper error handling and validation</li>
+                            <li>• Restaurant data integration for QR URLs</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">Frontend (React + Tailwind)</h4>
+                        <ul class="text-sm text-gray-700 space-y-1">
+                            <li>• MenuManagementDashboard component</li>
+                            <li>• MenuListingPage with tabs and cards</li>
+                            <li>• EnhancedMenuEditor with three-panel layout</li>
+                            <li>• Drag-and-drop with react-beautiful-dnd</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Simple demo interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for demo purposes
+            const menuCards = document.querySelectorAll('.menu-card');
+            menuCards.forEach((card, index) => {
+                card.addEventListener('click', function() {
+                    // Remove selection from all cards
+                    menuCards.forEach(c => {
+                        c.classList.remove('border-purple-500', 'shadow-lg');
+                        c.classList.add('border-gray-200');
+                    });
+                    
+                    // Add selection to clicked card
+                    this.classList.remove('border-gray-200');
+                    this.classList.add('border-purple-500', 'shadow-lg');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
