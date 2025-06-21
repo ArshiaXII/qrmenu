@@ -306,7 +306,9 @@ const MenuManagementContent = () => {
                 <LinkIcon className="link-icon" />
                 <div className="link-content">
                   <span className="link-label">Menü Linki:</span>
-                  <span className="link-url">{publicUrl}</span>
+                  <span className="link-url" title={publicUrl}>
+                    {publicUrl.length > 45 ? `${publicUrl.substring(0, 42)}...` : publicUrl}
+                  </span>
                 </div>
               </div>
               

@@ -22,14 +22,14 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
   const [expandedMenus, setExpandedMenus] = useState({});
 
   // Function to get current sub-page info for menu management
+  // Only show sub-page indicators for actual sub-pages, not the main menu management page
   const getMenuSubPageInfo = () => {
     if (location.pathname === '/dashboard/menu/create') {
       return 'Menü Oluştur';
     } else if (location.pathname === '/dashboard/menu/customize') {
       return 'Tasarım Özelleştir';
-    } else if (location.pathname === '/dashboard/menu-management') {
-      return 'Menü Yönetimi';
     }
+    // Don't show indicator for main menu management page (/dashboard/menu-management)
     return null;
   };
 
