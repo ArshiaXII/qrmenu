@@ -61,9 +61,19 @@ const MenuManagementContent = () => {
   } : { totalSections: 0, totalItems: 0 };
 
   // Generate public URL
-  const publicUrl = currentRestaurant ?
-    `${window.location.origin}/menu/${currentRestaurant.slug}` :
-    'https://finedine.app/menu/restaurant-slug';
+  const getPublicUrl = () => {
+    if (currentRestaurant) {
+      // Production server URL
+      if (window.location.hostname === '45.131.0.36' || window.location.hostname.includes('45.131.0.36')) {
+        return `http://45.131.0.36:3000/menu/${currentRestaurant.slug}`;
+      }
+      // Local development
+      return `${window.location.origin}/menu/${currentRestaurant.slug}`;
+    }
+    return 'http://45.131.0.36:3000/menu/lezzet-restaurant';
+  };
+
+  const publicUrl = getPublicUrl();
 
   const handleEditContent = () => {
     // Clear any existing referrer since we're starting fresh from menu management
@@ -81,11 +91,28 @@ const MenuManagementContent = () => {
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(publicUrl);
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(publicUrl);
+      } else {
+        // Fallback for HTTP or older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = publicUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy link:', err);
+      // Show error to user
+      alert('Link kopyalanamadı. Lütfen manuel olarak kopyalayın.');
     }
   };
 
@@ -307,7 +334,7 @@ const MenuManagementContent = () => {
                 <div className="link-content">
                   <span className="link-label">Menü Linki:</span>
                   <span className="link-url" title={publicUrl}>
-                    {publicUrl.length > 45 ? `${publicUrl.substring(0, 42)}...` : publicUrl}
+                    {publicUrl.length > 50 ? `${publicUrl.substring(0, 47)}...` : publicUrl}
                   </span>
                 </div>
               </div>
