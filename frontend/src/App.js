@@ -1,8 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
+// i18n
+import './i18n';
+
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Layout
 // import DashboardLayout from './components/Layout/DashboardLayout'; // Old layout
@@ -78,8 +82,9 @@ const RootRedirect = () => {
 function App() {
   return (
     <AuthProvider>
-      <MenuProvider>
-        <Router>
+      <LanguageProvider>
+        <MenuProvider>
+          <Router>
           <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -147,8 +152,9 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
           {/* <Route path="*" element={<div>404 Not Found</div>} /> */}
           </Routes>
-        </Router>
-      </MenuProvider>
+          </Router>
+        </MenuProvider>
+      </LanguageProvider>
     </AuthProvider>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   HomeIcon,
   ChartBarIcon,
@@ -18,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMenuNavigation }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState({});
 
@@ -34,38 +36,38 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
   };
 
   const menuItems = [
-    { id: 'Dashboard', label: 'Dashboard', icon: HomeIcon, hasSubmenu: false },
-    { id: 'Raporlar', label: 'Raporlar', icon: ChartBarIcon, hasSubmenu: false },
-    { id: 'Öneriler', label: 'Öneriler', icon: LightBulbIcon, hasSubmenu: false },
-    { 
-      id: 'Siparişler', 
-      label: 'Siparişler', 
-      icon: ListBulletIcon, 
+    { id: 'Dashboard', label: t('sidebar.dashboard'), icon: HomeIcon, hasSubmenu: false },
+    { id: 'Raporlar', label: t('sidebar.reports'), icon: ChartBarIcon, hasSubmenu: false },
+    { id: 'Öneriler', label: t('sidebar.suggestions'), icon: LightBulbIcon, hasSubmenu: false },
+    {
+      id: 'Siparişler',
+      label: t('sidebar.orders'),
+      icon: ListBulletIcon,
       hasSubmenu: true,
       submenu: ['Tüm Siparişler', 'Bekleyen Siparişler', 'Tamamlanan Siparişler']
     },
-    { 
-      id: 'Rezervasyonlar', 
-      label: 'Rezervasyonlar', 
-      icon: CalendarIcon, 
+    {
+      id: 'Rezervasyonlar',
+      label: t('sidebar.reservations'),
+      icon: CalendarIcon,
       hasSubmenu: true,
       submenu: ['Tüm Rezervasyonlar', 'Bugünkü Rezervasyonlar', 'Gelecek Rezervasyonlar']
     },
-    { 
-      id: 'Etkileşim', 
-      label: 'Etkileşim', 
-      icon: UsersIcon, 
+    {
+      id: 'Etkileşim',
+      label: t('sidebar.interaction'),
+      icon: UsersIcon,
       hasSubmenu: true,
       submenu: ['Müşteri Yorumları', 'Sosyal Medya', 'Analitik']
     },
-    { id: 'Menü Yönetimi', label: 'Menü Yönetimi', icon: BookOpenIcon, hasSubmenu: false },
-    { id: 'Geri Bildirimler', label: 'Geri Bildirimler', icon: ChatBubbleLeftRightIcon, hasSubmenu: false },
-    { id: 'Çeviri Merkezi', label: 'Çeviri Merkezi', icon: LanguageIcon, hasSubmenu: false },
-    { id: 'Pazaryeri', label: 'Pazaryeri', icon: BuildingStorefrontIcon, hasSubmenu: false },
-    { 
-      id: 'Ayarlar', 
-      label: 'Ayarlar', 
-      icon: CogIcon, 
+    { id: 'Menü Yönetimi', label: t('sidebar.menu_management'), icon: BookOpenIcon, hasSubmenu: false },
+    { id: 'Geri Bildirimler', label: t('sidebar.feedback'), icon: ChatBubbleLeftRightIcon, hasSubmenu: false },
+    { id: 'Çeviri Merkezi', label: t('sidebar.translation_center'), icon: LanguageIcon, hasSubmenu: false },
+    { id: 'Pazaryeri', label: t('sidebar.marketplace'), icon: BuildingStorefrontIcon, hasSubmenu: false },
+    {
+      id: 'Ayarlar',
+      label: t('sidebar.settings'),
+      icon: CogIcon,
       hasSubmenu: true,
       submenu: ['Genel Ayarlar', 'Hesap Ayarları', 'Bildirim Ayarları', 'Güvenlik']
     }

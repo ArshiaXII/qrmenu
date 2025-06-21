@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   PencilIcon,
@@ -16,6 +17,7 @@ import { useMenu } from '../../contexts/MenuContext';
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     currentMenu,
@@ -182,9 +184,9 @@ const MenuManagementContent = () => {
       {/* Page Header */}
       <div className="page-header">
         <div className="header-content">
-          <h1 className="page-title">Dijital Menünüzü Yönetin</h1>
+          <h1 className="page-title">{t('menu_management.title')}</h1>
           <p className="page-subtitle">
-            Menünüzün içeriğini düzenleyin, tasarımını özelleştirin ve müşterilerinizle paylaşın.
+            {t('menu_management.subtitle')}
           </p>
         </div>
 
@@ -198,13 +200,13 @@ const MenuManagementContent = () => {
                 <ExclamationTriangleIcon className="status-icon" />
               )}
               <span className="status-text">
-                {menuStatus === 'active' ? 'Menü Aktif' : 'Menü Taslak'}
+                {menuStatus === 'active' ? t('menu_management.menu_active') : t('menu_management.menu_draft')}
               </span>
             </div>
             <p className="status-description">
               {menuStatus === 'active'
-                ? 'Menünüz müşterileriniz tarafından görülebilir durumda.'
-                : 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.'
+                ? t('menu_management.active_description')
+                : t('menu_management.draft_description')
               }
             </p>
           </div>
@@ -213,7 +215,7 @@ const MenuManagementContent = () => {
             onClick={toggleMenuStatus}
             disabled={isLoading}
           >
-            {isLoading ? 'Güncelleniyor...' : (menuStatus === 'active' ? 'Pasif Yap' : 'Aktif Yap')}
+            {isLoading ? t('menu_management.updating') : (menuStatus === 'active' ? t('menu_management.deactivate') : t('menu_management.activate'))}
           </button>
         </div>
       </div>
@@ -227,10 +229,9 @@ const MenuManagementContent = () => {
               <PencilIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">Menü İçeriğini Düzenle</h3>
+              <h3 className="card-title">{t('menu_management.edit_content.title')}</h3>
               <p className="card-description">
-                Kategorilerinizi, ürünlerinizi, açıklamalarınızı, fiyatlarınızı ve görsellerinizi 
-                buradan düzenleyebilirsiniz.
+                {t('menu_management.edit_content.description')}
               </p>
             </div>
           </div>
@@ -238,11 +239,11 @@ const MenuManagementContent = () => {
           <div className="card-stats">
             <div className="stat-item">
               <span className="stat-value">{menuStats.totalSections}</span>
-              <span className="stat-label">Kategori</span>
+              <span className="stat-label">{t('menu_management.edit_content.categories')}</span>
             </div>
             <div className="stat-item">
               <span className="stat-value">{menuStats.totalItems}</span>
-              <span className="stat-label">Ürün</span>
+              <span className="stat-label">{t('menu_management.edit_content.products')}</span>
             </div>
           </div>
 
@@ -252,7 +253,7 @@ const MenuManagementContent = () => {
               onClick={handleEditContent}
             >
               <PencilIcon className="button-icon" />
-              İçeriği Düzenle
+              {t('menu_management.edit_content.button')}
             </button>
           </div>
         </div>
@@ -264,10 +265,9 @@ const MenuManagementContent = () => {
               <PaintBrushIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">Menü Tasarımını Özelleştir</h3>
+              <h3 className="card-title">{t('menu_management.customize_design.title')}</h3>
               <p className="card-description">
-                Menünüzün logosunu, metin rengini, arka plan rengini ve vurgu rengini 
-                buradan değiştirebilirsiniz.
+                {t('menu_management.customize_design.description')}
               </p>
             </div>
           </div>
@@ -278,7 +278,7 @@ const MenuManagementContent = () => {
               <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors.textColor || '#1f2937' }}></div>
               <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors.backgroundColor || '#ffffff', border: '1px solid #e5e7eb' }}></div>
             </div>
-            <span className="preview-label">Mevcut Renk Paleti</span>
+            <span className="preview-label">{t('menu_management.customize_design.current_palette')}</span>
           </div>
 
           <div className="card-footer">
@@ -287,7 +287,7 @@ const MenuManagementContent = () => {
               onClick={handleCustomizeDesign}
             >
               <PaintBrushIcon className="button-icon" />
-              Tasarımı Özelleştir
+              {t('menu_management.customize_design.button')}
             </button>
           </div>
         </div>
@@ -299,9 +299,9 @@ const MenuManagementContent = () => {
               <QrCodeIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">Menüyü Görüntüle ve Paylaş</h3>
+              <h3 className="card-title">{t('menu_management.view_share.title')}</h3>
               <p className="card-description">
-                QR kod ve link ile menünüzü müşterilerinizle paylaşın.
+                {t('menu_management.view_share.description')}
               </p>
             </div>
           </div>
@@ -323,7 +323,7 @@ const MenuManagementContent = () => {
                 onClick={handleDownloadQR}
               >
                 <ArrowDownTrayIcon className="button-icon" />
-                QR Kodu İndir
+                {t('menu_management.view_share.download_qr')}
               </button>
             </div>
 
@@ -332,7 +332,7 @@ const MenuManagementContent = () => {
               <div className="link-container">
                 <LinkIcon className="link-icon" />
                 <div className="link-content">
-                  <span className="link-label">Menü Linki:</span>
+                  <span className="link-label">{t('menu_management.view_share.menu_link')}</span>
                   <span className="link-url" title={publicUrl}>
                     {publicUrl.length > 50 ? `${publicUrl.substring(0, 47)}...` : publicUrl}
                   </span>
@@ -347,12 +347,12 @@ const MenuManagementContent = () => {
                   {copySuccess ? (
                     <>
                       <CheckCircleIcon className="button-icon" />
-                      Kopyalandı!
+                      {t('menu_management.view_share.copied')}
                     </>
                   ) : (
                     <>
                       <DocumentDuplicateIcon className="button-icon" />
-                      Linki Kopyala
+                      {t('menu_management.view_share.copy_link')}
                     </>
                   )}
                 </button>
@@ -362,7 +362,7 @@ const MenuManagementContent = () => {
                   onClick={handlePreviewMenu}
                 >
                   <EyeIcon className="button-icon" />
-                  Menüyü Önizle
+                  {t('menu_management.view_share.preview_menu')}
                 </button>
               </div>
             </div>
@@ -372,22 +372,22 @@ const MenuManagementContent = () => {
 
       {/* Menu Information */}
       <div className="menu-info-section">
-        <h3 className="info-title">Menü Bilgileri</h3>
+        <h3 className="info-title">{t('menu_management.menu_info.title')}</h3>
         <div className="info-grid">
           <div className="info-item">
-            <span className="info-label">Restoran Adı:</span>
-            <span className="info-value">{currentRestaurant?.name || 'Yükleniyor...'}</span>
+            <span className="info-label">{t('menu_management.menu_info.restaurant_name')}</span>
+            <span className="info-value">{currentRestaurant?.name || t('menu_management.menu_info.loading')}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Son Güncelleme:</span>
+            <span className="info-label">{t('menu_management.menu_info.last_update')}</span>
             <span className="info-value">{new Date().toLocaleDateString('tr-TR')}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Toplam Kategori:</span>
+            <span className="info-label">{t('menu_management.menu_info.total_categories')}</span>
             <span className="info-value">{menuStats.totalSections}</span>
           </div>
           <div className="info-item">
-            <span className="info-label">Toplam Ürün:</span>
+            <span className="info-label">{t('menu_management.menu_info.total_products')}</span>
             <span className="info-value">{menuStats.totalItems}</span>
           </div>
         </div>

@@ -1,0 +1,84 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "reports": "Reports",
+    "suggestions": "Suggestions",
+    "orders": "Orders",
+    "reservations": "Reservations",
+    "interaction": "Interaction",
+    "menu_management": "Menu Management",
+    "feedback": "Feedback",
+    "translation_center": "Translation Center",
+    "marketplace": "Marketplace",
+    "settings": "Settings"
+  },
+  "topbar": {
+    "welcome": "Welcome",
+    "logout": "Logout",
+    "language": "Language",
+    "profile": "Profile"
+  },
+  "menu_management": {
+    "title": "Manage Your Digital Menu",
+    "subtitle": "Edit your menu content, customize its design, and share it with your customers.",
+    "menu_active": "Menu Active",
+    "menu_draft": "Menu Draft",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "updating": "Updating...",
+    "active_description": "Your menu is visible to your customers.",
+    "draft_description": "Your menu is not yet published, only you can see it.",
+    "edit_content": {
+      "title": "Edit Menu Content",
+      "description": "You can edit your categories, products, descriptions, prices, and images from here.",
+      "button": "Edit Content",
+      "categories": "Categories",
+      "products": "Products"
+    },
+    "customize_design": {
+      "title": "Customize Menu Design",
+      "description": "You can change your menu's logo, text color, background color, and accent color from here.",
+      "button": "Customize Design",
+      "current_palette": "Current Color Palette"
+    },
+    "view_share": {
+      "title": "View and Share Menu",
+      "description": "Share your menu with your customers via QR code and link.",
+      "download_qr": "Download QR Code",
+      "menu_link": "Menu Link:",
+      "copy_link": "Copy Link",
+      "copied": "Copied!",
+      "preview_menu": "Preview Menu"
+    },
+    "menu_info": {
+      "title": "Menu Information",
+      "restaurant_name": "Restaurant Name:",
+      "last_update": "Last Update:",
+      "total_categories": "Total Categories:",
+      "total_products": "Total Products:",
+      "loading": "Loading..."
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Logout",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "remember_me": "Remember Me",
+    "forgot_password": "Forgot Password",
+    "logout_confirm": "Are you sure you want to logout?"
+  }
+}

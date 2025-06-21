@@ -1,0 +1,84 @@
+{
+  "sidebar": {
+    "dashboard": "Kontrol Paneli",
+    "reports": "Raporlar",
+    "suggestions": "Öneriler",
+    "orders": "Siparişler",
+    "reservations": "Rezervasyonlar",
+    "interaction": "Etkileşim",
+    "menu_management": "Menü Yönetimi",
+    "feedback": "Geri Bildirimler",
+    "translation_center": "Çeviri Merkezi",
+    "marketplace": "Pazaryeri",
+    "settings": "Ayarlar"
+  },
+  "topbar": {
+    "welcome": "Hoş geldin",
+    "logout": "Çıkış Yap",
+    "language": "Dil",
+    "profile": "Profil"
+  },
+  "menu_management": {
+    "title": "Dijital Menünüzü Yönetin",
+    "subtitle": "Menünüzün içeriğini düzenleyin, tasarımını özelleştirin ve müşterilerinizle paylaşın.",
+    "menu_active": "Menü Aktif",
+    "menu_draft": "Menü Taslak",
+    "activate": "Aktif Yap",
+    "deactivate": "Pasif Yap",
+    "updating": "Güncelleniyor...",
+    "active_description": "Menünüz müşterileriniz tarafından görülebilir durumda.",
+    "draft_description": "Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.",
+    "edit_content": {
+      "title": "Menü İçeriğini Düzenle",
+      "description": "Kategorilerinizi, ürünlerinizi, açıklamalarınızı, fiyatlarınızı ve görsellerinizi buradan düzenleyebilirsiniz.",
+      "button": "İçeriği Düzenle",
+      "categories": "Kategori",
+      "products": "Ürün"
+    },
+    "customize_design": {
+      "title": "Menü Tasarımını Özelleştir",
+      "description": "Menünüzün logosunu, metin rengini, arka plan rengini ve vurgu rengini buradan değiştirebilirsiniz.",
+      "button": "Tasarımı Özelleştir",
+      "current_palette": "Mevcut Renk Paleti"
+    },
+    "view_share": {
+      "title": "Menüyü Görüntüle ve Paylaş",
+      "description": "QR kod ve link ile menünüzü müşterilerinizle paylaşın.",
+      "download_qr": "QR Kodu İndir",
+      "menu_link": "Menü Linki:",
+      "copy_link": "Linki Kopyala",
+      "copied": "Kopyalandı!",
+      "preview_menu": "Menüyü Önizle"
+    },
+    "menu_info": {
+      "title": "Menü Bilgileri",
+      "restaurant_name": "Restoran Adı:",
+      "last_update": "Son Güncelleme:",
+      "total_categories": "Toplam Kategori:",
+      "total_products": "Toplam Ürün:",
+      "loading": "Yükleniyor..."
+    }
+  },
+  "common": {
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "add": "Ekle",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "confirm": "Onayla",
+    "close": "Kapat"
+  },
+  "auth": {
+    "login": "Giriş Yap",
+    "logout": "Çıkış Yap",
+    "register": "Kayıt Ol",
+    "email": "E-posta",
+    "password": "Şifre",
+    "remember_me": "Beni Hatırla",
+    "forgot_password": "Şifremi Unuttum",
+    "logout_confirm": "Çıkış yapmak istediğinizden emin misiniz?"
+  }
+}

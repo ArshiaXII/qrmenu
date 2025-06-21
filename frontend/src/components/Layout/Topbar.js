@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../contexts/AuthContext'; 
+import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../Common/LanguageSwitcher';
+import UserMenu from '../Common/UserMenu';
 // import { Bars3Icon, MagnifyingGlassIcon, BellIcon, MoonIcon, SunIcon, UserCircleIcon } from '@heroicons/react/24/outline'; // Keep actual icons commented
 
 const Topbar = ({ toggleSidebar }) => {
-  const { user } = useAuth(); 
+  const { t } = useTranslation();
+  const { user } = useAuth();
   const [darkMode, setDarkMode] = useState(document.documentElement.classList.contains('dark'));
   const [searchTerm, setSearchTerm] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -40,7 +44,7 @@ const Topbar = ({ toggleSidebar }) => {
         </button>
         <div className="ml-1 md:ml-2"> {/* Adjusted margin */}
           <h2 className="text-base font-semibold text-gray-800 dark:text-gray-100 sm:text-lg"> {/* Adjusted font size for mobile */}
-            Welcome, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}! {/* Shorter welcome */}
+            {t('topbar.welcome')}, {user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'User'}! {/* Shorter welcome */}
           </h2>
           <p className="hidden text-xs text-gray-500 dark:text-gray-400 sm:block sm:text-sm"> {/* Hide date/time on very small screens */}
             {formattedDate} - {formattedTime}
@@ -77,7 +81,7 @@ const Topbar = ({ toggleSidebar }) => {
           {/* {darkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />} */}
           <span className="flex h-6 w-6 items-center justify-center text-xl">{darkMode ? '☀️' : '🌙'}</span> {/* Emoji Placeholder */}
         </button>
-        <button 
+        <button
           className="relative rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:text-gray-400 dark:hover:bg-slate-700 dark:hover:text-white"
           aria-label="Notifications"
         >
@@ -86,16 +90,12 @@ const Topbar = ({ toggleSidebar }) => {
           {/* Optional: Notification badge */}
           {/* <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 text-xs text-white">3</span> */}
         </button>
-        <div className="relative">
-          <button className="flex items-center rounded-full p-1 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2">
-            <span className="sr-only">Open user menu</span>
-            {/* <UserCircleIcon className="h-8 w-8 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white" /> */}
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300 text-lg text-gray-700 dark:bg-slate-600 dark:text-gray-200">
-              {user?.email?.charAt(0).toUpperCase() || 'U'}
-            </span>
-          </button>
-          {/* Dropdown menu can be added here later using shadcn/ui DropdownMenu */}
-        </div>
+
+        {/* Language Switcher */}
+        <LanguageSwitcher />
+
+        {/* User Menu */}
+        <UserMenu />
       </div>
     </header>
   );
