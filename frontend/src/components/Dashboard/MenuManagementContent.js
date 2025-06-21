@@ -13,6 +13,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useMenu } from '../../contexts/MenuContext';
+import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
   const navigate = useNavigate();
@@ -174,7 +175,7 @@ const MenuManagementContent = () => {
               </span>
             </div>
             <p className="status-description">
-              {menuStatus === 'active' 
+              {menuStatus === 'active'
                 ? 'Menünüz müşterileriniz tarafından görülebilir durumda.'
                 : 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.'
               }
