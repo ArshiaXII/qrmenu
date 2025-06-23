@@ -63,8 +63,99 @@ const MenuCreationPage = () => {
   const [sections, setSections] = useState([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // TEMPORARY: Test function to save menu data
+  const testSaveMenuData = async () => {
+    console.log('🔍 Testing menu save...');
+    const testMenuData = {
+      sections: [
+        {
+          id: 'test-section-1',
+          title: 'Test Section for User 456',
+          description: 'This is test data for restaurant_id 456',
+          items: [
+            {
+              id: 'test-item-1',
+              title: 'Test Item',
+              description: 'Test item description',
+              price: '99.99'
+            }
+          ]
+        }
+      ]
+    };
+
+    try {
+      await saveMenuContent(testMenuData);
+      console.log('✅ Test menu data saved successfully');
+
+      // Show current storage state
+      const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{}');
+      console.log('🔍 Current storage state:', storageData);
+      console.log('🔍 Restaurant keys in storage:', Object.keys(storageData.restaurants || {}));
+    } catch (error) {
+      console.error('❌ Failed to save test menu data:', error);
+    }
+  };
+
+  // TEMPORARY: Function to show current storage state
+  const showStorageState = () => {
+    const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{}');
+    const authUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+    console.log('🔍 Current auth user:', authUser);
+    console.log('🔍 Current storage state:', storageData);
+    console.log('🔍 Restaurant keys in storage:', Object.keys(storageData.restaurants || {}));
+
+    // Create detailed summary
+    const restaurants = storageData.restaurants || {};
+    let summary = `=== DATA ISOLATION TEST RESULTS ===\n\n`;
+    summary += `Current User: ${authUser.email || 'Unknown'} (Restaurant ID: ${authUser.restaurant_id})\n\n`;
+    summary += `Storage Keys Found: ${Object.keys(restaurants).length}\n`;
+
+    Object.keys(restaurants).forEach(key => {
+      const restaurant = restaurants[key];
+      const sectionsCount = restaurant?.menu?.sections?.length || 0;
+      summary += `\n📍 ${key}:\n`;
+      summary += `   - Name: ${restaurant?.restaurant?.name || 'Unknown'}\n`;
+      summary += `   - Sections: ${sectionsCount}\n`;
+      if (sectionsCount > 0) {
+        summary += `   - Section Titles: ${restaurant.menu.sections.map(s => s.title).join(', ')}\n`;
+      }
+    });
+
+    alert(summary);
+  };
+
+  // TEMPORARY: Switch to different test users
+  const switchToUser = (userId, restaurantId) => {
+    const testUser = {
+      id: userId,
+      email: `user${userId}@example.com`,
+      restaurant_id: restaurantId
+    };
+    localStorage.setItem('authUser', JSON.stringify(testUser));
+    console.log('🔍 Switched to user:', testUser);
+    // Reload the page to see the new user's data
+    window.location.reload();
+  };
+
   // Load existing menu data when component mounts
   useEffect(() => {
+    console.log('🔍 MenuCreationPage: Component mounted, calling loadDashboardMenuData');
+    console.log('🔍 MenuCreationPage: localStorage authUser:', localStorage.getItem('authUser'));
+    console.log('🔍 MenuCreationPage: localStorage qr_menu_data:', localStorage.getItem('qr_menu_data'));
+
+    // TEMPORARY: Clear storage to test fresh start (DISABLED for testing persistence)
+    // menuService.clearStorageData();
+
+    // TEMPORARY: Create test user for debugging
+    const testUser = {
+      id: 1,
+      email: 'test@example.com',
+      restaurant_id: 456  // Changed to different restaurant_id to test isolation
+    };
+    localStorage.setItem('authUser', JSON.stringify(testUser));
+    console.log('🔍 Created test user:', testUser);
+
     loadDashboardMenuData();
   }, [loadDashboardMenuData]);
 
@@ -337,6 +428,32 @@ const MenuCreationPage = () => {
           <span className="step-number">2</span>
           <span className="step-text">Tasarımı Özelleştir</span>
         </div>
+      </div>
+
+      {/* TEMPORARY: Test button for debugging */}
+      <div style={{ padding: '10px', background: '#f0f0f0', margin: '10px 0', borderRadius: '5px' }}>
+        <div style={{ marginBottom: '10px' }}>
+          <button onClick={testSaveMenuData} style={{ padding: '10px 20px', background: '#007bff', color: 'white', border: 'none', borderRadius: '5px', marginRight: '10px' }}>
+            🧪 Test Save Menu Data
+          </button>
+          <button onClick={showStorageState} style={{ padding: '10px 20px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', marginRight: '10px' }}>
+            📊 Show Storage State
+          </button>
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <button onClick={() => switchToUser(1, 123)} style={{ padding: '8px 16px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', marginRight: '10px' }}>
+            👤 Switch to User 1 (Restaurant 123)
+          </button>
+          <button onClick={() => switchToUser(2, 456)} style={{ padding: '8px 16px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', marginRight: '10px' }}>
+            👤 Switch to User 2 (Restaurant 456)
+          </button>
+          <button onClick={() => switchToUser(3, 789)} style={{ padding: '8px 16px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', marginRight: '10px' }}>
+            👤 Switch to User 3 (Restaurant 789)
+          </button>
+        </div>
+        <span style={{ fontSize: '12px', color: '#666' }}>
+          Debug: Testing data isolation - Current user has restaurant_id 456
+        </span>
       </div>
 
       <div className="menu-creation-content">

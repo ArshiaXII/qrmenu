@@ -1,8 +1,9 @@
-import React from 'react';
+// import React from 'react'; // Not needed in React 17+
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 
 // i18n
-import './i18n';
+import i18n from './i18n';
+import { I18nextProvider } from 'react-i18next';
 
 // Context
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -17,16 +18,16 @@ import ProtectedRouteWrapper from './components/ProtectedRouteWrapper';
 // Pages
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import DashboardOverview from './pages/DashboardOverview';
+// import DashboardOverview from './pages/DashboardOverview'; // Not used anymore
 // import ManageMenu from './pages/ManageMenu'; // Old one
-import NewManageMenuPage from './pages/NewManageMenuPage';
+// import NewManageMenuPage from './pages/NewManageMenuPage'; // Replaced by MenuManagementPage
 import MenuEditorPage from './pages/MenuEditorPage';
 import ManageTemplates from './pages/ManageTemplates'; // This will be 'Appearance'
 import ManageQrCode from './pages/ManageQrCode';
-import ViewAnalytics from './pages/ViewAnalytics'; // This could be 'Reports' or part of it
+// import ViewAnalytics from './pages/ViewAnalytics'; // Not used anymore
 import ManageBilling from './pages/ManageBilling';
 import RestaurantSettings from './pages/RestaurantSettings'; // This will be 'Restaurant Settings' under main 'Settings'
-import PublicMenu from './components/PublicMenu';
+// import PublicMenu from './components/PublicMenu'; // Not used anymore
 // Import new placeholder pages
 import ReportsPage from './pages/ReportsPage';
 import SuggestionsPage from './pages/SuggestionsPage';
@@ -81,10 +82,11 @@ const RootRedirect = () => {
 
 function App() {
   return (
-    <AuthProvider>
+    <I18nextProvider i18n={i18n}>
       <LanguageProvider>
-        <MenuProvider>
-          <Router>
+        <AuthProvider>
+          <MenuProvider>
+            <Router>
           <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -121,11 +123,14 @@ function App() {
                 <Route path="interaction" element={<Navigate to="customers" replace />} />
 
                 <Route path="reviews" element={<ReviewsPage />} />
-                <Route path="menu" element={<NewManageMenuPage />} />
+                {/* Main Menu Management Dashboard */}
+                <Route path="menu-management" element={<MenuManagementPage />} />
+                {/* Menu Creation & Editing Routes */}
                 <Route path="menu/create" element={<MenuCreationPage />} />
                 <Route path="menu/customize" element={<DesignCustomizationPage />} />
-                <Route path="menu-management" element={<MenuManagementPage />} />
                 <Route path="menu/:menuId/edit" element={<MenuEditorPage />} />
+                {/* Legacy route redirect */}
+                <Route path="menu" element={<Navigate to="menu-management" replace />} />
                 <Route path="feedback" element={<FeedbackPage />} />
                 <Route path="translation" element={<TranslationCenterPage />} />
                 <Route path="marketplace" element={<MarketplacePage />} />
@@ -152,10 +157,11 @@ function App() {
           <Route path="/" element={<RootRedirect />} />
           {/* <Route path="*" element={<div>404 Not Found</div>} /> */}
           </Routes>
-          </Router>
-        </MenuProvider>
+            </Router>
+          </MenuProvider>
+        </AuthProvider>
       </LanguageProvider>
-    </AuthProvider>
+    </I18nextProvider>
   );
 }
 

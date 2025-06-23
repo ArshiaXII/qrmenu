@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { createContext, useContext, useState, useEffect } from 'react';
+import i18n from '../i18n';
 
 const LanguageContext = createContext();
 
@@ -12,8 +12,11 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const { i18n } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = useState(i18n.language || 'tr');
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    // Initialize from localStorage or default to 'tr'
+    const saved = localStorage.getItem('qrmenu_language');
+    return saved || 'tr';
+  });
 
   // Available languages
   const languages = [
@@ -32,15 +35,18 @@ export const LanguageProvider = ({ children }) => {
   // Change language function
   const changeLanguage = async (languageCode) => {
     try {
+      // Change i18n language
       await i18n.changeLanguage(languageCode);
+
+      // Update state
       setCurrentLanguage(languageCode);
-      
+
       // Store in localStorage
       localStorage.setItem('qrmenu_language', languageCode);
-      
+
       // Update document language attribute
       document.documentElement.lang = languageCode;
-      
+
       console.log(`Language changed to: ${languageCode}`);
     } catch (error) {
       console.error('Error changing language:', error);
@@ -49,28 +55,22 @@ export const LanguageProvider = ({ children }) => {
 
   // Initialize language on mount
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('qrmenu_language');
-    if (savedLanguage && savedLanguage !== currentLanguage) {
-      changeLanguage(savedLanguage);
-    }
-    
-    // Set initial document language
-    document.documentElement.lang = currentLanguage;
-  }, []);
+    const initializeLanguage = async () => {
+      try {
+        // Set i18n to current language
+        if (i18n.language !== currentLanguage) {
+          await i18n.changeLanguage(currentLanguage);
+        }
 
-  // Listen to i18n language changes
-  useEffect(() => {
-    const handleLanguageChange = (lng) => {
-      setCurrentLanguage(lng);
-      document.documentElement.lang = lng;
+        // Set document language
+        document.documentElement.lang = currentLanguage;
+      } catch (error) {
+        console.error('Error initializing language:', error);
+      }
     };
 
-    i18n.on('languageChanged', handleLanguageChange);
-
-    return () => {
-      i18n.off('languageChanged', handleLanguageChange);
-    };
-  }, [i18n]);
+    initializeLanguage();
+  }, [currentLanguage]);
 
   const value = {
     currentLanguage,

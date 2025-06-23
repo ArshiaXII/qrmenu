@@ -15,6 +15,7 @@ const resources = {
   }
 };
 
+// Initialize i18n synchronously
 i18n
   // Detect user language
   .use(LanguageDetector)
@@ -23,26 +24,30 @@ i18n
   // Initialize i18next
   .init({
     resources,
-    
+
     // Default language
     fallbackLng: 'tr',
-    
+    lng: 'tr', // Default to Turkish, let LanguageDetector handle the rest
+
     // Language detection options
     detection: {
       // Order of language detection methods
       order: ['localStorage', 'navigator', 'htmlTag'],
-      
+
       // Cache user language
       caches: ['localStorage'],
-      
+
       // localStorage key
       lookupLocalStorage: 'qrmenu_language',
-      
+
       // Don't lookup from subdomain
       lookupFromSubdomainIndex: 0,
-      
+
       // Don't lookup from path
       lookupFromPathIndex: 0,
+
+      // Check for localStorage availability
+      checkWhitelist: true,
     },
 
     interpolation: {
@@ -50,8 +55,8 @@ i18n
       escapeValue: false,
     },
 
-    // Enable debug mode in development
-    debug: process.env.NODE_ENV === 'development',
+    // Disable debug mode for production
+    debug: false,
 
     // Namespace configuration
     defaultNS: 'translation',
@@ -59,9 +64,19 @@ i18n
 
     // Key separator
     keySeparator: '.',
-    
+
     // Nested separator
     nsSeparator: ':',
+
+    // React options
+    react: {
+      useSuspense: false, // Disable suspense to avoid loading issues
+      bindI18n: 'languageChanged',
+      bindI18nStore: '',
+      transEmptyNodeValue: '',
+      transSupportBasicHtmlNodes: true,
+      transKeepBasicHtmlNodesFor: ['br', 'strong', 'i'],
+    },
   });
 
 export default i18n;

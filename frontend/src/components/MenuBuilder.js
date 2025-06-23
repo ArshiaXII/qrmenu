@@ -1,12 +1,10 @@
-import React, { useReducer, useEffect, useState } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import axios from 'axios';
-import { QRCodeCanvas } from 'qrcode.react';
-import CategoryEditor from './CategoryEditor';
-import ProductEditor from './ProductEditor';
-import TemplateSelector from './TemplateSelector';
-import PublicMenuPreview from './PublicMenuPreview';
-import '../styles/MenuBuilder.css';
+// DEPRECATED: This file is deprecated and replaced by:
+// - MenuCreation/MenuCreationPage.js for menu content editing
+// - Dashboard/MenuManagementContent.js for menu management
+// - DesignCustomization/DesignCustomizationPage.js for design customization
+// Please use the new modular components instead.
+
+export default null;
 
 // Initial state for our reducer
 const initialState = {

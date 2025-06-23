@@ -17,7 +17,24 @@ import { useMenu } from '../../contexts/MenuContext';
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
-  const { t } = useTranslation();
+  // Safe translation hook with fallback
+  let t;
+  try {
+    const translation = useTranslation();
+    t = (key, fallback) => {
+      try {
+        const result = translation.t(key);
+        // If translation returns the key itself, use fallback
+        return result === key ? fallback : result;
+      } catch (error) {
+        return fallback || key;
+      }
+    };
+  } catch (error) {
+    console.warn('Translation hook error:', error);
+    t = (key, fallback) => fallback || key;
+  }
+
   const navigate = useNavigate();
   const {
     currentMenu,
@@ -33,8 +50,8 @@ const MenuManagementContent = () => {
 
   // Load dashboard data when component mounts
   useEffect(() => {
-    // In production, this would use the actual restaurant ID from auth context
-    loadDashboardMenuData('lezzet-restaurant');
+    // Use current user's restaurant data (no hardcoded slug)
+    loadDashboardMenuData();
   }, [loadDashboardMenuData]);
 
   // Show loading state
@@ -171,10 +188,21 @@ const MenuManagementContent = () => {
 
   const toggleMenuStatus = async () => {
     try {
+      console.log('🔄 [MenuManagementContent] Toggle button clicked');
+      console.log('🔄 [MenuManagementContent] Current menuStatus:', menuStatus);
+      console.log('🔄 [MenuManagementContent] Current restaurant:', currentRestaurant);
+
       const newStatus = menuStatus === 'active' ? false : true;
-      await updateMenuStatus(newStatus, 'lezzet-restaurant');
+      console.log('🔄 [MenuManagementContent] New status will be:', newStatus);
+
+      // Use current restaurant's slug instead of hardcoded value
+      const restaurantSlug = currentRestaurant?.slug || null;
+      console.log('🔄 [MenuManagementContent] Using restaurant slug:', restaurantSlug);
+
+      await updateMenuStatus(newStatus, restaurantSlug);
+      console.log('✅ [MenuManagementContent] Menu status updated successfully');
     } catch (error) {
-      console.error('Failed to update menu status:', error);
+      console.error('❌ [MenuManagementContent] Failed to update menu status:', error);
       // You could show a toast notification here
     }
   };
@@ -184,9 +212,9 @@ const MenuManagementContent = () => {
       {/* Page Header */}
       <div className="page-header">
         <div className="header-content">
-          <h1 className="page-title">{t('menu_management.title')}</h1>
+          <h1 className="page-title">{t('menu_management.title', 'Dijital Menünüzü Yönetin')}</h1>
           <p className="page-subtitle">
-            {t('menu_management.subtitle')}
+            {t('menu_management.subtitle', 'Menünüzün içeriğini düzenleyin, tasarımını özelleştirin ve müşterilerinizle paylaşın.')}
           </p>
         </div>
 
@@ -200,13 +228,13 @@ const MenuManagementContent = () => {
                 <ExclamationTriangleIcon className="status-icon" />
               )}
               <span className="status-text">
-                {menuStatus === 'active' ? t('menu_management.menu_active') : t('menu_management.menu_draft')}
+                {menuStatus === 'active' ? t('menu_management.menu_active', 'Menü Aktif') : t('menu_management.menu_draft', 'Menü Taslak')}
               </span>
             </div>
             <p className="status-description">
               {menuStatus === 'active'
-                ? t('menu_management.active_description')
-                : t('menu_management.draft_description')
+                ? t('menu_management.active_description', 'Menünüz müşterileriniz tarafından görülebilir.')
+                : t('menu_management.draft_description', 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.')
               }
             </p>
           </div>
@@ -215,7 +243,7 @@ const MenuManagementContent = () => {
             onClick={toggleMenuStatus}
             disabled={isLoading}
           >
-            {isLoading ? t('menu_management.updating') : (menuStatus === 'active' ? t('menu_management.deactivate') : t('menu_management.activate'))}
+            {isLoading ? t('menu_management.updating', 'Güncelleniyor...') : (menuStatus === 'active' ? t('menu_management.deactivate', 'Pasif Yap') : t('menu_management.activate', 'Aktif Yap'))}
           </button>
         </div>
       </div>

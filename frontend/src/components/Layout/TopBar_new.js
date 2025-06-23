@@ -48,6 +48,12 @@ const Topbar = ({ toggleSidebar }) => {
   const formattedDate = currentTime.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const formattedTime = currentTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
+  // Helper function to truncate restaurant name if too long
+  const getDisplayRestaurantName = (name) => {
+    if (!name) return '';
+    return name.length > 25 ? `${name.substring(0, 25)}...` : name;
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 sm:h-20 w-full items-center justify-between border-b border-gray-200 bg-white px-3 shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:px-6">
       {/* Left Section: Hamburger Menu (mobile) & Welcome/Date */}
@@ -65,8 +71,8 @@ const Topbar = ({ toggleSidebar }) => {
           </h2>
           {/* Restaurant Name Display */}
           {currentRestaurant?.name && (
-            <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
-              🏪 {currentRestaurant.name}
+            <p className="text-sm font-medium text-purple-600 dark:text-purple-400 mt-1" title={currentRestaurant.name}>
+              🏪 {getDisplayRestaurantName(currentRestaurant.name)}
             </p>
           )}
           <p className="hidden text-xs text-gray-500 dark:text-gray-400 sm:block sm:text-sm"> {/* Hide date/time on very small screens */}

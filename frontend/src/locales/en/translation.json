@@ -16,7 +16,10 @@
     "welcome": "Welcome",
     "logout": "Logout",
     "language": "Language",
-    "profile": "Profile"
+    "profile": "Profile",
+    "trial_message": "Your trial expires in 7 days.",
+    "upgrade": "UPGRADE",
+    "search_placeholder": "Search..."
   },
   "menu_management": {
     "title": "Manage Your Digital Menu",
@@ -71,6 +74,7 @@
     "confirm": "Confirm",
     "close": "Close"
   },
+  "button_logout": "Logout",
   "auth": {
     "login": "Login",
     "logout": "Logout",

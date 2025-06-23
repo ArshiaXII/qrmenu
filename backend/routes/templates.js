@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Template = require('../models/template');
-const auth = require('../middleware/auth');
+const auth = require('../middleware/authMiddleware');
 const db = require('../db/db'); // Import the Knex instance
 
 // Configure multer for file uploads

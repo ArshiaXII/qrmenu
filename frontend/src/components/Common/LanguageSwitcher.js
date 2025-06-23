@@ -4,8 +4,20 @@ import { useTranslation } from 'react-i18next';
 import { ChevronDownIcon, LanguageIcon } from '@heroicons/react/24/outline';
 
 const LanguageSwitcher = ({ className = '' }) => {
-  const { t } = useTranslation();
+  const { t, ready } = useTranslation();
   const { currentLanguage, languages, changeLanguage } = useLanguage();
+
+  // Safe translation function
+  const safeT = (key, fallback = key) => {
+    try {
+      if (ready && t) {
+        return t(key);
+      }
+      return fallback;
+    } catch (error) {
+      return fallback;
+    }
+  };
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -37,7 +49,7 @@ const LanguageSwitcher = ({ className = '' }) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-        aria-label={t('topbar.language')}
+        aria-label={safeT('topbar.language', 'Dil')}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >

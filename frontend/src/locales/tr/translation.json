@@ -16,7 +16,10 @@
     "welcome": "Hoş geldin",
     "logout": "Çıkış Yap",
     "language": "Dil",
-    "profile": "Profil"
+    "profile": "Profil",
+    "trial_message": "Deneme sürümünüzün sona ermesine 7 gün kaldı.",
+    "upgrade": "YÜKSELT",
+    "search_placeholder": "Ara..."
   },
   "menu_management": {
     "title": "Dijital Menünüzü Yönetin",
@@ -71,6 +74,7 @@
     "confirm": "Onayla",
     "close": "Kapat"
   },
+  "button_logout": "Çıkış Yap",
   "auth": {
     "login": "Giriş Yap",
     "logout": "Çıkış Yap",

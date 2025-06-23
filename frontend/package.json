@@ -8,7 +8,10 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
+    "ajv": "^8.0.0",
     "axios": "^1.8.4",
+    "i18next": "^25.2.1",
+    "i18next-browser-languagedetector": "^8.2.0",
     "qr-code-styling": "^1.9.2",
     "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
@@ -16,6 +19,7 @@
     "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.5",
+    "react-i18next": "^15.5.3",
     "react-router-dom": "^6.22.1",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"

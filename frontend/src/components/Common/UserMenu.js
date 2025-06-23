@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+// import { useTranslation } from 'react-i18next'; // Temporarily disabled
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   UserCircleIcon, 
@@ -11,9 +11,23 @@ import {
 } from '@heroicons/react/24/outline';
 
 const UserMenu = ({ className = '' }) => {
-  const { t } = useTranslation();
+  // const { t, ready } = useTranslation(); // Temporarily disabled
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  // Static translations for logout functionality
+  const translations = {
+    'topbar.profile': 'Profil',
+    'sidebar.settings': 'Ayarlar',
+    'auth.logout': 'Çıkış Yap',
+    'auth.logout_confirm': 'Çıkış yapmak istediğinizden emin misiniz?',
+    'common.cancel': 'İptal'
+  };
+
+  // Simple translation function
+  const t = (key, fallback = key) => {
+    return translations[key] || fallback;
+  };
   const [isOpen, setIsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const dropdownRef = useRef(null);
@@ -35,22 +49,26 @@ const UserMenu = ({ className = '' }) => {
 
   const handleLogout = async () => {
     try {
-      // Clear authentication tokens
+      // Call logout from AuthContext (this will clear authToken and authUser)
+      if (logout) {
+        logout();
+      }
+
+      // Clear any additional tokens that might exist
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
-      
+
       // Clear any other user-specific data
       sessionStorage.clear();
-      
-      // Call logout from AuthContext
-      if (logout) {
-        await logout();
-      }
-      
+
+      // Close the dropdown
+      setIsOpen(false);
+      setShowLogoutConfirm(false);
+
       // Redirect to login page
       navigate('/login', { replace: true });
-      
+
       console.log('User logged out successfully');
     } catch (error) {
       console.error('Error during logout:', error);
@@ -80,7 +98,7 @@ const UserMenu = ({ className = '' }) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
-        aria-label={t('topbar.profile')}
+        aria-label={t('topbar.profile', 'Profil')}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -123,7 +141,7 @@ const UserMenu = ({ className = '' }) => {
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <UserIcon className="w-4 h-4" />
-              <span>{t('topbar.profile')}</span>
+              <span>{t('topbar.profile', 'Profil')}</span>
             </button>
 
             <button
@@ -134,7 +152,7 @@ const UserMenu = ({ className = '' }) => {
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <CogIcon className="w-4 h-4" />
-              <span>{t('sidebar.settings')}</span>
+              <span>{t('sidebar.settings', 'Ayarlar')}</span>
             </button>
 
             <hr className="my-1 border-gray-100" />
@@ -146,25 +164,25 @@ const UserMenu = ({ className = '' }) => {
                 className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
               >
                 <ArrowRightOnRectangleIcon className="w-4 h-4" />
-                <span>{t('auth.logout')}</span>
+                <span>{t('auth.logout', 'Çıkış Yap')}</span>
               </button>
             ) : (
               <div className="px-4 py-3 bg-red-50">
                 <p className="text-sm text-red-800 mb-3">
-                  {t('auth.logout_confirm')}
+                  {t('auth.logout_confirm', 'Çıkış yapmak istediğinizden emin misiniz?')}
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleLogout}
                     className="flex-1 px-3 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-700 transition-colors"
                   >
-                    {t('auth.logout')}
+                    {t('auth.logout', 'Çıkış Yap')}
                   </button>
                   <button
                     onClick={cancelLogout}
                     className="flex-1 px-3 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300 transition-colors"
                   >
-                    {t('common.cancel')}
+                    {t('common.cancel', 'İptal')}
                   </button>
                 </div>
               </div>

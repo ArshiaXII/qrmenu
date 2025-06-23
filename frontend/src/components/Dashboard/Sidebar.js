@@ -19,9 +19,30 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMenuNavigation }) => {
-  const { t } = useTranslation();
+  // Safe translation hook with fallback
+  let t;
+  try {
+    const translation = useTranslation();
+    t = translation.t;
+  } catch (error) {
+    console.warn('Translation hook error:', error);
+    t = (key, fallback) => fallback || key;
+  }
+
   const location = useLocation();
   const [expandedMenus, setExpandedMenus] = useState({});
+
+  // Fallback translation function
+  const translate = (key, fallback) => {
+    try {
+      const result = t(key);
+      // If translation returns the key itself, use fallback
+      return result === key ? fallback : result;
+    } catch (error) {
+      console.warn('Translation error:', error);
+      return fallback || key;
+    }
+  };
 
   // Function to get current sub-page info for menu management
   // Only show sub-page indicators for actual sub-pages, not the main menu management page
@@ -36,37 +57,37 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
   };
 
   const menuItems = [
-    { id: 'Dashboard', label: t('sidebar.dashboard'), icon: HomeIcon, hasSubmenu: false },
-    { id: 'Raporlar', label: t('sidebar.reports'), icon: ChartBarIcon, hasSubmenu: false },
-    { id: 'Öneriler', label: t('sidebar.suggestions'), icon: LightBulbIcon, hasSubmenu: false },
+    { id: 'Dashboard', label: translate('sidebar.dashboard', 'Kontrol Paneli'), icon: HomeIcon, hasSubmenu: false },
+    { id: 'Raporlar', label: translate('sidebar.reports', 'Raporlar'), icon: ChartBarIcon, hasSubmenu: false },
+    { id: 'Öneriler', label: translate('sidebar.suggestions', 'Öneriler'), icon: LightBulbIcon, hasSubmenu: false },
     {
       id: 'Siparişler',
-      label: t('sidebar.orders'),
+      label: translate('sidebar.orders', 'Siparişler'),
       icon: ListBulletIcon,
       hasSubmenu: true,
       submenu: ['Tüm Siparişler', 'Bekleyen Siparişler', 'Tamamlanan Siparişler']
     },
     {
       id: 'Rezervasyonlar',
-      label: t('sidebar.reservations'),
+      label: translate('sidebar.reservations', 'Rezervasyonlar'),
       icon: CalendarIcon,
       hasSubmenu: true,
       submenu: ['Tüm Rezervasyonlar', 'Bugünkü Rezervasyonlar', 'Gelecek Rezervasyonlar']
     },
     {
       id: 'Etkileşim',
-      label: t('sidebar.interaction'),
+      label: translate('sidebar.interaction', 'Etkileşim'),
       icon: UsersIcon,
       hasSubmenu: true,
       submenu: ['Müşteri Yorumları', 'Sosyal Medya', 'Analitik']
     },
-    { id: 'Menü Yönetimi', label: t('sidebar.menu_management'), icon: BookOpenIcon, hasSubmenu: false },
-    { id: 'Geri Bildirimler', label: t('sidebar.feedback'), icon: ChatBubbleLeftRightIcon, hasSubmenu: false },
-    { id: 'Çeviri Merkezi', label: t('sidebar.translation_center'), icon: LanguageIcon, hasSubmenu: false },
-    { id: 'Pazaryeri', label: t('sidebar.marketplace'), icon: BuildingStorefrontIcon, hasSubmenu: false },
+    { id: 'Menü Yönetimi', label: translate('sidebar.menu_management', 'Menü Yönetimi'), icon: BookOpenIcon, hasSubmenu: false },
+    { id: 'Geri Bildirimler', label: translate('sidebar.feedback', 'Geri Bildirimler'), icon: ChatBubbleLeftRightIcon, hasSubmenu: false },
+    { id: 'Çeviri Merkezi', label: translate('sidebar.translation_center', 'Çeviri Merkezi'), icon: LanguageIcon, hasSubmenu: false },
+    { id: 'Pazaryeri', label: translate('sidebar.marketplace', 'Pazaryeri'), icon: BuildingStorefrontIcon, hasSubmenu: false },
     {
       id: 'Ayarlar',
-      label: t('sidebar.settings'),
+      label: translate('sidebar.settings', 'Ayarlar'),
       icon: CogIcon,
       hasSubmenu: true,
       submenu: ['Genel Ayarlar', 'Hesap Ayarları', 'Bildirim Ayarları', 'Güvenlik']

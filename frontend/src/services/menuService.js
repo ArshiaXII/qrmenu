@@ -6,116 +6,53 @@ class MenuService {
     this.initializeStorage();
   }
 
-  // Initialize localStorage with default data if not exists
+  // Get current user's restaurant slug from auth context
+  getCurrentUserRestaurantSlug() {
+    console.log('🔍 Getting current user restaurant slug...');
+    try {
+      const authUser = localStorage.getItem('authUser');
+      console.log('🔍 Raw authUser from localStorage:', authUser);
+
+      if (authUser) {
+        const user = JSON.parse(authUser);
+        console.log('🔍 Parsed user object:', user);
+        console.log('🔍 User restaurant_id:', user.restaurant_id);
+
+        if (user.restaurant_id) {
+          // For now, we'll use a simple mapping. In production, this would come from the backend
+          const slug = `restaurant-${user.restaurant_id}`;
+          console.log('🔍 Generated restaurant slug:', slug);
+          return slug;
+        } else {
+          console.warn('⚠️ User has no restaurant_id');
+        }
+      } else {
+        console.warn('⚠️ No authUser found in localStorage');
+      }
+    } catch (error) {
+      console.error('❌ Error getting user restaurant slug:', error);
+    }
+    console.log('🔍 Returning null - no valid restaurant slug found');
+    return null;
+  }
+
+  // Check if user has a restaurant
+  hasUserRestaurant() {
+    return this.getCurrentUserRestaurantSlug() !== null;
+  }
+
+  // Initialize localStorage with empty structure if not exists
   initializeStorage() {
     const storageKey = 'qr_menu_data';
     if (!localStorage.getItem(storageKey)) {
+      console.log('🔍 Initializing empty storage structure');
       const defaultData = {
-        restaurants: {
-          'lezzet-restaurant': {
-            restaurant: {
-              id: 1,
-              name: 'Lezzet Restaurant',
-              slug: 'lezzet-restaurant',
-              address: 'İstanbul, Türkiye',
-              phone: '+90 212 555 0123',
-              hours: '09:00 - 23:00',
-              isActive: true,
-              currency: 'TRY',
-              socialMedia: {
-                instagram: '',
-                facebook: '',
-                twitter: ''
-              }
-            },
-            branding: {
-              logo: null,
-              colors: {
-                textColor: '#1f2937',
-                backgroundColor: '#ffffff',
-                accentColor: '#8b5cf6'
-              }
-            },
-            menu: {
-              sections: [
-                {
-                  id: 'section-1',
-                  title: 'Başlangıçlar',
-                  description: 'Lezzetli başlangıç yemekleri',
-                  image: null,
-                  order: 1,
-                  items: [
-                    {
-                      id: 'item-1',
-                      title: 'Humus',
-                      description: 'Geleneksel Türk humusu, taze sebzeler ile servis edilir',
-                      price: '25.00',
-                      image: null,
-                      order: 1,
-                      isAvailable: true
-                    },
-                    {
-                      id: 'item-2',
-                      title: 'Çoban Salatası',
-                      description: 'Taze domates, salatalık, soğan ve peynir ile hazırlanmış',
-                      price: '30.00',
-                      image: null,
-                      order: 2,
-                      isAvailable: true
-                    }
-                  ]
-                },
-                {
-                  id: 'section-2',
-                  title: 'Ana Yemekler',
-                  description: 'Özenle hazırlanmış ana yemeklerimiz',
-                  image: null,
-                  order: 2,
-                  items: [
-                    {
-                      id: 'item-3',
-                      title: 'Izgara Köfte',
-                      description: 'Özel baharatlarla marine edilmiş köfte, pilav ve salata ile',
-                      price: '65.00',
-                      image: null,
-                      order: 1,
-                      isAvailable: true
-                    },
-                    {
-                      id: 'item-4',
-                      title: 'Tavuk Şiş',
-                      description: 'Izgara tavuk şiş, sebzeler ve pilav ile servis edilir',
-                      price: '55.00',
-                      image: null,
-                      order: 2,
-                      isAvailable: true
-                    }
-                  ]
-                },
-                {
-                  id: 'section-3',
-                  title: 'Tatlılar',
-                  description: 'Ev yapımı tatlılarımız',
-                  image: null,
-                  order: 3,
-                  items: [
-                    {
-                      id: 'item-5',
-                      title: 'Baklava',
-                      description: 'Geleneksel baklava, antep fıstığı ile',
-                      price: '35.00',
-                      image: null,
-                      order: 1,
-                      isAvailable: true
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
+        restaurants: {}  // Start with empty restaurants object - each user will create their own
       };
       localStorage.setItem(storageKey, JSON.stringify(defaultData));
+      console.log('✅ Empty storage structure initialized');
+    } else {
+      console.log('🔍 Storage already exists, skipping initialization');
     }
   }
 
@@ -128,6 +65,14 @@ class MenuService {
   // Save data to localStorage
   saveStorageData(data) {
     localStorage.setItem('qr_menu_data', JSON.stringify(data));
+  }
+
+  // Clear all storage data (for testing/debugging)
+  clearStorageData() {
+    console.log('🔍 Clearing all storage data');
+    localStorage.removeItem('qr_menu_data');
+    this.initializeStorage(); // Reinitialize with empty structure
+    console.log('✅ Storage cleared and reinitialized');
   }
 
   // Get public menu data for a specific restaurant
@@ -179,25 +124,45 @@ class MenuService {
   }
 
   // Get menu data for dashboard (authenticated)
-  async getMenuData(restaurantSlug = 'lezzet-restaurant') {
+  async getMenuData(restaurantSlug = null) {
+    console.log('🔍 menuService.getMenuData called with slug:', restaurantSlug);
+
     try {
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+      console.log('🔍 Target slug determined:', targetSlug);
+
+      if (!targetSlug) {
+        console.error('❌ No target slug - USER_NO_RESTAURANT');
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
       // For development, use localStorage. In production, this would be a real API call
       const storageData = this.getStorageData();
-      let restaurantData = storageData.restaurants[restaurantSlug];
+      console.log('🔍 All storage data keys:', Object.keys(storageData.restaurants));
 
-      // If restaurant not found, create it with default data
+      let restaurantData = storageData.restaurants[targetSlug];
+      console.log('🔍 Restaurant data found for slug:', targetSlug, !!restaurantData);
+
+      // If restaurant not found, create it with default data for the user
       if (!restaurantData) {
-        restaurantData = this.createDefaultRestaurantData(restaurantSlug);
-        storageData.restaurants[restaurantSlug] = restaurantData;
+        console.log('🔍 Creating default restaurant data for:', targetSlug);
+        restaurantData = this.createDefaultRestaurantData(targetSlug);
+        storageData.restaurants[targetSlug] = restaurantData;
         this.saveStorageData(storageData);
+        console.log('🔍 Default data created and saved');
       }
+
+      console.log('🔍 Final restaurant data to return:', restaurantData);
+      console.log('🔍 Menu sections in data:', restaurantData?.menu?.sections?.length || 0);
+      console.log('🔍 Menu sections detail:', restaurantData?.menu?.sections);
 
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
 
       return restaurantData;
     } catch (error) {
-      console.error('Error fetching menu data:', error);
+      console.error('❌ Error fetching menu data:', error);
       throw error;
     }
   }
@@ -248,41 +213,69 @@ class MenuService {
   }
 
   // Save menu content
-  async saveMenuContent(restaurantSlug = 'lezzet-restaurant', menuData) {
-    try {
-      const storageData = this.getStorageData();
+  async saveMenuContent(restaurantSlug = null, menuData) {
+    console.log('🔍 menuService.saveMenuContent called');
+    console.log('🔍 Input slug:', restaurantSlug);
+    console.log('🔍 Menu data to save:', menuData);
 
-      if (!storageData.restaurants[restaurantSlug]) {
+    try {
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+      console.log('🔍 Target slug for saving:', targetSlug);
+
+      if (!targetSlug) {
+        console.error('❌ No target slug for saving - USER_NO_RESTAURANT');
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
+      const storageData = this.getStorageData();
+      console.log('🔍 Current storage restaurants:', Object.keys(storageData.restaurants));
+
+      if (!storageData.restaurants[targetSlug]) {
+        console.error('❌ Restaurant not found for slug:', targetSlug);
         throw new Error('Restaurant not found');
       }
 
+      console.log('🔍 Updating menu data for restaurant:', targetSlug);
+      console.log('🔍 Previous menu data:', storageData.restaurants[targetSlug].menu);
+
       // Update menu data
-      storageData.restaurants[restaurantSlug].menu = menuData;
+      storageData.restaurants[targetSlug].menu = menuData;
+
+      console.log('🔍 New menu data set:', storageData.restaurants[targetSlug].menu);
 
       // Save to localStorage
       this.saveStorageData(storageData);
+      console.log('✅ Menu data saved to localStorage');
 
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
 
       return { success: true, message: 'Menu content saved successfully' };
     } catch (error) {
-      console.error('Error saving menu content:', error);
+      console.error('❌ Error saving menu content:', error);
       throw error;
     }
   }
 
   // Save design customization
-  async saveDesignCustomization(restaurantSlug = 'lezzet-restaurant', designData) {
+  async saveDesignCustomization(restaurantSlug = null, designData) {
     try {
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+
+      if (!targetSlug) {
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
       const storageData = this.getStorageData();
 
-      if (!storageData.restaurants[restaurantSlug]) {
+      if (!storageData.restaurants[targetSlug]) {
         throw new Error('Restaurant not found');
       }
 
       // Update branding data
-      storageData.restaurants[restaurantSlug].branding = designData;
+      storageData.restaurants[targetSlug].branding = designData;
 
       // Save to localStorage
       this.saveStorageData(storageData);
@@ -298,42 +291,71 @@ class MenuService {
   }
 
   // Update menu status (active/inactive)
-  async updateMenuStatus(restaurantSlug = 'lezzet-restaurant', isActive) {
+  async updateMenuStatus(restaurantSlug = null, isActive) {
     try {
-      const storageData = this.getStorageData();
+      console.log('🔄 [menuService] updateMenuStatus called');
+      console.log('🔄 [menuService] restaurantSlug:', restaurantSlug);
+      console.log('🔄 [menuService] isActive:', isActive);
 
-      if (!storageData.restaurants[restaurantSlug]) {
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+      console.log('🔄 [menuService] targetSlug (final):', targetSlug);
+
+      if (!targetSlug) {
+        console.error('❌ [menuService] No restaurant slug available');
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
+      const storageData = this.getStorageData();
+      console.log('🔄 [menuService] Current storage data:', storageData);
+
+      if (!storageData.restaurants[targetSlug]) {
+        console.error('❌ [menuService] Restaurant not found in storage:', targetSlug);
+        console.log('🔄 [menuService] Available restaurants:', Object.keys(storageData.restaurants));
         throw new Error('Restaurant not found');
       }
 
+      console.log('🔄 [menuService] Current restaurant data before update:', storageData.restaurants[targetSlug].restaurant);
+
       // Update restaurant status
-      storageData.restaurants[restaurantSlug].restaurant.isActive = isActive;
+      storageData.restaurants[targetSlug].restaurant.isActive = isActive;
+      console.log('🔄 [menuService] Updated restaurant data:', storageData.restaurants[targetSlug].restaurant);
 
       // Save to localStorage
       this.saveStorageData(storageData);
+      console.log('✅ [menuService] Data saved to localStorage');
 
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      return { success: true, message: 'Menu status updated successfully', isActive };
+      const result = { success: true, message: 'Menu status updated successfully', isActive };
+      console.log('✅ [menuService] Returning result:', result);
+      return result;
     } catch (error) {
-      console.error('Error updating menu status:', error);
+      console.error('❌ [menuService] Error updating menu status:', error);
       throw error;
     }
   }
 
   // Save restaurant settings (currency, social media)
-  async saveRestaurantSettings(restaurantSlug = 'lezzet-restaurant', settings) {
+  async saveRestaurantSettings(restaurantSlug = null, settings) {
     try {
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+
+      if (!targetSlug) {
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
       const storageData = this.getStorageData();
 
-      if (!storageData.restaurants[restaurantSlug]) {
+      if (!storageData.restaurants[targetSlug]) {
         throw new Error('Restaurant not found');
       }
 
       // Update restaurant settings
-      storageData.restaurants[restaurantSlug].restaurant.currency = settings.currency;
-      storageData.restaurants[restaurantSlug].restaurant.socialMedia = settings.socialMedia;
+      storageData.restaurants[targetSlug].restaurant.currency = settings.currency;
+      storageData.restaurants[targetSlug].restaurant.socialMedia = settings.socialMedia;
 
       // Save to localStorage
       this.saveStorageData(storageData);
@@ -379,6 +401,68 @@ class MenuService {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  // Check if restaurant name is unique (for validation)
+  async checkRestaurantNameUnique(name, excludeSlug = null) {
+    try {
+      const storageData = this.getStorageData();
+      const currentUserSlug = this.getCurrentUserRestaurantSlug();
+
+      // Check all restaurants for name conflicts
+      for (const [slug, restaurantData] of Object.entries(storageData.restaurants)) {
+        // Skip the current user's restaurant if excludeSlug is provided
+        if (excludeSlug && slug === excludeSlug) continue;
+        if (excludeSlug && slug === currentUserSlug) continue;
+
+        // Case-insensitive name comparison
+        if (restaurantData.restaurant.name.toLowerCase() === name.toLowerCase()) {
+          return false; // Name is not unique
+        }
+      }
+
+      return true; // Name is unique
+    } catch (error) {
+      console.error('Error checking restaurant name uniqueness:', error);
+      return false; // Assume not unique on error for safety
+    }
+  }
+
+  // Update restaurant name with uniqueness validation
+  async updateRestaurantName(newName) {
+    try {
+      const currentSlug = this.getCurrentUserRestaurantSlug();
+
+      if (!currentSlug) {
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
+      // Check if name is unique
+      const isUnique = await this.checkRestaurantNameUnique(newName, currentSlug);
+      if (!isUnique) {
+        throw new Error('RESTAURANT_NAME_EXISTS');
+      }
+
+      const storageData = this.getStorageData();
+
+      if (!storageData.restaurants[currentSlug]) {
+        throw new Error('Restaurant not found');
+      }
+
+      // Update restaurant name
+      storageData.restaurants[currentSlug].restaurant.name = newName;
+
+      // Save to localStorage
+      this.saveStorageData(storageData);
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      return { success: true, message: 'Restaurant name updated successfully' };
+    } catch (error) {
+      console.error('Error updating restaurant name:', error);
+      throw error;
+    }
   }
 
   // Get authentication token from localStorage or context

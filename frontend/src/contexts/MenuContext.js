@@ -155,19 +155,37 @@ export function MenuProvider({ children }) {
   }, []);
 
   // Load dashboard menu data (authenticated)
-  const loadDashboardMenuData = useCallback(async (restaurantSlug = 'lezzet-restaurant') => {
+  const loadDashboardMenuData = useCallback(async (restaurantSlug = null) => {
+    console.log('🔍 MenuContext.loadDashboardMenuData called with slug:', restaurantSlug);
+
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
+      // Get current user info for debugging
+      const authUser = localStorage.getItem('authUser');
+      const user = authUser ? JSON.parse(authUser) : null;
+      console.log('🔍 Current authenticated user:', user);
+      console.log('🔍 User restaurant_id:', user?.restaurant_id);
+
       const data = await menuService.getMenuData(restaurantSlug);
+
+      console.log('🔍 MenuContext received data from menuService:', data);
+      console.log('🔍 Restaurant data:', data?.restaurant);
+      console.log('🔍 Menu sections count:', data?.menu?.sections?.length || 0);
+      console.log('🔍 Menu sections:', data?.menu?.sections);
 
       dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: data.restaurant });
       dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: data.branding });
       dispatch({ type: ActionTypes.SET_MENU_DATA, payload: data.menu });
 
+      // Set menu status based on restaurant's isActive property
+      const menuStatus = data.restaurant.isActive ? 'active' : 'draft';
+      console.log('🔄 [MenuContext] Setting initial menu status:', menuStatus, 'based on restaurant.isActive:', data.restaurant.isActive);
+      dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: menuStatus });
+
       return data;
     } catch (error) {
-      console.error('Failed to load dashboard menu data:', error);
+      console.error('❌ Failed to load dashboard menu data:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
 
       // Don't throw the error, just continue with empty state
@@ -177,7 +195,7 @@ export function MenuProvider({ children }) {
   }, []);
 
   // Save menu content
-  const saveMenuContent = useCallback(async (menuData, restaurantSlug = 'lezzet-restaurant') => {
+  const saveMenuContent = useCallback(async (menuData, restaurantSlug = null) => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
@@ -193,7 +211,7 @@ export function MenuProvider({ children }) {
   }, []);
 
   // Save design customization
-  const saveDesignCustomization = useCallback(async (brandingData, restaurantSlug = 'lezzet-restaurant') => {
+  const saveDesignCustomization = useCallback(async (brandingData, restaurantSlug = null) => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
@@ -209,24 +227,35 @@ export function MenuProvider({ children }) {
   }, []);
 
   // Update menu status
-  const updateMenuStatus = useCallback(async (isActive, restaurantSlug = 'lezzet-restaurant') => {
+  const updateMenuStatus = useCallback(async (isActive, restaurantSlug = null) => {
+    console.log('🔄 [MenuContext] updateMenuStatus called');
+    console.log('🔄 [MenuContext] isActive:', isActive);
+    console.log('🔄 [MenuContext] restaurantSlug:', restaurantSlug);
+
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
       const result = await menuService.updateMenuStatus(restaurantSlug, isActive);
+      console.log('✅ [MenuContext] menuService.updateMenuStatus result:', result);
 
       const newStatus = isActive ? 'active' : 'draft';
+      console.log('🔄 [MenuContext] Setting new status:', newStatus);
       dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: newStatus });
+
+      // Reset loading state
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
 
       return result;
     } catch (error) {
+      console.error('❌ [MenuContext] Error updating menu status:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
       throw error;
     }
   }, []);
 
   // Save restaurant settings
-  const saveRestaurantSettings = useCallback(async (settings, restaurantSlug = 'lezzet-restaurant') => {
+  const saveRestaurantSettings = useCallback(async (settings, restaurantSlug = null) => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
@@ -267,7 +296,42 @@ export function MenuProvider({ children }) {
     });
   }, []);
 
-  // Clear all data
+  // Check restaurant name uniqueness
+  const checkRestaurantNameUnique = useCallback(async (name, excludeSlug = null) => {
+    try {
+      return await menuService.checkRestaurantNameUnique(name, excludeSlug);
+    } catch (error) {
+      console.error('Error checking restaurant name uniqueness:', error);
+      return false;
+    }
+  }, []);
+
+  // Update restaurant name with validation
+  const updateRestaurantName = useCallback(async (newName) => {
+    dispatch({ type: ActionTypes.SET_LOADING, payload: true });
+
+    try {
+      const result = await menuService.updateRestaurantName(newName);
+
+      // Update local restaurant state
+      if (state.currentRestaurant) {
+        dispatch({
+          type: ActionTypes.SET_RESTAURANT_DATA,
+          payload: {
+            ...state.currentRestaurant,
+            name: newName
+          }
+        });
+      }
+
+      return result;
+    } catch (error) {
+      dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
+      throw error;
+    }
+  }, [state.currentRestaurant]);
+
+  // Clear all data (useful for logout)
   const clearData = useCallback(() => {
     dispatch({ type: ActionTypes.CLEAR_DATA });
   }, []);
@@ -276,7 +340,7 @@ export function MenuProvider({ children }) {
   const value = {
     // State
     ...state,
-    
+
     // Actions
     loadPublicMenuData,
     loadPreviewMenuData,
@@ -287,6 +351,8 @@ export function MenuProvider({ children }) {
     saveRestaurantSettings,
     updateSection,
     updateItem,
+    checkRestaurantNameUnique,
+    updateRestaurantName,
     clearData
   };
 

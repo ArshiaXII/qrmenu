@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'; // Import useState, useRef, AND useEffect
 import PropTypes from 'prop-types';
+import { LanguageIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
 // Helper to parse settings safely
 const parseSettings = (settingsString) => {
@@ -17,9 +18,11 @@ const ElegantLightTemplate = ({ menuData, restaurantData, templateData, baseApiU
   // Initialize useState with a function to avoid accessing menuData if it's initially null/invalid
   const [activeCategory, setActiveCategory] = useState(() => menuData?.categories?.[0]?.id || null);
   const [navTopOffset, setNavTopOffset] = useState(150); // Default offset, will update
+  const [currentLanguage, setCurrentLanguage] = useState('tr'); // Default language
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const categoryRefs = useRef({});
-  const headerRef = useRef(null); 
-  const navRef = useRef(null); 
+  const headerRef = useRef(null);
+  const navRef = useRef(null);
 
   // --- Calculate Nav Offset after Header Mount ---
   useEffect(() => {
@@ -105,6 +108,24 @@ const ElegantLightTemplate = ({ menuData, restaurantData, templateData, baseApiU
     }
   };
 
+  // Language handler
+  const handleLanguageChange = (lang) => {
+    setCurrentLanguage(lang);
+    setShowLanguageDropdown(false);
+    // Here you would typically reload the menu data in the selected language
+    // For now, we'll just update the state
+  };
+
+  // Get language display text
+  const getLanguageDisplay = (lang) => {
+    const languages = {
+      'tr': { flag: '🇹🇷', name: 'Türkçe' },
+      'en': { flag: '🇺🇸', name: 'English' },
+      'de': { flag: '🇩🇪', name: 'Deutsch' }
+    };
+    return languages[lang] || languages['tr'];
+  };
+
   // Scroll handler
   const handleCategoryClick = (categoryId) => {
     setActiveCategory(categoryId);
@@ -127,12 +148,48 @@ const ElegantLightTemplate = ({ menuData, restaurantData, templateData, baseApiU
       {/* Sticky Header */}
       <header ref={headerRef} className="sticky top-0 z-40 bg-white shadow-md" style={{backgroundColor: styles.backgroundColor}}>
         <div className="container mx-auto px-3 sm:px-4 md:px-8 lg:px-16 py-4">
+          {/* Language Selector - Top Right */}
+          <div className="absolute top-4 right-4 z-50">
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all"
+                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+                style={{ borderColor: styles.borderColor }}
+              >
+                <LanguageIcon className="w-4 h-4" style={{ color: styles.primaryColor }} />
+                <span className="text-sm font-medium" style={{ color: styles.textColor }}>
+                  {getLanguageDisplay(currentLanguage).flag} {getLanguageDisplay(currentLanguage).name}
+                </span>
+                <ChevronDownIcon className="w-4 h-4" style={{ color: styles.textColor }} />
+              </button>
+
+              {showLanguageDropdown && (
+                <div className="absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[140px] z-60" style={{ borderColor: styles.borderColor }}>
+                  {['tr', 'en', 'de'].map((lang) => (
+                    <button
+                      key={lang}
+                      className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors ${currentLanguage === lang ? 'bg-blue-50' : ''}`}
+                      onClick={() => handleLanguageChange(lang)}
+                      style={{
+                        color: currentLanguage === lang ? styles.primaryColor : styles.textColor,
+                        backgroundColor: currentLanguage === lang ? `${styles.primaryColor}10` : 'transparent'
+                      }}
+                    >
+                      <span className="text-lg">{getLanguageDisplay(lang).flag}</span>
+                      <span className="text-sm font-medium">{getLanguageDisplay(lang).name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="text-center">
             {restaurantData.logo_path && (
-              <img 
+              <img
                 src={`${baseApiUrl}${restaurantData.logo_path.startsWith('/') ? restaurantData.logo_path : `/${restaurantData.logo_path}`}`}
-                alt={`${restaurantData.name} Logo`} 
-                className="mx-auto h-16 md:h-20 w-auto object-contain mb-2 md:mb-3" 
+                alt={`${restaurantData.name} Logo`}
+                className="mx-auto h-16 md:h-20 w-auto object-contain mb-2 md:mb-3"
               />
             )}
             <h1 className="text-3xl md:text-4xl font-bold" style={{ color: styles.primaryColor, fontFamily: styles.fontFamily }}>
