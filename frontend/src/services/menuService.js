@@ -170,11 +170,48 @@ class MenuService {
       const storageData = this.getStorageData();
       console.log('🔍 [menuService] Available restaurant slugs:', Object.keys(storageData.restaurants));
 
-      const restaurantData = storageData.restaurants[restaurantSlug];
-      console.log('🔍 [menuService] Found restaurant data:', !!restaurantData);
+      let restaurantData = storageData.restaurants[restaurantSlug];
+      console.log('🔍 [menuService] Found restaurant data directly:', !!restaurantData);
+
+      // CRITICAL: If not found directly, try to find by cross-referencing
+      if (!restaurantData) {
+        console.log('🔍 [menuService] Direct lookup failed, trying cross-reference...');
+
+        // Check if this might be a user's current restaurant slug
+        const currentUserSlug = this.getCurrentUserRestaurantSlug();
+        console.log('🔍 [menuService] Current user slug:', currentUserSlug);
+
+        if (currentUserSlug && storageData.restaurants[currentUserSlug]) {
+          console.log('🔍 [menuService] Found data under current user slug, checking if it matches...');
+          const currentUserData = storageData.restaurants[currentUserSlug];
+
+          // Check if the restaurant object has the requested slug
+          if (currentUserData.restaurant.slug === restaurantSlug) {
+            console.log('✅ [menuService] Found matching restaurant by cross-reference');
+            restaurantData = currentUserData;
+          }
+        }
+
+        // If still not found, try searching all restaurants for matching slug in restaurant object
+        if (!restaurantData) {
+          console.log('🔍 [menuService] Searching all restaurants for matching slug...');
+          for (const [storageSlug, data] of Object.entries(storageData.restaurants)) {
+            if (data.restaurant && data.restaurant.slug === restaurantSlug) {
+              console.log('✅ [menuService] Found restaurant with matching slug:', storageSlug);
+              restaurantData = data;
+              break;
+            }
+          }
+        }
+      }
 
       if (!restaurantData) {
         console.error('❌ [menuService] Restaurant not found for slug:', restaurantSlug);
+        console.log('🔍 [menuService] Available data:');
+        Object.keys(storageData.restaurants).forEach(slug => {
+          const data = storageData.restaurants[slug];
+          console.log(`  - Storage slug: ${slug}, Restaurant slug: ${data.restaurant?.slug}, Active: ${data.restaurant?.isActive}`);
+        });
         throw new Error('RESTAURANT_NOT_FOUND');
       }
 

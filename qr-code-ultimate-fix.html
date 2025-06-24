@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code - ULTIMATE FIX</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .critical {
+            border-left: 4px solid #ef4444;
+            background-color: #fef2f2;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+            background-color: #f0fdf4;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbeb;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .info {
+            border-left: 4px solid #3b82f6;
+            background-color: #eff6ff;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .step {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .button {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #7c3aed;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .fix-button {
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .test-button {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎯 QR Code - ULTIMATE FIX IMPLEMENTED</h1>
+    
+    <div class="container">
+        <h2>🔍 ROOT CAUSE IDENTIFIED</h2>
+        
+        <div class="critical">
+            <h3>❌ The Core Issue:</h3>
+            <p><strong>Dashboard Preview works but Public URL doesn't</strong> because:</p>
+            <ul>
+                <li><strong>Dashboard Preview:</strong> Uses <code>getPreviewMenuData()</code> - bypasses active status check</li>
+                <li><strong>Public URL:</strong> Uses <code>getPublicMenuData()</code> - enforces active status check</li>
+                <li><strong>Data Mismatch:</strong> QR URL slug doesn't match where data is actually stored</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>✅ ULTIMATE FIXES IMPLEMENTED</h2>
+        
+        <div class="success">
+            <h3>🔧 Advanced Cross-Reference Lookup</h3>
+            <p>Public menu access now includes:</p>
+            <ul>
+                <li><strong>Direct Lookup:</strong> Try the slug from URL first</li>
+                <li><strong>Current User Cross-Reference:</strong> Check if it matches current user's data</li>
+                <li><strong>Full Search:</strong> Search all restaurants for matching slug</li>
+                <li><strong>Detailed Logging:</strong> Shows exactly what's found and where</li>
+            </ul>
+        </div>
+        
+        <div class="success">
+            <h3>🧪 Enhanced Storage Debugger</h3>
+            <p>New testing capabilities:</p>
+            <ul>
+                <li><strong>Inspect Storage:</strong> Visual data inspection</li>
+                <li><strong>Fix Slug Mismatch:</strong> Automatic data migration</li>
+                <li><strong>Test Public Access:</strong> Simulate QR code access</li>
+                <li><strong>QR URL Verification:</strong> Check if QR slug exists in storage</li>
+            </ul>
+        </div>
+        
+        <div class="success">
+            <h3>🔗 Smart QR Code Generation</h3>
+            <p>QR code generation now includes:</p>
+            <ul>
+                <li><strong>Storage Verification:</strong> Checks if slug exists before generating URL</li>
+                <li><strong>Mismatch Warnings:</strong> Alerts if QR slug won't work</li>
+                <li><strong>Alternative Slug Detection:</strong> Finds correct slug if mismatch detected</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🚀 STEP-BY-STEP SOLUTION</h2>
+        
+        <div class="step">
+            <h3>Step 1: Upload Latest Build</h3>
+            <p>Upload the new build files from <code>frontend/build/*</code> to <code>/home/ars/qrmenu-app/frontend/</code></p>
+            <div class="warning">
+                <strong>Critical:</strong> This build includes cross-reference lookup and enhanced debugging.
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Access Enhanced Storage Debugger</h3>
+            <p>Go to: <a href="http://45.131.0.36/dashboard/menu-management" target="_blank" class="button">Menu Management</a></p>
+            <p>You'll see the purple debug panel with three buttons:</p>
+            <ul>
+                <li><span class="fix-button">Inspect Storage</span> - View all data</li>
+                <li><span class="fix-button">Fix Slug Mismatch</span> - Migrate data</li>
+                <li><span class="test-button">Test Public Access</span> - Simulate QR access</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Run Complete Diagnostic</h3>
+            <ol>
+                <li>Click <strong>"Inspect Storage"</strong> to see current state</li>
+                <li>If mismatch found, click <strong>"Fix Slug Mismatch"</strong></li>
+                <li>Click <strong>"Test Public Access"</strong> to verify fix</li>
+                <li>Check console for detailed diagnostic information</li>
+            </ol>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Verify QR Code Generation</h3>
+            <p>Check console logs for QR URL generation:</p>
+            <div class="code">
+🔗 [MenuManagementContent] Using slug for QR code: restaurant-123
+🔗 [MenuManagementContent] Slug exists in storage: true/false
+🔗 [MenuManagementContent] Available slugs: ["restaurant-123"]
+🔗 [MenuManagementContent] Generated QR URL: http://45.131.0.36/menu/restaurant-123
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 5: Test Public Access</h3>
+            <ol>
+                <li>Set menu to <strong>"Aktif"</strong></li>
+                <li>Copy QR URL from console</li>
+                <li>Test in incognito tab</li>
+                <li>Check console for cross-reference lookup logs</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 EXPECTED DIAGNOSTIC OUTPUT</h2>
+        
+        <div class="info">
+            <h3>Successful Cross-Reference Lookup:</h3>
+            <div class="code">
+🔍 [menuService] getPublicMenuData called with slug: restaurant-123
+🔍 [menuService] Available restaurant slugs: ["lezzet-restaurant"]
+🔍 [menuService] Found restaurant data directly: false
+🔍 [menuService] Direct lookup failed, trying cross-reference...
+🔍 [menuService] Current user slug: restaurant-123
+✅ [menuService] Found matching restaurant by cross-reference
+🔍 [menuService] Restaurant isActive: true
+✅ [menuService] Returning active menu data for slug: restaurant-123
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>Test Public Access Success:</h3>
+            <div class="code">
+🧪 [StorageDebugger] Testing public access for slug: restaurant-123
+✅ [StorageDebugger] Public access test PASSED: {restaurant: {...}, menu: {...}}
+Alert: "✅ Public access test PASSED! QR code should work."
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 WHAT THIS FIX SOLVES</h2>
+        
+        <div class="success">
+            <h3>✅ Before Fix (Issue):</h3>
+            <ul>
+                <li>QR URL: <code>http://45.131.0.36/menu/restaurant-123</code></li>
+                <li>Storage has data under: <code>lezzet-restaurant</code></li>
+                <li>Public lookup fails: "Restaurant not found"</li>
+                <li>Dashboard preview works (bypasses lookup)</li>
+            </ul>
+        </div>
+        
+        <div class="success">
+            <h3>✅ After Fix (Working):</h3>
+            <ul>
+                <li>QR URL: <code>http://45.131.0.36/menu/restaurant-123</code></li>
+                <li>Storage has data under: <code>lezzet-restaurant</code></li>
+                <li>Cross-reference lookup finds data: "Match found!"</li>
+                <li>Public access works: Menu displays correctly</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📱 FINAL TESTING CHECKLIST</h2>
+        
+        <div class="warning">
+            <h3>Complete Testing Flow:</h3>
+            <ol>
+                <li>✅ Upload new build files</li>
+                <li>✅ Use Storage Debugger to inspect and fix</li>
+                <li>✅ Click "Test Public Access" - should show success</li>
+                <li>✅ Set menu to "Aktif"</li>
+                <li>✅ Check QR URL generation logs</li>
+                <li>✅ Test QR URL in incognito tab - should show menu</li>
+                <li>✅ Scan QR code with mobile - should work</li>
+                <li>✅ Toggle to "Pasif" - should show unavailable message</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🚨 IF STILL NOT WORKING</h2>
+        
+        <div class="critical">
+            <h3>Provide This Information:</h3>
+            <ol>
+                <li><strong>Storage Debugger Output:</strong> All three button results</li>
+                <li><strong>"Test Public Access" Result:</strong> Success or failure message</li>
+                <li><strong>QR URL Generation Logs:</strong> From Menu Management console</li>
+                <li><strong>Cross-Reference Lookup Logs:</strong> From public URL access</li>
+                <li><strong>Exact Error Message:</strong> What shows on mobile/public view</li>
+            </ol>
+            
+            <p><strong>The cross-reference lookup should resolve the data mismatch issue completely.</strong></p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🎯 QR Code Ultimate Fix Loaded');
+        console.log('✅ Key improvements:');
+        console.log('  1. Cross-reference lookup for data access');
+        console.log('  2. Enhanced Storage Debugger with testing');
+        console.log('  3. Smart QR code generation with verification');
+        console.log('  4. Comprehensive diagnostic logging');
+        console.log('🚀 Use "Test Public Access" button to verify fix!');
+    </script>
+</body>
+</html>

@@ -51,6 +51,32 @@ const StorageDebugger = () => {
     });
   };
 
+  const testPublicAccess = () => {
+    // Test public access with current data
+    import('../../services/menuService').then(({ default: MenuService }) => {
+      const menuService = new MenuService();
+      const currentSlug = menuService.getCurrentUserRestaurantSlug();
+
+      if (currentSlug) {
+        console.log('🧪 [StorageDebugger] Testing public access for slug:', currentSlug);
+
+        // Test the public data access
+        menuService.getPublicMenuData(currentSlug)
+          .then(data => {
+            console.log('✅ [StorageDebugger] Public access test PASSED:', data);
+            alert('✅ Public access test PASSED! QR code should work.');
+          })
+          .catch(error => {
+            console.error('❌ [StorageDebugger] Public access test FAILED:', error);
+            alert(`❌ Public access test FAILED: ${error.message}`);
+          });
+      } else {
+        console.error('❌ [StorageDebugger] No current user slug found');
+        alert('❌ No current user slug found');
+      }
+    });
+  };
+
   return (
     <div style={{ 
       position: 'fixed', 
@@ -107,6 +133,19 @@ const StorageDebugger = () => {
           }}
         >
           Fix Slug Mismatch
+        </button>
+        <button
+          onClick={testPublicAccess}
+          style={{
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            padding: '5px 10px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Test Public Access
         </button>
       </div>
 

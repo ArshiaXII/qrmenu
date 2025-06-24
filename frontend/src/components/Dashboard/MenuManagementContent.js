@@ -88,6 +88,23 @@ const MenuManagementContent = () => {
       console.log('🔗 [MenuManagementContent] Current restaurant object:', currentRestaurant);
       console.log('🔗 [MenuManagementContent] Using slug for QR code:', slug);
 
+      // CRITICAL: Verify this slug will work for public access
+      const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
+      const slugExists = !!storageData.restaurants[slug];
+      console.log('🔗 [MenuManagementContent] Slug exists in storage:', slugExists);
+      console.log('🔗 [MenuManagementContent] Available slugs:', Object.keys(storageData.restaurants));
+
+      if (!slugExists) {
+        console.warn('⚠️ [MenuManagementContent] QR slug not found in storage! This will cause "Restaurant not found" error');
+        // Try to find the correct slug
+        for (const [storageSlug, data] of Object.entries(storageData.restaurants)) {
+          if (data.restaurant && data.restaurant.name === currentRestaurant.name) {
+            console.log('🔗 [MenuManagementContent] Found matching restaurant under different slug:', storageSlug);
+            break;
+          }
+        }
+      }
+
       // Production server URL (port 80, not 3000!)
       if (window.location.hostname === '45.131.0.36' || window.location.hostname.includes('45.131.0.36')) {
         const url = `http://45.131.0.36/menu/${slug}`;
