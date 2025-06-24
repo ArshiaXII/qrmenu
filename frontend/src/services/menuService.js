@@ -22,6 +22,13 @@ class MenuService {
           // For now, we'll use a simple mapping. In production, this would come from the backend
           const slug = `restaurant-${user.restaurant_id}`;
           console.log('🔍 Generated restaurant slug:', slug);
+
+          // CRITICAL: Verify this slug exists in storage
+          const storageData = this.getStorageData();
+          const exists = !!storageData.restaurants[slug];
+          console.log('🔍 Slug exists in storage:', exists);
+          console.log('🔍 Available slugs in storage:', Object.keys(storageData.restaurants));
+
           return slug;
         } else {
           console.warn('⚠️ User has no restaurant_id');
@@ -73,6 +80,29 @@ class MenuService {
     localStorage.removeItem('qr_menu_data');
     this.initializeStorage(); // Reinitialize with empty structure
     console.log('✅ Storage cleared and reinitialized');
+  }
+
+  // Debug function to inspect storage data
+  debugStorageData() {
+    console.log('🔍 [DEBUG] Storage Data Inspection:');
+    const storageData = this.getStorageData();
+    console.log('🔍 [DEBUG] Full storage data:', storageData);
+    console.log('🔍 [DEBUG] Available restaurant slugs:', Object.keys(storageData.restaurants));
+
+    Object.keys(storageData.restaurants).forEach(slug => {
+      const restaurant = storageData.restaurants[slug];
+      console.log(`🔍 [DEBUG] Restaurant ${slug}:`, {
+        name: restaurant.restaurant?.name,
+        isActive: restaurant.restaurant?.isActive,
+        slug: restaurant.restaurant?.slug
+      });
+    });
+
+    const currentUserSlug = this.getCurrentUserRestaurantSlug();
+    console.log('🔍 [DEBUG] Current user slug:', currentUserSlug);
+    console.log('🔍 [DEBUG] Current user data exists:', !!storageData.restaurants[currentUserSlug]);
+
+    return storageData;
   }
 
   // Get public menu data for a specific restaurant

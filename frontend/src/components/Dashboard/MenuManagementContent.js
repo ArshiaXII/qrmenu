@@ -14,6 +14,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useMenu } from '../../contexts/MenuContext';
+import StorageDebugger from '../Debug/StorageDebugger';
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
@@ -82,23 +83,30 @@ const MenuManagementContent = () => {
   // Generate public URL
   const getPublicUrl = () => {
     if (currentRestaurant) {
+      // CRITICAL: Use the slug that matches the storage key
+      const slug = currentRestaurant.slug;
+      console.log('🔗 [MenuManagementContent] Current restaurant object:', currentRestaurant);
+      console.log('🔗 [MenuManagementContent] Using slug for QR code:', slug);
+
       // Production server URL (port 80, not 3000!)
       if (window.location.hostname === '45.131.0.36' || window.location.hostname.includes('45.131.0.36')) {
-        const url = `http://45.131.0.36/menu/${currentRestaurant.slug}`;
+        const url = `http://45.131.0.36/menu/${slug}`;
         console.log('🔗 [MenuManagementContent] Generated production QR URL:', url);
-        console.log('🔗 [MenuManagementContent] Restaurant slug:', currentRestaurant.slug);
+        console.log('🔗 [MenuManagementContent] Restaurant slug:', slug);
         console.log('🔗 [MenuManagementContent] Restaurant isActive:', currentRestaurant.isActive);
+        console.log('🔗 [MenuManagementContent] Restaurant name:', currentRestaurant.name);
         return url;
       }
       // Local development
-      const url = `${window.location.origin}/menu/${currentRestaurant.slug}`;
+      const url = `${window.location.origin}/menu/${slug}`;
       console.log('🔗 [MenuManagementContent] Generated local QR URL:', url);
-      console.log('🔗 [MenuManagementContent] Restaurant slug:', currentRestaurant.slug);
+      console.log('🔗 [MenuManagementContent] Restaurant slug:', slug);
       console.log('🔗 [MenuManagementContent] Restaurant isActive:', currentRestaurant.isActive);
+      console.log('🔗 [MenuManagementContent] Restaurant name:', currentRestaurant.name);
       return url;
     }
     const fallbackUrl = 'http://45.131.0.36/menu/lezzet-restaurant';
-    console.log('🔗 [MenuManagementContent] Using fallback QR URL:', fallbackUrl);
+    console.log('🔗 [MenuManagementContent] Using fallback QR URL (no currentRestaurant):', fallbackUrl);
     return fallbackUrl;
   };
 
@@ -219,6 +227,8 @@ const MenuManagementContent = () => {
 
   return (
     <div className="menu-management-content">
+      {/* Debug component - remove in production */}
+      <StorageDebugger />
       {/* Page Header */}
       <div className="page-header">
         <div className="header-content">

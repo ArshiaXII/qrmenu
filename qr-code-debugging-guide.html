@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Issue - Comprehensive Debugging Guide</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .critical {
+            border-left: 4px solid #ef4444;
+            background-color: #fef2f2;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+            background-color: #f0fdf4;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbeb;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .info {
+            border-left: 4px solid #3b82f6;
+            background-color: #eff6ff;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .step {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+        }
+        .button {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #7c3aed;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 QR Code Issue - Root Cause Analysis & Fix</h1>
+    
+    <div class="container">
+        <h2>🚨 Critical Issue Identified: SLUG MISMATCH</h2>
+        
+        <div class="critical">
+            <h3>❌ The Problem:</h3>
+            <p>The QR code URL contains a different slug than what's stored in localStorage, causing "Restaurant not found" errors.</p>
+            
+            <h4>Likely Scenario:</h4>
+            <ul>
+                <li><strong>Dashboard generates slug:</strong> <code>restaurant-123</code> (based on user.restaurant_id)</li>
+                <li><strong>QR code uses slug:</strong> <code>currentRestaurant.slug</code> (might be different)</li>
+                <li><strong>Storage key:</strong> Data stored under one slug, accessed under another</li>
+                <li><strong>Result:</strong> PublicMenuView can't find the restaurant data</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Enhanced Debugging Features Added</h2>
+        
+        <div class="success">
+            <h3>✅ New Debug Tools:</h3>
+            <ol>
+                <li><strong>Storage Debugger Component:</strong> Visual inspector in Menu Management</li>
+                <li><strong>Enhanced Console Logs:</strong> Comprehensive logging throughout data flow</li>
+                <li><strong>Slug Verification:</strong> Checks if slugs exist in storage</li>
+                <li><strong>Data Inspection:</strong> Shows available vs expected slugs</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📋 Step-by-Step Debugging Process</h2>
+        
+        <div class="step">
+            <h3>Step 1: Upload New Build Files</h3>
+            <p>Upload the new build files from <code>frontend/build/*</code> to <code>/home/ars/qrmenu-app/frontend/</code></p>
+            <div class="warning">
+                <strong>Important:</strong> The new build includes the Storage Debugger and enhanced logging.
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Access Menu Management with Debugger</h3>
+            <p>Go to: <a href="http://45.131.0.36/dashboard/menu-management" target="_blank" class="button">Menu Management</a></p>
+            <p>You'll see a purple debug panel in the top-right corner.</p>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Inspect Storage Data</h3>
+            <p>Click "Inspect Storage" in the debug panel and check:</p>
+            <ul>
+                <li><strong>Auth User Restaurant ID:</strong> What's your user.restaurant_id?</li>
+                <li><strong>Expected Slug:</strong> Should be <code>restaurant-{restaurant_id}</code></li>
+                <li><strong>Available Slugs:</strong> What slugs actually exist in storage?</li>
+                <li><strong>Slug Match:</strong> Does expected slug exist in available slugs?</li>
+            </ul>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Check QR Code URL Generation</h3>
+            <p>Open browser console (F12) and look for these logs:</p>
+            <div class="code">
+🔗 [MenuManagementContent] Current restaurant object: {...}
+🔗 [MenuManagementContent] Using slug for QR code: restaurant-123
+🔗 [MenuManagementContent] Generated production QR URL: http://45.131.0.36/menu/restaurant-123
+🔗 [MenuManagementContent] Restaurant isActive: true
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 5: Test QR Code URL</h3>
+            <p>Copy the QR URL from console and test it:</p>
+            <ol>
+                <li>Open the URL in a new incognito tab</li>
+                <li>Check console for these logs:</li>
+            </ol>
+            <div class="code">
+🔍 [PublicMenuView] restaurantSlug from URL: restaurant-123
+🔍 [PublicMenuView] Available restaurant slugs in storage: ["restaurant-456"]
+🔍 [PublicMenuView] Looking for slug: restaurant-123
+🔍 [PublicMenuView] Slug exists in storage: false
+❌ [menuService] Restaurant not found for slug: restaurant-123
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🎯 Expected Debug Output Scenarios</h2>
+        
+        <div class="info">
+            <h3>Scenario A: Slug Mismatch (Most Likely)</h3>
+            <div class="code">
+# In Menu Management:
+Auth User Restaurant ID: 123
+Expected Slug: restaurant-123
+Available Slugs: restaurant-456
+QR URL: http://45.131.0.36/menu/restaurant-123
+
+# In Public View:
+Looking for slug: restaurant-123
+Slug exists in storage: false
+Result: "Restaurant not found"
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>Scenario B: Status Issue</h3>
+            <div class="code">
+# In Menu Management:
+QR URL: http://45.131.0.36/menu/restaurant-123
+Restaurant isActive: true
+
+# In Public View:
+Looking for slug: restaurant-123
+Slug exists in storage: true
+Restaurant isActive: false
+Result: "Menu inactive"
+            </div>
+        </div>
+        
+        <div class="success">
+            <h3>Scenario C: Working Correctly</h3>
+            <div class="code">
+# In Menu Management:
+QR URL: http://45.131.0.36/menu/restaurant-123
+Restaurant isActive: true
+
+# In Public View:
+Looking for slug: restaurant-123
+Slug exists in storage: true
+Restaurant isActive: true
+Result: Menu displays correctly
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Potential Fixes Based on Debug Results</h2>
+        
+        <div class="warning">
+            <h3>Fix A: If Slug Mismatch Found</h3>
+            <p>We'll need to ensure consistent slug generation between dashboard and QR code.</p>
+            <p><strong>Temporary Fix:</strong> Use the Storage Debugger to clear storage and recreate data with correct slug.</p>
+        </div>
+        
+        <div class="warning">
+            <h3>Fix B: If Status Not Persisting</h3>
+            <p>We'll need to verify the menu status update is saving to the correct restaurant entry.</p>
+            <p><strong>Check:</strong> Toggle menu status and verify it updates the correct slug in storage.</p>
+        </div>
+        
+        <div class="warning">
+            <h3>Fix C: If Data Not Found</h3>
+            <p>We'll need to ensure restaurant data is created and stored properly during onboarding.</p>
+            <p><strong>Check:</strong> Verify user has completed restaurant setup and data exists.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📱 Mobile Testing</h2>
+        
+        <div class="step">
+            <h3>After Desktop Debugging:</h3>
+            <ol>
+                <li>Ensure the issue is identified and fixed on desktop</li>
+                <li>Generate a new QR code (if slug was corrected)</li>
+                <li>Test with mobile device by scanning QR code</li>
+                <li>If mobile browser supports it, check console logs on mobile</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🚀 Next Steps</h2>
+        
+        <div class="info">
+            <h3>Please provide the following debug information:</h3>
+            <ol>
+                <li><strong>Storage Debugger Output:</strong> Screenshot or text from the debug panel</li>
+                <li><strong>Console Logs:</strong> QR URL generation logs from Menu Management</li>
+                <li><strong>Public View Logs:</strong> Slug lookup logs when accessing QR URL</li>
+                <li><strong>Specific Error:</strong> Exact error message shown on mobile/public view</li>
+            </ol>
+            
+            <p>With this information, I can provide the exact fix needed to resolve the QR code issue.</p>
+        </div>
+    </div>
+
+    <script>
+        console.log('🔍 QR Code Debugging Guide Loaded');
+        console.log('📋 Follow the step-by-step process to identify the root cause');
+        console.log('🎯 Key areas to check:');
+        console.log('  1. Slug mismatch between QR URL and storage');
+        console.log('  2. Menu status not persisting correctly');
+        console.log('  3. Restaurant data not found in storage');
+    </script>
+</body>
+</html>

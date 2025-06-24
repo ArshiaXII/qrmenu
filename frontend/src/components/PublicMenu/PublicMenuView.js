@@ -58,6 +58,12 @@ const PublicMenuView = () => {
     console.log('🔍 [PublicMenuView] isPreview mode:', isPreview);
     console.log('🔍 [PublicMenuView] Current URL:', window.location.href);
 
+    // CRITICAL: Debug storage data to see what's available
+    const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
+    console.log('🔍 [PublicMenuView] Available restaurant slugs in storage:', Object.keys(storageData.restaurants));
+    console.log('🔍 [PublicMenuView] Looking for slug:', restaurantSlug);
+    console.log('🔍 [PublicMenuView] Slug exists in storage:', !!storageData.restaurants[restaurantSlug]);
+
     if (restaurantSlug) {
       if (isPreview) {
         console.log('🔍 [PublicMenuView] Loading preview data for slug:', restaurantSlug);
