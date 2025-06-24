@@ -105,6 +105,62 @@ class MenuService {
     return storageData;
   }
 
+  // Fix slug mismatch by ensuring data exists under the correct slug
+  fixSlugMismatch() {
+    console.log('🔧 [menuService] Attempting to fix slug mismatch...');
+    const storageData = this.getStorageData();
+    const expectedSlug = this.getCurrentUserRestaurantSlug();
+
+    if (!expectedSlug) {
+      console.error('❌ [menuService] No expected slug found');
+      return false;
+    }
+
+    console.log('🔧 [menuService] Expected slug:', expectedSlug);
+    console.log('🔧 [menuService] Available slugs:', Object.keys(storageData.restaurants));
+
+    // If expected slug doesn't exist, try to find user's data under a different slug
+    if (!storageData.restaurants[expectedSlug]) {
+      console.log('🔧 [menuService] Expected slug not found, searching for user data...');
+
+      // Look for any restaurant data that might belong to this user
+      const availableSlugs = Object.keys(storageData.restaurants);
+      if (availableSlugs.length > 0) {
+        console.log('🔧 [menuService] Found existing data, migrating to correct slug...');
+
+        // Take the first available restaurant data and move it to the correct slug
+        const existingSlug = availableSlugs[0];
+        const existingData = storageData.restaurants[existingSlug];
+
+        // Update the slug in the restaurant object
+        existingData.restaurant.slug = expectedSlug;
+
+        // Move data to correct slug
+        storageData.restaurants[expectedSlug] = existingData;
+
+        // Remove old slug entry
+        delete storageData.restaurants[existingSlug];
+
+        // Save updated data
+        this.saveStorageData(storageData);
+
+        console.log('✅ [menuService] Data migrated from', existingSlug, 'to', expectedSlug);
+        return true;
+      } else {
+        console.log('🔧 [menuService] No existing data found, creating new...');
+        // Create new data under correct slug
+        const newData = this.createDefaultRestaurantData(expectedSlug);
+        storageData.restaurants[expectedSlug] = newData;
+        this.saveStorageData(storageData);
+        console.log('✅ [menuService] New data created under slug:', expectedSlug);
+        return true;
+      }
+    } else {
+      console.log('✅ [menuService] Slug already exists correctly');
+      return true;
+    }
+  }
+
   // Get public menu data for a specific restaurant
   async getPublicMenuData(restaurantSlug) {
     try {
@@ -210,15 +266,16 @@ class MenuService {
 
   // Create default restaurant data
   createDefaultRestaurantData(slug) {
+    console.log('🔍 [menuService] Creating default restaurant data for slug:', slug);
     return {
       restaurant: {
         id: Date.now(),
         name: 'Yeni Restaurant',
-        slug: slug,
+        slug: slug, // CRITICAL: Ensure slug is stored in restaurant object
         address: 'İstanbul, Türkiye',
         phone: '+90 212 555 0123',
         hours: '09:00 - 23:00',
-        isActive: false
+        isActive: false // Start as inactive, user must activate
       },
       branding: {
         logo: null,
@@ -338,6 +395,10 @@ class MenuService {
       console.log('🔄 [menuService] restaurantSlug:', restaurantSlug);
       console.log('🔄 [menuService] isActive:', isActive);
 
+      // CRITICAL: Fix slug mismatch before updating
+      console.log('🔄 [menuService] Fixing slug mismatch before status update...');
+      this.fixSlugMismatch();
+
       // Use current user's restaurant slug if not provided
       const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
       console.log('🔄 [menuService] targetSlug (final):', targetSlug);
@@ -353,7 +414,11 @@ class MenuService {
       if (!storageData.restaurants[targetSlug]) {
         console.error('❌ [menuService] Restaurant not found in storage:', targetSlug);
         console.log('🔄 [menuService] Available restaurants:', Object.keys(storageData.restaurants));
-        throw new Error('Restaurant not found');
+        console.log('🔄 [menuService] Creating missing restaurant data...');
+
+        // Create default data if missing
+        storageData.restaurants[targetSlug] = this.createDefaultRestaurantData(targetSlug);
+        console.log('✅ [menuService] Created default restaurant data for:', targetSlug);
       }
 
       console.log('🔄 [menuService] Current restaurant data before update:', storageData.restaurants[targetSlug].restaurant);

@@ -36,6 +36,21 @@ const StorageDebugger = () => {
     console.log('🔍 [StorageDebugger] Storage cleared');
   };
 
+  const fixSlugMismatch = () => {
+    // Import menuService and call fixSlugMismatch
+    import('../../services/menuService').then(({ default: MenuService }) => {
+      const menuService = new MenuService();
+      const result = menuService.fixSlugMismatch();
+      if (result) {
+        console.log('✅ [StorageDebugger] Slug mismatch fixed');
+        // Refresh the display
+        inspectStorage();
+      } else {
+        console.error('❌ [StorageDebugger] Failed to fix slug mismatch');
+      }
+    });
+  };
+
   return (
     <div style={{ 
       position: 'fixed', 
@@ -67,18 +82,31 @@ const StorageDebugger = () => {
         >
           Inspect Storage
         </button>
-        <button 
+        <button
           onClick={clearStorage}
-          style={{ 
-            background: '#ef4444', 
-            color: 'white', 
-            border: 'none', 
-            padding: '5px 10px', 
+          style={{
+            background: '#ef4444',
+            color: 'white',
+            border: 'none',
+            padding: '5px 10px',
             borderRadius: '4px',
             cursor: 'pointer'
           }}
         >
           Clear Storage
+        </button>
+        <button
+          onClick={fixSlugMismatch}
+          style={{
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            padding: '5px 10px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+          }}
+        >
+          Fix Slug Mismatch
         </button>
       </div>
 
