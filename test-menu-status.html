@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Status Toggle Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 10px;
+            border-left: 4px solid #8b5cf6;
+            background-color: #f8f9fa;
+        }
+        .success {
+            border-left-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .button {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .button:hover {
+            background-color: #7c3aed;
+        }
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-active {
+            background-color: #10b981;
+            color: white;
+        }
+        .status-draft {
+            background-color: #f59e0b;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Menu Status Toggle Test</h1>
+    
+    <div class="test-container">
+        <h2>📋 Test Instructions</h2>
+        <div class="test-step">
+            <strong>Step 1:</strong> Open the QR Menu Platform at <a href="http://localhost:3000" target="_blank">http://localhost:3000</a>
+        </div>
+        <div class="test-step">
+            <strong>Step 2:</strong> Login to your account and navigate to Menu Management
+        </div>
+        <div class="test-step">
+            <strong>Step 3:</strong> Open browser console (F12) to see debug logs
+        </div>
+        <div class="test-step">
+            <strong>Step 4:</strong> Click the "Aktif Yap" / "Pasif Yap" button and observe:
+            <ul>
+                <li>Console logs showing the toggle process</li>
+                <li>UI updates (button text and status indicator)</li>
+                <li>Loading state during update</li>
+            </ul>
+        </div>
+        <div class="test-step">
+            <strong>Step 5:</strong> Test the public menu view behavior
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🔍 Expected Console Logs</h2>
+        <p>When you click the toggle button, you should see these logs in order:</p>
+        <pre style="background: #1f2937; color: #f9fafb; padding: 15px; border-radius: 6px; overflow-x: auto;">
+🔄 [MenuManagementContent] Toggle button clicked
+🔄 [MenuManagementContent] Current menuStatus: draft
+🔄 [MenuManagementContent] Current restaurant: {name: "...", slug: "..."}
+🔄 [MenuManagementContent] New status will be: true
+🔄 [MenuManagementContent] Using restaurant slug: your-restaurant-slug
+🔄 [MenuContext] updateMenuStatus called
+🔄 [MenuContext] isActive: true
+🔄 [MenuContext] restaurantSlug: your-restaurant-slug
+🔄 [menuService] updateMenuStatus called
+🔄 [menuService] restaurantSlug: your-restaurant-slug
+🔄 [menuService] isActive: true
+🔄 [menuService] targetSlug (final): your-restaurant-slug
+🔄 [menuService] Current storage data: {...}
+🔄 [menuService] Current restaurant data before update: {...}
+🔄 [menuService] Updated restaurant data: {...}
+✅ [menuService] Data saved to localStorage
+✅ [menuService] Returning result: {success: true, ...}
+✅ [MenuContext] menuService.updateMenuStatus result: {...}
+🔄 [MenuContext] Setting new status: active
+✅ [MenuManagementContent] Menu status updated successfully
+        </pre>
+    </div>
+
+    <div class="test-container">
+        <h2>✅ Expected UI Behavior</h2>
+        <div class="test-step">
+            <strong>Before Toggle (Draft Status):</strong>
+            <ul>
+                <li>Status indicator: "⚠️ Menü Taslak" <span class="status-indicator status-draft">TASLAK</span></li>
+                <li>Button text: "Aktif Yap"</li>
+                <li>Description: "Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz."</li>
+            </ul>
+        </div>
+        <div class="test-step">
+            <strong>After Toggle (Active Status):</strong>
+            <ul>
+                <li>Status indicator: "✅ Menü Aktif" <span class="status-indicator status-active">AKTİF</span></li>
+                <li>Button text: "Pasif Yap"</li>
+                <li>Description: "Menünüz müşterileriniz tarafından görülebilir."</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🌐 Public Menu View Test</h2>
+        <div class="test-step">
+            <strong>Test Active Menu:</strong>
+            <ol>
+                <li>Set menu status to "Active" in Menu Management</li>
+                <li>Copy the public menu URL from the QR code section</li>
+                <li>Open the URL in a new tab/window</li>
+                <li><strong>Expected:</strong> Menu content should be visible</li>
+            </ol>
+        </div>
+        <div class="test-step">
+            <strong>Test Draft Menu:</strong>
+            <ol>
+                <li>Set menu status to "Draft" in Menu Management</li>
+                <li>Refresh the public menu URL</li>
+                <li><strong>Expected:</strong> Should show "Menü Şu Anda Aktif Değil" message</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🚨 Troubleshooting</h2>
+        <div class="test-step error">
+            <strong>If toggle doesn't work:</strong>
+            <ul>
+                <li>Check console for error messages</li>
+                <li>Verify restaurant data is loaded (currentRestaurant should not be null)</li>
+                <li>Check localStorage for menu data updates</li>
+                <li>Ensure no JavaScript errors are blocking execution</li>
+            </ul>
+        </div>
+        <div class="test-step error">
+            <strong>If UI doesn't update:</strong>
+            <ul>
+                <li>Check if MenuContext state is updating correctly</li>
+                <li>Verify the reducer is handling SET_MENU_STATUS action</li>
+                <li>Check if component is re-rendering after state change</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🎯 Quick Test Links</h2>
+        <button class="button" onclick="window.open('http://localhost:3000/dashboard/menu-management', '_blank')">
+            🏪 Open Menu Management
+        </button>
+        <button class="button" onclick="window.open('http://localhost:3000/menu/lezzet-restaurant', '_blank')">
+            🌐 Open Public Menu (Default)
+        </button>
+        <button class="button" onclick="window.open('http://localhost:3000/menu/lezzet-restaurant?preview=true', '_blank')">
+            👁️ Open Preview Mode
+        </button>
+    </div>
+
+    <script>
+        console.log('🧪 Menu Status Toggle Test Page Loaded');
+        console.log('📋 Follow the test instructions above to verify the toggle functionality');
+        console.log('🔍 Open browser console to see debug logs during testing');
+    </script>
+</body>
+</html>

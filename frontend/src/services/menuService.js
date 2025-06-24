@@ -78,24 +78,35 @@ class MenuService {
   // Get public menu data for a specific restaurant
   async getPublicMenuData(restaurantSlug) {
     try {
+      console.log('🔍 [menuService] getPublicMenuData called with slug:', restaurantSlug);
+
       // For development, use localStorage. In production, this would be a real API call
       const storageData = this.getStorageData();
+      console.log('🔍 [menuService] Available restaurant slugs:', Object.keys(storageData.restaurants));
+
       const restaurantData = storageData.restaurants[restaurantSlug];
+      console.log('🔍 [menuService] Found restaurant data:', !!restaurantData);
 
       if (!restaurantData) {
+        console.error('❌ [menuService] Restaurant not found for slug:', restaurantSlug);
         throw new Error('RESTAURANT_NOT_FOUND');
       }
 
+      console.log('🔍 [menuService] Restaurant isActive:', restaurantData.restaurant.isActive);
+      console.log('🔍 [menuService] Full restaurant data:', restaurantData.restaurant);
+
       if (!restaurantData.restaurant.isActive) {
+        console.error('❌ [menuService] Menu is inactive for slug:', restaurantSlug);
         throw new Error('MENU_INACTIVE');
       }
 
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 500));
 
+      console.log('✅ [menuService] Returning active menu data for slug:', restaurantSlug);
       return restaurantData;
     } catch (error) {
-      console.error('Error fetching public menu data:', error);
+      console.error('❌ [menuService] Error fetching public menu data:', error);
       throw error;
     }
   }

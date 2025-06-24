@@ -82,14 +82,24 @@ const MenuManagementContent = () => {
   // Generate public URL
   const getPublicUrl = () => {
     if (currentRestaurant) {
-      // Production server URL
+      // Production server URL (port 80, not 3000!)
       if (window.location.hostname === '45.131.0.36' || window.location.hostname.includes('45.131.0.36')) {
-        return `http://45.131.0.36:3000/menu/${currentRestaurant.slug}`;
+        const url = `http://45.131.0.36/menu/${currentRestaurant.slug}`;
+        console.log('🔗 [MenuManagementContent] Generated production QR URL:', url);
+        console.log('🔗 [MenuManagementContent] Restaurant slug:', currentRestaurant.slug);
+        console.log('🔗 [MenuManagementContent] Restaurant isActive:', currentRestaurant.isActive);
+        return url;
       }
       // Local development
-      return `${window.location.origin}/menu/${currentRestaurant.slug}`;
+      const url = `${window.location.origin}/menu/${currentRestaurant.slug}`;
+      console.log('🔗 [MenuManagementContent] Generated local QR URL:', url);
+      console.log('🔗 [MenuManagementContent] Restaurant slug:', currentRestaurant.slug);
+      console.log('🔗 [MenuManagementContent] Restaurant isActive:', currentRestaurant.isActive);
+      return url;
     }
-    return 'http://45.131.0.36:3000/menu/lezzet-restaurant';
+    const fallbackUrl = 'http://45.131.0.36/menu/lezzet-restaurant';
+    console.log('🔗 [MenuManagementContent] Using fallback QR URL:', fallbackUrl);
+    return fallbackUrl;
   };
 
   const publicUrl = getPublicUrl();

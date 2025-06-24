@@ -120,10 +120,15 @@ export function MenuProvider({ children }) {
 
   // Load public menu data
   const loadPublicMenuData = useCallback(async (restaurantSlug) => {
+    console.log('🔍 [MenuContext] loadPublicMenuData called with slug:', restaurantSlug);
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
       const data = await menuService.getPublicMenuData(restaurantSlug);
+      console.log('✅ [MenuContext] Received public menu data:', data);
+      console.log('🔍 [MenuContext] Restaurant data:', data.restaurant);
+      console.log('🔍 [MenuContext] Restaurant isActive:', data.restaurant.isActive);
+      console.log('🔍 [MenuContext] Menu sections count:', data.menu?.sections?.length || 0);
 
       dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: data.restaurant });
       dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: data.branding });
@@ -131,6 +136,7 @@ export function MenuProvider({ children }) {
 
       return data;
     } catch (error) {
+      console.error('❌ [MenuContext] Error in loadPublicMenuData:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
       throw error;
     }

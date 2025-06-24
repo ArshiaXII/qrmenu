@@ -53,24 +53,35 @@ const PublicMenuView = () => {
 
   // Load menu data when component mounts or restaurantSlug changes
   useEffect(() => {
+    console.log('🔍 [PublicMenuView] useEffect triggered');
+    console.log('🔍 [PublicMenuView] restaurantSlug from URL:', restaurantSlug);
+    console.log('🔍 [PublicMenuView] isPreview mode:', isPreview);
+    console.log('🔍 [PublicMenuView] Current URL:', window.location.href);
+
     if (restaurantSlug) {
       if (isPreview) {
+        console.log('🔍 [PublicMenuView] Loading preview data for slug:', restaurantSlug);
         // For preview mode, use loadPreviewMenuData to bypass active status check
         loadPreviewMenuData(restaurantSlug).catch((error) => {
-          console.error('Failed to load preview menu data:', error);
+          console.error('❌ [PublicMenuView] Failed to load preview menu data:', error);
           if (error.message === 'RESTAURANT_NOT_FOUND') {
             setMenuUnavailable(true);
           }
         });
       } else {
+        console.log('🔍 [PublicMenuView] Loading public data for slug:', restaurantSlug);
         // Normal public access
         loadPublicMenuData(restaurantSlug).catch((error) => {
-          console.error('Failed to load menu data:', error);
+          console.error('❌ [PublicMenuView] Failed to load menu data:', error);
+          console.error('❌ [PublicMenuView] Error message:', error.message);
           if (error.message === 'MENU_INACTIVE' || error.message === 'RESTAURANT_NOT_FOUND') {
+            console.log('🔍 [PublicMenuView] Setting menu unavailable due to:', error.message);
             setMenuUnavailable(true);
           }
         });
       }
+    } else {
+      console.log('❌ [PublicMenuView] No restaurant slug found in URL');
     }
   }, [restaurantSlug, isPreview, loadPublicMenuData, loadPreviewMenuData]);
 
@@ -162,7 +173,12 @@ const PublicMenuView = () => {
   }
 
   // Check if menu is active (skip check for preview mode)
+  console.log('🔍 [PublicMenuView] Status check - isPreview:', isPreview);
+  console.log('🔍 [PublicMenuView] Status check - currentRestaurant.isActive:', currentRestaurant?.isActive);
+  console.log('🔍 [PublicMenuView] Status check - currentRestaurant:', currentRestaurant);
+
   if (!isPreview && !currentRestaurant.isActive) {
+    console.log('❌ [PublicMenuView] Menu is inactive, showing unavailable message');
     return (
       <div className="public-menu-unavailable">
         <div className="unavailable-content">
@@ -174,6 +190,8 @@ const PublicMenuView = () => {
       </div>
     );
   }
+
+  console.log('✅ [PublicMenuView] Menu is active, rendering content');
 
   // Get currency symbol
   const getCurrencySymbol = (currencyCode) => {

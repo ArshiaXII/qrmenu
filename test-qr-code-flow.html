@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code to PublicMenuView Flow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .test-step {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #8b5cf6;
+            background-color: #f8f9fa;
+        }
+        .success {
+            border-left-color: #10b981;
+            background-color: #f0fdf4;
+        }
+        .error {
+            border-left-color: #ef4444;
+            background-color: #fef2f2;
+        }
+        .warning {
+            border-left-color: #f59e0b;
+            background-color: #fffbeb;
+        }
+        .button {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background-color: #7c3aed;
+        }
+        .code-block {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .log-section {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .issue-fixed {
+            background-color: #dcfce7;
+            border: 1px solid #16a34a;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 QR Code to PublicMenuView Flow Test</h1>
+    
+    <div class="test-container">
+        <h2>🚨 Critical Issues Found & Fixed</h2>
+        
+        <div class="issue-fixed">
+            <h3>✅ Issue 1: Wrong Port in QR Code URL</h3>
+            <p><strong>Problem:</strong> QR code was generating <code>http://45.131.0.36:3000/menu/...</code></p>
+            <p><strong>Fix:</strong> Changed to <code>http://45.131.0.36/menu/...</code> (port 80 via Nginx)</p>
+        </div>
+        
+        <div class="issue-fixed">
+            <h3>✅ Issue 2: Missing Debug Logs</h3>
+            <p><strong>Problem:</strong> No visibility into data flow from QR code to PublicMenuView</p>
+            <p><strong>Fix:</strong> Added comprehensive logging throughout the entire flow</p>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>📋 Testing Instructions</h2>
+        
+        <div class="test-step">
+            <h3>Step 1: Access Menu Management</h3>
+            <p>Go to Dashboard → Menu Management and check the QR code URL in console</p>
+            <a href="http://45.131.0.36/dashboard/menu-management" target="_blank" class="button">Open Menu Management</a>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 2: Check QR Code URL Generation</h3>
+            <p>Open browser console (F12) and look for these logs:</p>
+            <div class="code-block">
+🔗 [MenuManagementContent] Generated production QR URL: http://45.131.0.36/menu/your-restaurant-slug
+🔗 [MenuManagementContent] Restaurant slug: your-restaurant-slug
+🔗 [MenuManagementContent] Restaurant isActive: true/false
+            </div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 3: Test Menu Status Toggle</h3>
+            <p>Toggle menu status and verify the QR code URL remains correct</p>
+            <ol>
+                <li>Set menu to "Aktif" (Active)</li>
+                <li>Note the QR code URL in console</li>
+                <li>Set menu to "Pasif" (Inactive)</li>
+                <li>Verify QR code URL is the same (only status changes)</li>
+            </ol>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 4: Test QR Code Access - Active Menu</h3>
+            <p>With menu set to "Aktif":</p>
+            <ol>
+                <li>Copy the QR code URL from console</li>
+                <li>Open URL in new tab/incognito window</li>
+                <li>Check console for these logs:</li>
+            </ol>
+            <div class="code-block">
+🔍 [PublicMenuView] restaurantSlug from URL: your-restaurant-slug
+🔍 [PublicMenuView] isPreview mode: false
+🔍 [menuService] getPublicMenuData called with slug: your-restaurant-slug
+🔍 [menuService] Restaurant isActive: true
+✅ [menuService] Returning active menu data
+✅ [PublicMenuView] Menu is active, rendering content
+            </div>
+            <p><strong>Expected Result:</strong> Full menu content should be visible</p>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 5: Test QR Code Access - Inactive Menu</h3>
+            <p>With menu set to "Pasif":</p>
+            <ol>
+                <li>Go back to Menu Management and set status to "Pasif"</li>
+                <li>Refresh the public menu URL</li>
+                <li>Check console for these logs:</li>
+            </ol>
+            <div class="code-block">
+🔍 [PublicMenuView] restaurantSlug from URL: your-restaurant-slug
+🔍 [PublicMenuView] isPreview mode: false
+🔍 [menuService] getPublicMenuData called with slug: your-restaurant-slug
+🔍 [menuService] Restaurant isActive: false
+❌ [menuService] Menu is inactive for slug: your-restaurant-slug
+❌ [PublicMenuView] Failed to load menu data: MENU_INACTIVE
+🔍 [PublicMenuView] Setting menu unavailable due to: MENU_INACTIVE
+            </div>
+            <p><strong>Expected Result:</strong> "Menü Şu Anda Aktif Değil" message should be shown</p>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🔧 Data Flow Verification</h2>
+        
+        <div class="log-section">
+            <h3>Complete Expected Log Flow (Active Menu):</h3>
+            <div class="code-block">
+# 1. QR Code Generation (Menu Management)
+🔗 [MenuManagementContent] Generated production QR URL: http://45.131.0.36/menu/restaurant-slug
+🔗 [MenuManagementContent] Restaurant slug: restaurant-slug
+🔗 [MenuManagementContent] Restaurant isActive: true
+
+# 2. PublicMenuView Load
+🔍 [PublicMenuView] useEffect triggered
+🔍 [PublicMenuView] restaurantSlug from URL: restaurant-slug
+🔍 [PublicMenuView] isPreview mode: false
+🔍 [PublicMenuView] Loading public data for slug: restaurant-slug
+
+# 3. MenuContext Call
+🔍 [MenuContext] loadPublicMenuData called with slug: restaurant-slug
+
+# 4. MenuService Data Fetch
+🔍 [menuService] getPublicMenuData called with slug: restaurant-slug
+🔍 [menuService] Available restaurant slugs: ["restaurant-slug"]
+🔍 [menuService] Found restaurant data: true
+🔍 [menuService] Restaurant isActive: true
+✅ [menuService] Returning active menu data for slug: restaurant-slug
+
+# 5. MenuContext Success
+✅ [MenuContext] Received public menu data: {...}
+🔍 [MenuContext] Restaurant isActive: true
+
+# 6. PublicMenuView Render
+🔍 [PublicMenuView] Status check - isPreview: false
+🔍 [PublicMenuView] Status check - currentRestaurant.isActive: true
+✅ [PublicMenuView] Menu is active, rendering content
+            </div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🎯 Quick Test Links</h2>
+        
+        <a href="http://45.131.0.36/dashboard/menu-management" target="_blank" class="button">
+            🏪 Menu Management Dashboard
+        </a>
+        
+        <a href="http://45.131.0.36/menu/lezzet-restaurant" target="_blank" class="button">
+            🌐 Test Public Menu (Default)
+        </a>
+        
+        <a href="http://45.131.0.36/menu/lezzet-restaurant?preview=true" target="_blank" class="button">
+            👁️ Test Preview Mode
+        </a>
+        
+        <button class="button" onclick="window.open('http://45.131.0.36', '_blank')">
+            🏠 Homepage
+        </button>
+    </div>
+
+    <div class="test-container">
+        <h2>🚨 Troubleshooting</h2>
+        
+        <div class="test-step error">
+            <h3>If QR Code Still Shows Wrong URL:</h3>
+            <ul>
+                <li>Clear browser cache and refresh Menu Management page</li>
+                <li>Check if you're accessing via correct domain (45.131.0.36)</li>
+                <li>Verify the fix was deployed to production server</li>
+            </ul>
+        </div>
+        
+        <div class="test-step error">
+            <h3>If Menu Shows as Inactive When It Should Be Active:</h3>
+            <ul>
+                <li>Check localStorage data in browser dev tools</li>
+                <li>Verify menu status was actually saved (check console logs)</li>
+                <li>Try toggling status again and check for errors</li>
+            </ul>
+        </div>
+        
+        <div class="test-step warning">
+            <h3>If No Console Logs Appear:</h3>
+            <ul>
+                <li>Ensure you're looking at the correct browser tab's console</li>
+                <li>Check if console is filtered (show all log levels)</li>
+                <li>Verify the updated code was deployed to server</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        console.log('🧪 QR Code Flow Test Page Loaded');
+        console.log('📋 Follow the test instructions to verify QR code functionality');
+        console.log('🔍 Key fixes implemented:');
+        console.log('  1. ✅ Fixed QR code URL port (45.131.0.36:3000 → 45.131.0.36)');
+        console.log('  2. ✅ Added comprehensive debug logging');
+        console.log('  3. ✅ Enhanced status checking and error handling');
+    </script>
+</body>
+</html>
