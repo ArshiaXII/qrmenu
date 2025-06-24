@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import menuService from '../../services/menuService';
 
 const StorageDebugger = () => {
   const [storageData, setStorageData] = useState(null);
@@ -37,9 +38,8 @@ const StorageDebugger = () => {
   };
 
   const fixSlugMismatch = () => {
-    // Import menuService and call fixSlugMismatch
-    import('../../services/menuService').then(({ default: MenuService }) => {
-      const menuService = new MenuService();
+    try {
+      console.log('🔧 [StorageDebugger] Calling fixSlugMismatch...');
       const result = menuService.fixSlugMismatch();
       if (result) {
         console.log('✅ [StorageDebugger] Slug mismatch fixed');
@@ -48,14 +48,39 @@ const StorageDebugger = () => {
       } else {
         console.error('❌ [StorageDebugger] Failed to fix slug mismatch');
       }
-    });
+    } catch (error) {
+      console.error('❌ [StorageDebugger] Error in fixSlugMismatch:', error);
+      alert('❌ Error fixing slug mismatch: ' + error.message);
+    }
   };
 
   const testPublicAccess = () => {
-    // Test public access with current data
-    import('../../services/menuService').then(({ default: MenuService }) => {
-      const menuService = new MenuService();
+    try {
+      console.log('🧪 [StorageDebugger] === COMPREHENSIVE PUBLIC ACCESS TEST ===');
+
+      // Step 1: Get current user slug
       const currentSlug = menuService.getCurrentUserRestaurantSlug();
+      console.log('🧪 [StorageDebugger] Current user slug:', currentSlug);
+
+      // Step 2: Check storage data
+      const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
+      console.log('🧪 [StorageDebugger] Available slugs in storage:', Object.keys(storageData.restaurants));
+
+      // Step 3: Check if current slug exists
+      const directExists = !!storageData.restaurants[currentSlug];
+      console.log('🧪 [StorageDebugger] Current slug exists directly:', directExists);
+
+      // Step 4: Check restaurant data for each slug
+      Object.keys(storageData.restaurants).forEach(slug => {
+        const data = storageData.restaurants[slug];
+        console.log(`🧪 [StorageDebugger] Slug "${slug}":`, {
+          restaurantName: data.restaurant?.name,
+          restaurantSlug: data.restaurant?.slug,
+          isActive: data.restaurant?.isActive,
+          hasMenu: !!data.menu,
+          menuSections: data.menu?.sections?.length || 0
+        });
+      });
 
       if (currentSlug) {
         console.log('🧪 [StorageDebugger] Testing public access for slug:', currentSlug);
@@ -64,17 +89,24 @@ const StorageDebugger = () => {
         menuService.getPublicMenuData(currentSlug)
           .then(data => {
             console.log('✅ [StorageDebugger] Public access test PASSED:', data);
+            console.log('✅ [StorageDebugger] Restaurant found:', data.restaurant?.name);
+            console.log('✅ [StorageDebugger] Restaurant active:', data.restaurant?.isActive);
+            console.log('✅ [StorageDebugger] Menu sections:', data.menu?.sections?.length || 0);
             alert('✅ Public access test PASSED! QR code should work.');
           })
           .catch(error => {
             console.error('❌ [StorageDebugger] Public access test FAILED:', error);
-            alert(`❌ Public access test FAILED: ${error.message}`);
+            console.error('❌ [StorageDebugger] Error details:', error.message);
+            alert(`❌ Public access test FAILED: ${error.message}\n\nCheck console for detailed logs.`);
           });
       } else {
         console.error('❌ [StorageDebugger] No current user slug found');
         alert('❌ No current user slug found');
       }
-    });
+    } catch (error) {
+      console.error('❌ [StorageDebugger] Error in testPublicAccess:', error);
+      alert('❌ Error testing public access: ' + error.message);
+    }
   };
 
   return (
