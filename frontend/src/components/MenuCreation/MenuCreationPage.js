@@ -493,36 +493,43 @@ const MenuCreationPage = () => {
             Örnek: Kategoriler: "Başlangıçlar", "Salatalar", "Ürünler", "Humus", "Gazpacho", "Peynir Tabağı"
           </div>
 
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="sections" type="section">
-              {(provided) => (
-                <div 
-                  className="sections-container"
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                >
-                  {sections.map((section, index) => (
-                    <SectionEditor
-                      key={section.id}
-                      section={section}
-                      index={index}
-                      onUpdateSection={updateSection}
-                      onDeleteSection={deleteSection}
-                      onToggleSection={toggleSection}
-                      onAddItem={addItem}
-                      onUpdateItem={updateItem}
-                      onDeleteItem={deleteItem}
-                      onImageUpload={handleSectionImageUpload}
-                      onImageRemove={handleSectionImageRemove}
-                      onItemImageUpload={handleItemImageUpload}
-                      onItemImageRemove={handleItemImageRemove}
-                    />
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          {/* Conditional rendering to fix drag-and-drop timing issue */}
+          {isLoading ? (
+            <div className="loading-sections">
+              <p>Menü yükleniyor...</p>
+            </div>
+          ) : (
+            <DragDropContext onDragEnd={onDragEnd}>
+              <Droppable droppableId="sections" type="section">
+                {(provided) => (
+                  <div 
+                    className="sections-container"
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                  >
+                    {sections.map((section, index) => (
+                      <SectionEditor
+                        key={section.id}
+                        section={section}
+                        index={index}
+                        onUpdateSection={updateSection}
+                        onDeleteSection={deleteSection}
+                        onToggleSection={toggleSection}
+                        onAddItem={addItem}
+                        onUpdateItem={updateItem}
+                        onDeleteItem={deleteItem}
+                        onImageUpload={handleSectionImageUpload}
+                        onImageRemove={handleSectionImageRemove}
+                        onItemImageUpload={handleItemImageUpload}
+                        onItemImageRemove={handleItemImageRemove}
+                      />
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+          )}
 
           <button className="add-section-btn" onClick={addSection}>
             <PlusIcon className="w-5 h-5" />
