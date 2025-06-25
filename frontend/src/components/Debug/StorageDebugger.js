@@ -5,44 +5,80 @@ const StorageDebugger = () => {
   const [storageData, setStorageData] = useState(null);
   const [authUser, setAuthUser] = useState(null);
   const [diagnosticsResult, setDiagnosticsResult] = useState(null);
+  const [debugError, setDebugError] = useState(null);
+
+  // Safe wrapper for menuService calls
+  const safeMenuServiceCall = (methodName, ...args) => {
+    try {
+      console.log(`🔧 [StorageDebugger] Attempting to call menuService.${methodName}...`);
+      console.log(`🔧 [StorageDebugger] menuService type:`, typeof menuService);
+      console.log(`🔧 [StorageDebugger] menuService constructor:`, menuService?.constructor?.name);
+      
+      if (!menuService || typeof menuService[methodName] !== 'function') {
+        throw new Error(`MenuService method ${methodName} not available`);
+      }
+      
+      const result = menuService[methodName](...args);
+      console.log(`✅ [StorageDebugger] menuService.${methodName} succeeded:`, result);
+      return result;
+    } catch (error) {
+      console.error(`❌ [StorageDebugger] menuService.${methodName} failed:`, error);
+      setDebugError(`MenuService Error: ${error.message}`);
+      throw error;
+    }
+  };
 
   const inspectStorage = () => {
-    // Get storage data
-    const rawStorageData = localStorage.getItem('qr_menu_data');
-    const parsedStorageData = rawStorageData ? JSON.parse(rawStorageData) : null;
-    setStorageData(parsedStorageData);
+    try {
+      setDebugError(null);
+      
+      // Get storage data directly
+      const rawStorageData = localStorage.getItem('qr_menu_data');
+      const parsedStorageData = rawStorageData ? JSON.parse(rawStorageData) : null;
+      setStorageData(parsedStorageData);
 
-    // Get auth user
-    const rawAuthUser = localStorage.getItem('authUser');
-    const parsedAuthUser = rawAuthUser ? JSON.parse(rawAuthUser) : null;
-    setAuthUser(parsedAuthUser);
+      // Get auth user directly
+      const rawAuthUser = localStorage.getItem('authUser');
+      const parsedAuthUser = rawAuthUser ? JSON.parse(rawAuthUser) : null;
+      setAuthUser(parsedAuthUser);
 
-    // Console logs for debugging
-    console.log('🔍 [StorageDebugger] Raw storage data:', rawStorageData);
-    console.log('🔍 [StorageDebugger] Parsed storage data:', parsedStorageData);
-    console.log('🔍 [StorageDebugger] Raw auth user:', rawAuthUser);
-    console.log('🔍 [StorageDebugger] Parsed auth user:', parsedAuthUser);
+      // Console logs for debugging
+      console.log('🔍 [StorageDebugger] Raw storage data:', rawStorageData);
+      console.log('🔍 [StorageDebugger] Parsed storage data:', parsedStorageData);
+      console.log('🔍 [StorageDebugger] Raw auth user:', rawAuthUser);
+      console.log('🔍 [StorageDebugger] Parsed auth user:', parsedAuthUser);
 
-    if (parsedAuthUser?.restaurant_id) {
-      const expectedSlug = `restaurant-${parsedAuthUser.restaurant_id}`;
-      console.log('🔍 [StorageDebugger] Expected slug:', expectedSlug);
-      console.log('🔍 [StorageDebugger] Slug exists in storage:', !!parsedStorageData?.restaurants?.[expectedSlug]);
+      if (parsedAuthUser?.restaurant_id) {
+        const expectedSlug = `restaurant-${parsedAuthUser.restaurant_id}`;
+        console.log('🔍 [StorageDebugger] Expected slug:', expectedSlug);
+        console.log('🔍 [StorageDebugger] Slug exists in storage:', !!parsedStorageData?.restaurants?.[expectedSlug]);
+      }
+    } catch (error) {
+      console.error('❌ [StorageDebugger] Error in inspectStorage:', error);
+      setDebugError(`Inspect Error: ${error.message}`);
     }
   };
 
   const clearStorage = () => {
-    localStorage.removeItem('qr_menu_data');
-    localStorage.removeItem('authUser');
-    setStorageData(null);
-    setAuthUser(null);
-    setDiagnosticsResult(null);
-    console.log('🔍 [StorageDebugger] Storage cleared');
+    try {
+      localStorage.removeItem('qr_menu_data');
+      localStorage.removeItem('authUser');
+      setStorageData(null);
+      setAuthUser(null);
+      setDiagnosticsResult(null);
+      setDebugError(null);
+      console.log('🔍 [StorageDebugger] Storage cleared');
+    } catch (error) {
+      console.error('❌ [StorageDebugger] Error clearing storage:', error);
+      setDebugError(`Clear Error: ${error.message}`);
+    }
   };
 
   const fixSlugMismatch = () => {
     try {
+      setDebugError(null);
       console.log('🔧 [StorageDebugger] Calling fixSlugMismatch...');
-      const result = menuService.fixSlugMismatch();
+      const result = safeMenuServiceCall('fixSlugMismatch');
       if (result) {
         console.log('✅ [StorageDebugger] Slug mismatch fixed');
         // Refresh the display
@@ -58,6 +94,7 @@ const StorageDebugger = () => {
 
   const runComprehensiveDiagnostics = () => {
     try {
+      setDebugError(null);
       console.log('🧪 [StorageDebugger] === COMPREHENSIVE DIAGNOSTICS ===');
 
       const result = {
@@ -72,20 +109,21 @@ const StorageDebugger = () => {
       // Test 1: MenuService functionality
       console.log('🧪 [Test 1] Testing MenuService functionality...');
       try {
-        // Test that menuService is an instance, not a class
+        // Test that menuService is accessible and functional
         console.log('🧪 [Test 1] menuService type:', typeof menuService);
-        console.log('🧪 [Test 1] menuService constructor:', menuService.constructor.name);
-        console.log('🧪 [Test 1] menuService methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(menuService)));
+        console.log('🧪 [Test 1] menuService constructor:', menuService?.constructor?.name);
+        console.log('🧪 [Test 1] menuService available methods:', menuService ? Object.getOwnPropertyNames(Object.getPrototypeOf(menuService)) : 'NOT AVAILABLE');
 
-        // Test a simple method call
-        const userSlug = menuService.getCurrentUserRestaurantSlug();
+        // Test a simple method call safely
+        const userSlug = safeMenuServiceCall('getCurrentUserRestaurantSlug');
         console.log('🧪 [Test 1] getCurrentUserRestaurantSlug result:', userSlug);
 
         result.menuServiceTest = {
           success: true,
           type: typeof menuService,
-          constructorName: menuService.constructor.name,
-          userSlug: userSlug
+          constructorName: menuService?.constructor?.name,
+          userSlug: userSlug,
+          isAvailable: !!menuService
         };
         console.log('✅ [Test 1] MenuService test PASSED');
       } catch (error) {
@@ -93,7 +131,8 @@ const StorageDebugger = () => {
         result.menuServiceTest = {
           success: false,
           error: error.message,
-          stack: error.stack
+          stack: error.stack,
+          isAvailable: !!menuService
         };
       }
 
@@ -177,60 +216,87 @@ const StorageDebugger = () => {
         result.slugAnalysis = { error: error.message };
       }
 
-      // Test 5: Public Access Test
+      // Test 5: Public Access Test (only if MenuService is working)
       console.log('🧪 [Test 5] Testing public access...');
       const expectedSlug = result.authAnalysis?.expectedSlug;
-      if (expectedSlug) {
-        menuService.getPublicMenuData(expectedSlug)
-          .then(data => {
-            console.log('✅ [Test 5] Public access test PASSED:', data);
-            result.publicAccessTest = {
-              success: true,
-              restaurantName: data.restaurant?.name,
-              isActive: data.restaurant?.isActive,
-              menuSections: data.menu?.sections?.length || 0
-            };
-            
-            setDiagnosticsResult(result);
-            console.log('🧪 [FINAL] Comprehensive diagnostics completed:', result);
-            alert('✅ Comprehensive diagnostics completed! Check console for detailed results.');
-          })
-          .catch(error => {
-            console.error('❌ [Test 5] Public access test FAILED:', error);
-            result.publicAccessTest = {
-              success: false,
-              error: error.message
-            };
-            
-            setDiagnosticsResult(result);
-            console.log('🧪 [FINAL] Comprehensive diagnostics completed with errors:', result);
-            alert(`❌ Diagnostics completed with errors. Check console for details.\n\nPublic Access Error: ${error.message}`);
-          });
+      if (expectedSlug && result.menuServiceTest?.success) {
+        try {
+          const publicAccessPromise = safeMenuServiceCall('getPublicMenuData', expectedSlug);
+          
+          if (publicAccessPromise && typeof publicAccessPromise.then === 'function') {
+            publicAccessPromise
+              .then(data => {
+                console.log('✅ [Test 5] Public access test PASSED:', data);
+                result.publicAccessTest = {
+                  success: true,
+                  restaurantName: data.restaurant?.name,
+                  isActive: data.restaurant?.isActive,
+                  menuSections: data.menu?.sections?.length || 0
+                };
+                
+                setDiagnosticsResult(result);
+                console.log('🧪 [FINAL] Comprehensive diagnostics completed:', result);
+                alert('✅ Comprehensive diagnostics completed! Check console for detailed results.');
+              })
+              .catch(error => {
+                console.error('❌ [Test 5] Public access test FAILED:', error);
+                result.publicAccessTest = {
+                  success: false,
+                  error: error.message
+                };
+                
+                setDiagnosticsResult(result);
+                console.log('🧪 [FINAL] Comprehensive diagnostics completed with errors:', result);
+                alert(`❌ Diagnostics completed with errors. Check console for details.\n\nPublic Access Error: ${error.message}`);
+              });
+          } else {
+            throw new Error('getPublicMenuData did not return a promise');
+          }
+        } catch (error) {
+          console.error('❌ [Test 5] Public access test setup FAILED:', error);
+          result.publicAccessTest = {
+            success: false,
+            error: error.message
+          };
+          
+          setDiagnosticsResult(result);
+          console.log('🧪 [FINAL] Comprehensive diagnostics completed with setup error:', result);
+          alert(`❌ Diagnostics completed with setup error: ${error.message}`);
+        }
       } else {
-        console.log('⚠️ [Test 5] Skipping public access test - no expected slug found');
+        console.log('⚠️ [Test 5] Skipping public access test - no expected slug found or MenuService failed');
         result.publicAccessTest = {
           success: false,
-          error: 'No expected slug found'
+          error: result.menuServiceTest?.success ? 'No expected slug found' : 'MenuService not functional'
         };
         
         setDiagnosticsResult(result);
         console.log('🧪 [FINAL] Comprehensive diagnostics completed:', result);
-        alert('⚠️ Diagnostics completed but no expected slug found for public access test.');
+        alert('⚠️ Diagnostics completed but public access test was skipped.');
       }
 
     } catch (error) {
       console.error('❌ [StorageDebugger] Error in comprehensive diagnostics:', error);
+      setDebugError(`Diagnostics Error: ${error.message}`);
       alert('❌ Error running diagnostics: ' + error.message);
     }
   };
 
   const testPublicAccess = () => {
     try {
+      setDebugError(null);
       console.log('🧪 [StorageDebugger] === COMPREHENSIVE PUBLIC ACCESS TEST ===');
 
-      // Step 1: Get current user slug
-      const currentSlug = menuService.getCurrentUserRestaurantSlug();
-      console.log('🧪 [StorageDebugger] Current user slug:', currentSlug);
+      // Step 1: Get current user slug safely
+      let currentSlug;
+      try {
+        currentSlug = safeMenuServiceCall('getCurrentUserRestaurantSlug');
+        console.log('🧪 [StorageDebugger] Current user slug:', currentSlug);
+      } catch (error) {
+        console.error('❌ [StorageDebugger] Failed to get current user slug:', error);
+        alert('❌ Cannot get current user slug: ' + error.message);
+        return;
+      }
 
       // Step 2: Check storage data
       const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
@@ -255,33 +321,56 @@ const StorageDebugger = () => {
       if (currentSlug) {
         console.log('🧪 [StorageDebugger] Testing public access for slug:', currentSlug);
 
-        // Test the public data access
-        menuService.getPublicMenuData(currentSlug)
-          .then(data => {
-            console.log('✅ [StorageDebugger] Public access test PASSED:', data);
-            console.log('✅ [StorageDebugger] Restaurant found:', data.restaurant?.name);
-            console.log('✅ [StorageDebugger] Restaurant active:', data.restaurant?.isActive);
-            console.log('✅ [StorageDebugger] Menu sections:', data.menu?.sections?.length || 0);
-            alert('✅ Public access test PASSED! QR code should work.');
-          })
-          .catch(error => {
-            console.error('❌ [StorageDebugger] Public access test FAILED:', error);
-            console.error('❌ [StorageDebugger] Error details:', error.message);
-            alert(`❌ Public access test FAILED: ${error.message}\n\nCheck console for detailed logs.`);
-          });
+        // Test the public data access safely
+        try {
+          const publicAccessPromise = safeMenuServiceCall('getPublicMenuData', currentSlug);
+          
+          if (publicAccessPromise && typeof publicAccessPromise.then === 'function') {
+            publicAccessPromise
+              .then(data => {
+                console.log('✅ [StorageDebugger] Public access test PASSED:', data);
+                console.log('✅ [StorageDebugger] Restaurant found:', data.restaurant?.name);
+                console.log('✅ [StorageDebugger] Restaurant active:', data.restaurant?.isActive);
+                console.log('✅ [StorageDebugger] Menu sections:', data.menu?.sections?.length || 0);
+                alert('✅ Public access test PASSED! QR code should work.');
+              })
+              .catch(error => {
+                console.error('❌ [StorageDebugger] Public access test FAILED:', error);
+                console.error('❌ [StorageDebugger] Error details:', error.message);
+                alert(`❌ Public access test FAILED: ${error.message}\n\nCheck console for detailed logs.`);
+              });
+          } else {
+            console.error('❌ [StorageDebugger] getPublicMenuData did not return a promise');
+            alert('❌ getPublicMenuData did not return a promise. Check console for details.');
+          }
+        } catch (error) {
+          console.error('❌ [StorageDebugger] Error calling getPublicMenuData:', error);
+          alert('❌ Error calling getPublicMenuData: ' + error.message);
+        }
       } else {
         console.error('❌ [StorageDebugger] No current user slug found');
         alert('❌ No current user slug found');
       }
     } catch (error) {
       console.error('❌ [StorageDebugger] Error in testPublicAccess:', error);
+      setDebugError(`Test Public Access Error: ${error.message}`);
       alert('❌ Error testing public access: ' + error.message);
     }
   };
 
   const generateQRTestURL = () => {
     try {
-      const currentSlug = menuService.getCurrentUserRestaurantSlug();
+      setDebugError(null);
+      
+      let currentSlug;
+      try {
+        currentSlug = safeMenuServiceCall('getCurrentUserRestaurantSlug');
+      } catch (error) {
+        console.error('❌ [StorageDebugger] Failed to get current user slug for QR URL:', error);
+        alert('❌ Cannot generate QR URL - failed to get restaurant slug: ' + error.message);
+        return;
+      }
+
       if (currentSlug) {
         // Use the current environment - in production this would be the server IP
         const baseURL = window.location.hostname === 'localhost' 
@@ -302,6 +391,7 @@ const StorageDebugger = () => {
       }
     } catch (error) {
       console.error('❌ [StorageDebugger] Error generating QR URL:', error);
+      setDebugError(`QR URL Error: ${error.message}`);
       alert('❌ Error generating QR URL: ' + error.message);
     }
   };
@@ -322,7 +412,16 @@ const StorageDebugger = () => {
       maxHeight: '90vh',
       overflowY: 'auto'
     }}>
-      <h3 style={{ margin: '0 0 10px 0', color: '#8b5cf6' }}>🔍 Enhanced Storage Debugger</h3>
+      <h3 style={{ margin: '0 0 10px 0', color: '#8b5cf6' }}>🔍 Enhanced Storage Debugger v2</h3>
+      
+      {debugError && (
+        <div style={{ marginBottom: '10px', padding: '8px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '4px', fontSize: '10px' }}>
+          <strong>🚨 Error:</strong><br/>
+          {debugError}
+          <br/>
+          <small style={{ color: '#666' }}>Check console for detailed logs</small>
+        </div>
+      )}
       
       <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
         <button 
