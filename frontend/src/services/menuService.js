@@ -173,11 +173,11 @@ class MenuService {
       let restaurantData = storageData.restaurants[restaurantSlug];
       console.log('🔍 [menuService] Found restaurant data directly:', !!restaurantData);
 
-      // CRITICAL: If not found directly, try to find by cross-referencing
+      // ENHANCED: If not found directly, try comprehensive cross-referencing
       if (!restaurantData) {
-        console.log('🔍 [menuService] Direct lookup failed, trying cross-reference...');
+        console.log('🔍 [menuService] Direct lookup failed, trying comprehensive cross-reference...');
 
-        // Check if this might be a user's current restaurant slug
+        // Method 1: Check if this might be a user's current restaurant slug
         const currentUserSlug = this.getCurrentUserRestaurantSlug();
         console.log('🔍 [menuService] Current user slug:', currentUserSlug);
 
@@ -187,20 +187,91 @@ class MenuService {
 
           // Check if the restaurant object has the requested slug
           if (currentUserData.restaurant.slug === restaurantSlug) {
-            console.log('✅ [menuService] Found matching restaurant by cross-reference');
+            console.log('✅ [menuService] Found matching restaurant by user slug cross-reference');
             restaurantData = currentUserData;
           }
         }
 
-        // If still not found, try searching all restaurants for matching slug in restaurant object
+        // Method 2: Search all restaurants for matching slug in restaurant object
         if (!restaurantData) {
-          console.log('🔍 [menuService] Searching all restaurants for matching slug...');
+          console.log('🔍 [menuService] Searching all restaurants for matching slug in restaurant.slug field...');
           for (const [storageSlug, data] of Object.entries(storageData.restaurants)) {
             if (data.restaurant && data.restaurant.slug === restaurantSlug) {
               console.log('✅ [menuService] Found restaurant with matching slug:', storageSlug);
               restaurantData = data;
               break;
             }
+          }
+        }
+
+        // Method 3: ENHANCED - Check if the requested slug might be the "expected" slug for existing data
+        if (!restaurantData && Object.keys(storageData.restaurants).length > 0) {
+          console.log('🔍 [menuService] Checking if requested slug matches expected pattern...');
+          
+          // If the requested slug follows the pattern "restaurant-{id}", extract the ID
+          const slugMatch = restaurantSlug.match(/^restaurant-(\d+)$/);
+          if (slugMatch) {
+            const restaurantId = slugMatch[1];
+            console.log('🔍 [menuService] Extracted restaurant ID from slug:', restaurantId);
+            
+            // Check auth user to see if this matches their restaurant_id
+            try {
+              const authUser = localStorage.getItem('authUser');
+              if (authUser) {
+                const user = JSON.parse(authUser);
+                if (user.restaurant_id && user.restaurant_id.toString() === restaurantId) {
+                  console.log('🔍 [menuService] Slug matches current user restaurant ID, checking for any user data...');
+                  
+                  // Find any restaurant data that might belong to this user
+                  const availableSlugs = Object.keys(storageData.restaurants);
+                  if (availableSlugs.length === 1) {
+                    console.log('✅ [menuService] Found single restaurant data, assuming it belongs to current user');
+                    restaurantData = storageData.restaurants[availableSlugs[0]];
+                    
+                    // Update the restaurant slug to match the requested one for consistency
+                    if (restaurantData) {
+                      restaurantData.restaurant.slug = restaurantSlug;
+                      console.log('🔧 [menuService] Updated restaurant.slug to match requested slug');
+                    }
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('❌ [menuService] Error checking auth user for slug matching:', error);
+            }
+          }
+        }
+
+        // Method 4: FALLBACK - If still not found but data exists, try to match by user context
+        if (!restaurantData && Object.keys(storageData.restaurants).length > 0) {
+          console.log('🔍 [menuService] Last resort: checking if any data belongs to current user context...');
+          
+          try {
+            const authUser = localStorage.getItem('authUser');
+            if (authUser) {
+              const user = JSON.parse(authUser);
+              if (user.restaurant_id) {
+                // If there's only one restaurant in storage and we have a logged-in user, assume it's theirs
+                const availableSlugs = Object.keys(storageData.restaurants);
+                if (availableSlugs.length === 1) {
+                  console.log('✅ [menuService] Single restaurant found, assuming it belongs to authenticated user');
+                  restaurantData = storageData.restaurants[availableSlugs[0]];
+                  
+                  // Update the restaurant slug to match what was requested
+                  if (restaurantData) {
+                    restaurantData.restaurant.slug = restaurantSlug;
+                    
+                    // Optionally save this correction back to storage
+                    storageData.restaurants[restaurantSlug] = restaurantData;
+                    delete storageData.restaurants[availableSlugs[0]];
+                    this.saveStorageData(storageData);
+                    console.log('🔧 [menuService] Migrated data to correct slug and saved');
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ [menuService] Error in fallback slug matching:', error);
           }
         }
       }

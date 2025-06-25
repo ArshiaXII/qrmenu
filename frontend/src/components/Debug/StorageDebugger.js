@@ -4,6 +4,7 @@ import menuService from '../../services/menuService';
 const StorageDebugger = () => {
   const [storageData, setStorageData] = useState(null);
   const [authUser, setAuthUser] = useState(null);
+  const [diagnosticsResult, setDiagnosticsResult] = useState(null);
 
   const inspectStorage = () => {
     // Get storage data
@@ -34,6 +35,7 @@ const StorageDebugger = () => {
     localStorage.removeItem('authUser');
     setStorageData(null);
     setAuthUser(null);
+    setDiagnosticsResult(null);
     console.log('🔍 [StorageDebugger] Storage cleared');
   };
 
@@ -51,6 +53,174 @@ const StorageDebugger = () => {
     } catch (error) {
       console.error('❌ [StorageDebugger] Error in fixSlugMismatch:', error);
       alert('❌ Error fixing slug mismatch: ' + error.message);
+    }
+  };
+
+  const runComprehensiveDiagnostics = () => {
+    try {
+      console.log('🧪 [StorageDebugger] === COMPREHENSIVE DIAGNOSTICS ===');
+
+      const result = {
+        timestamp: new Date().toISOString(),
+        menuServiceTest: null,
+        slugAnalysis: null,
+        authAnalysis: null,
+        storageAnalysis: null,
+        publicAccessTest: null
+      };
+
+      // Test 1: MenuService functionality
+      console.log('🧪 [Test 1] Testing MenuService functionality...');
+      try {
+        // Test that menuService is an instance, not a class
+        console.log('🧪 [Test 1] menuService type:', typeof menuService);
+        console.log('🧪 [Test 1] menuService constructor:', menuService.constructor.name);
+        console.log('🧪 [Test 1] menuService methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(menuService)));
+
+        // Test a simple method call
+        const userSlug = menuService.getCurrentUserRestaurantSlug();
+        console.log('🧪 [Test 1] getCurrentUserRestaurantSlug result:', userSlug);
+
+        result.menuServiceTest = {
+          success: true,
+          type: typeof menuService,
+          constructorName: menuService.constructor.name,
+          userSlug: userSlug
+        };
+        console.log('✅ [Test 1] MenuService test PASSED');
+      } catch (error) {
+        console.error('❌ [Test 1] MenuService test FAILED:', error);
+        result.menuServiceTest = {
+          success: false,
+          error: error.message,
+          stack: error.stack
+        };
+      }
+
+      // Test 2: Auth Analysis
+      console.log('🧪 [Test 2] Analyzing authentication...');
+      try {
+        const authUser = localStorage.getItem('authUser');
+        const parsedAuthUser = authUser ? JSON.parse(authUser) : null;
+
+        result.authAnalysis = {
+          hasAuthUser: !!authUser,
+          authUser: parsedAuthUser,
+          restaurantId: parsedAuthUser?.restaurant_id,
+          expectedSlug: parsedAuthUser?.restaurant_id ? `restaurant-${parsedAuthUser.restaurant_id}` : null
+        };
+        console.log('✅ [Test 2] Auth analysis completed:', result.authAnalysis);
+      } catch (error) {
+        console.error('❌ [Test 2] Auth analysis FAILED:', error);
+        result.authAnalysis = { error: error.message };
+      }
+
+      // Test 3: Storage Analysis
+      console.log('🧪 [Test 3] Analyzing storage data...');
+      try {
+        const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
+        const availableSlugs = Object.keys(storageData.restaurants);
+
+        result.storageAnalysis = {
+          hasStorageData: !!localStorage.getItem('qr_menu_data'),
+          availableSlugs: availableSlugs,
+          restaurantCount: availableSlugs.length,
+          restaurants: {}
+        };
+
+        availableSlugs.forEach(slug => {
+          const data = storageData.restaurants[slug];
+          result.storageAnalysis.restaurants[slug] = {
+            restaurantName: data.restaurant?.name,
+            restaurantSlug: data.restaurant?.slug,
+            isActive: data.restaurant?.isActive,
+            hasMenu: !!data.menu,
+            menuSections: data.menu?.sections?.length || 0
+          };
+        });
+
+        console.log('✅ [Test 3] Storage analysis completed:', result.storageAnalysis);
+      } catch (error) {
+        console.error('❌ [Test 3] Storage analysis FAILED:', error);
+        result.storageAnalysis = { error: error.message };
+      }
+
+      // Test 4: Slug Cross-Reference Analysis
+      console.log('🧪 [Test 4] Analyzing slug matching...');
+      try {
+        const expectedSlug = result.authAnalysis?.expectedSlug;
+        const availableSlugs = result.storageAnalysis?.availableSlugs || [];
+
+        result.slugAnalysis = {
+          expectedSlug: expectedSlug,
+          directMatch: expectedSlug ? availableSlugs.includes(expectedSlug) : false,
+          crossReferences: []
+        };
+
+        if (expectedSlug && !result.slugAnalysis.directMatch) {
+          // Check for cross-references
+          availableSlugs.forEach(slug => {
+            const data = JSON.parse(localStorage.getItem('qr_menu_data')).restaurants[slug];
+            if (data.restaurant?.slug === expectedSlug) {
+              result.slugAnalysis.crossReferences.push({
+                storageSlug: slug,
+                restaurantSlug: data.restaurant.slug,
+                match: true
+              });
+            }
+          });
+        }
+
+        console.log('✅ [Test 4] Slug analysis completed:', result.slugAnalysis);
+      } catch (error) {
+        console.error('❌ [Test 4] Slug analysis FAILED:', error);
+        result.slugAnalysis = { error: error.message };
+      }
+
+      // Test 5: Public Access Test
+      console.log('🧪 [Test 5] Testing public access...');
+      const expectedSlug = result.authAnalysis?.expectedSlug;
+      if (expectedSlug) {
+        menuService.getPublicMenuData(expectedSlug)
+          .then(data => {
+            console.log('✅ [Test 5] Public access test PASSED:', data);
+            result.publicAccessTest = {
+              success: true,
+              restaurantName: data.restaurant?.name,
+              isActive: data.restaurant?.isActive,
+              menuSections: data.menu?.sections?.length || 0
+            };
+            
+            setDiagnosticsResult(result);
+            console.log('🧪 [FINAL] Comprehensive diagnostics completed:', result);
+            alert('✅ Comprehensive diagnostics completed! Check console for detailed results.');
+          })
+          .catch(error => {
+            console.error('❌ [Test 5] Public access test FAILED:', error);
+            result.publicAccessTest = {
+              success: false,
+              error: error.message
+            };
+            
+            setDiagnosticsResult(result);
+            console.log('🧪 [FINAL] Comprehensive diagnostics completed with errors:', result);
+            alert(`❌ Diagnostics completed with errors. Check console for details.\n\nPublic Access Error: ${error.message}`);
+          });
+      } else {
+        console.log('⚠️ [Test 5] Skipping public access test - no expected slug found');
+        result.publicAccessTest = {
+          success: false,
+          error: 'No expected slug found'
+        };
+        
+        setDiagnosticsResult(result);
+        console.log('🧪 [FINAL] Comprehensive diagnostics completed:', result);
+        alert('⚠️ Diagnostics completed but no expected slug found for public access test.');
+      }
+
+    } catch (error) {
+      console.error('❌ [StorageDebugger] Error in comprehensive diagnostics:', error);
+      alert('❌ Error running diagnostics: ' + error.message);
     }
   };
 
@@ -109,6 +279,33 @@ const StorageDebugger = () => {
     }
   };
 
+  const generateQRTestURL = () => {
+    try {
+      const currentSlug = menuService.getCurrentUserRestaurantSlug();
+      if (currentSlug) {
+        // Use the current environment - in production this would be the server IP
+        const baseURL = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3000' 
+          : `http://${window.location.hostname}`;
+        const qrURL = `${baseURL}/menu/${currentSlug}`;
+        
+        console.log('🔗 [StorageDebugger] Generated QR URL:', qrURL);
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(qrURL).then(() => {
+          alert(`✅ QR URL copied to clipboard:\n\n${qrURL}\n\nOpen this URL in a new tab or mobile browser to test.`);
+        }).catch(() => {
+          alert(`📋 QR URL:\n\n${qrURL}\n\nCopy this URL manually to test.`);
+        });
+      } else {
+        alert('❌ Cannot generate QR URL - no restaurant slug found');
+      }
+    } catch (error) {
+      console.error('❌ [StorageDebugger] Error generating QR URL:', error);
+      alert('❌ Error generating QR URL: ' + error.message);
+    }
+  };
+
   return (
     <div style={{ 
       position: 'fixed', 
@@ -120,22 +317,24 @@ const StorageDebugger = () => {
       borderRadius: '8px',
       boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
       zIndex: 9999,
-      maxWidth: '400px',
-      fontSize: '12px'
+      maxWidth: '450px',
+      fontSize: '12px',
+      maxHeight: '90vh',
+      overflowY: 'auto'
     }}>
-      <h3 style={{ margin: '0 0 10px 0', color: '#8b5cf6' }}>🔍 Storage Debugger</h3>
+      <h3 style={{ margin: '0 0 10px 0', color: '#8b5cf6' }}>🔍 Enhanced Storage Debugger</h3>
       
-      <div style={{ marginBottom: '10px' }}>
+      <div style={{ marginBottom: '10px', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
         <button 
           onClick={inspectStorage}
           style={{ 
             background: '#8b5cf6', 
             color: 'white', 
             border: 'none', 
-            padding: '5px 10px', 
+            padding: '5px 8px', 
             borderRadius: '4px',
-            marginRight: '5px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '11px'
           }}
         >
           Inspect Storage
@@ -146,9 +345,10 @@ const StorageDebugger = () => {
             background: '#ef4444',
             color: 'white',
             border: 'none',
-            padding: '5px 10px',
+            padding: '5px 8px',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '11px'
           }}
         >
           Clear Storage
@@ -159,9 +359,10 @@ const StorageDebugger = () => {
             background: '#10b981',
             color: 'white',
             border: 'none',
-            padding: '5px 10px',
+            padding: '5px 8px',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '11px'
           }}
         >
           Fix Slug Mismatch
@@ -172,12 +373,41 @@ const StorageDebugger = () => {
             background: '#3b82f6',
             color: 'white',
             border: 'none',
-            padding: '5px 10px',
+            padding: '5px 8px',
             borderRadius: '4px',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            fontSize: '11px'
           }}
         >
           Test Public Access
+        </button>
+        <button
+          onClick={runComprehensiveDiagnostics}
+          style={{
+            background: '#f59e0b',
+            color: 'white',
+            border: 'none',
+            padding: '5px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '11px'
+          }}
+        >
+          Full Diagnostics
+        </button>
+        <button
+          onClick={generateQRTestURL}
+          style={{
+            background: '#6366f1',
+            color: 'white',
+            border: 'none',
+            padding: '5px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '11px'
+          }}
+        >
+          Get QR URL
         </button>
       </div>
 
@@ -191,7 +421,7 @@ const StorageDebugger = () => {
       )}
 
       {storageData && (
-        <div style={{ padding: '8px', background: '#f3f4f6', borderRadius: '4px' }}>
+        <div style={{ marginBottom: '10px', padding: '8px', background: '#f3f4f6', borderRadius: '4px' }}>
           <strong>Storage Data:</strong><br/>
           Available Slugs: {Object.keys(storageData.restaurants || {}).join(', ') || 'None'}<br/>
           <br/>
@@ -206,6 +436,18 @@ const StorageDebugger = () => {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {diagnosticsResult && (
+        <div style={{ marginTop: '10px', padding: '8px', background: '#e0f2fe', borderRadius: '4px', fontSize: '10px' }}>
+          <strong>🧪 Diagnostics Result:</strong><br/>
+          MenuService: {diagnosticsResult.menuServiceTest?.success ? '✅' : '❌'}<br/>
+          Auth: {diagnosticsResult.authAnalysis?.hasAuthUser ? '✅' : '❌'}<br/>
+          Storage: {diagnosticsResult.storageAnalysis?.restaurantCount > 0 ? '✅' : '❌'}<br/>
+          Slug Match: {diagnosticsResult.slugAnalysis?.directMatch || diagnosticsResult.slugAnalysis?.crossReferences?.length > 0 ? '✅' : '❌'}<br/>
+          Public Access: {diagnosticsResult.publicAccessTest?.success ? '✅' : '❌'}<br/>
+          <small style={{ color: '#666' }}>Check console for detailed logs</small>
         </div>
       )}
     </div>
