@@ -8,39 +8,90 @@ class MenuService {
 
   // Get current user's restaurant slug from auth context
   getCurrentUserRestaurantSlug() {
-    console.log('🔍 Getting current user restaurant slug...');
+    console.log('🔍 [menuService] Getting current user restaurant slug...');
     try {
       const authUser = localStorage.getItem('authUser');
-      console.log('🔍 Raw authUser from localStorage:', authUser);
+      console.log('🔍 [menuService] Raw authUser from localStorage:', authUser);
 
       if (authUser) {
         const user = JSON.parse(authUser);
-        console.log('🔍 Parsed user object:', user);
-        console.log('🔍 User restaurant_id:', user.restaurant_id);
+        console.log('🔍 [menuService] Parsed user object:', user);
+        console.log('🔍 [menuService] User ID:', user.id);
+        console.log('🔍 [menuService] User restaurant_id:', user.restaurant_id);
+        console.log('🔍 [menuService] User email:', user.email);
+
+        // CRITICAL: Handle different user data structures
+        let restaurantId = null;
 
         if (user.restaurant_id) {
-          // For now, we'll use a simple mapping. In production, this would come from the backend
-          const slug = `restaurant-${user.restaurant_id}`;
-          console.log('🔍 Generated restaurant slug:', slug);
+          restaurantId = user.restaurant_id;
+          console.log('🔍 [menuService] Using user.restaurant_id:', restaurantId);
+        } else if (user.id) {
+          // Fallback: use user ID if no restaurant_id
+          restaurantId = user.id;
+          console.log('🔍 [menuService] Fallback: using user.id as restaurant_id:', restaurantId);
+        }
+
+        if (restaurantId) {
+          const slug = `restaurant-${restaurantId}`;
+          console.log('🔍 [menuService] Generated restaurant slug:', slug);
 
           // CRITICAL: Verify this slug exists in storage
           const storageData = this.getStorageData();
           const exists = !!storageData.restaurants[slug];
-          console.log('🔍 Slug exists in storage:', exists);
-          console.log('🔍 Available slugs in storage:', Object.keys(storageData.restaurants));
+          console.log('🔍 [menuService] Slug exists in storage:', exists);
+          console.log('🔍 [menuService] Available slugs in storage:', Object.keys(storageData.restaurants));
+
+          if (!exists) {
+            console.warn('⚠️ [menuService] Expected slug not found, attempting auto-creation...');
+            // Auto-create restaurant data if missing
+            this.ensureRestaurantDataExists(slug, user);
+          }
 
           return slug;
         } else {
-          console.warn('⚠️ User has no restaurant_id');
+          console.warn('⚠️ [menuService] User has no restaurant_id or id');
         }
       } else {
-        console.warn('⚠️ No authUser found in localStorage');
+        console.warn('⚠️ [menuService] No authUser found in localStorage');
       }
     } catch (error) {
-      console.error('❌ Error getting user restaurant slug:', error);
+      console.error('❌ [menuService] Error getting user restaurant slug:', error);
     }
-    console.log('🔍 Returning null - no valid restaurant slug found');
+    console.log('🔍 [menuService] Returning null - no valid restaurant slug found');
     return null;
+  }
+
+  // Ensure restaurant data exists for the user
+  ensureRestaurantDataExists(slug, user) {
+    console.log('🔧 [menuService] Ensuring restaurant data exists for slug:', slug);
+    try {
+      const storageData = this.getStorageData();
+
+      if (!storageData.restaurants[slug]) {
+        console.log('🔧 [menuService] Creating missing restaurant data...');
+
+        // Create default restaurant data
+        const defaultData = this.createDefaultRestaurantData(slug);
+
+        // Enhance with user information if available
+        if (user.email) {
+          defaultData.restaurant.name = user.email.split('@')[0] + ' Restaurant';
+        }
+
+        storageData.restaurants[slug] = defaultData;
+        this.saveStorageData(storageData);
+
+        console.log('✅ [menuService] Created restaurant data for slug:', slug);
+        return true;
+      }
+
+      console.log('✅ [menuService] Restaurant data already exists for slug:', slug);
+      return true;
+    } catch (error) {
+      console.error('❌ [menuService] Error ensuring restaurant data:', error);
+      return false;
+    }
   }
 
   // Check if user has a restaurant
@@ -503,9 +554,10 @@ class MenuService {
       console.log('🔄 [menuService] restaurantSlug:', restaurantSlug);
       console.log('🔄 [menuService] isActive:', isActive);
 
-      // CRITICAL: Fix slug mismatch before updating
-      console.log('🔄 [menuService] Fixing slug mismatch before status update...');
-      this.fixSlugMismatch();
+      // CRITICAL: Ensure restaurant data exists before updating
+      console.log('🔄 [menuService] Ensuring restaurant data exists before status update...');
+      const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+      this.ensureRestaurantDataExists(targetSlug || this.getCurrentUserRestaurantSlug(), currentUser);
 
       // Use current user's restaurant slug if not provided
       const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();

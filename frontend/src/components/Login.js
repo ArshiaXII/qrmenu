@@ -26,14 +26,19 @@ const Login = () => {
 
         try {
             const response = await axios.post('/api/auth/login', formData);
-            
-            // Save token and user data
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
-            
+
+            console.log('🔍 [Login.js] Login response:', response.data);
+
+            // CRITICAL: Use consistent storage keys with AuthContext
+            localStorage.setItem('authToken', response.data.token);
+            localStorage.setItem('authUser', JSON.stringify(response.data.user));
+
+            console.log('🔍 [Login.js] Stored user data:', response.data.user);
+            console.log('🔍 [Login.js] User restaurant_id:', response.data.user.restaurant_id);
+
             // Set auth header for future requests
             axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
-            
+
             navigate('/dashboard');
         } catch (error) {
             console.error('Login error:', error);

@@ -404,6 +404,96 @@ const StorageDebugger = () => {
     }
   };
 
+  const emergencyDataRecovery = () => {
+    try {
+      setDebugError(null);
+      console.log('🚨 [StorageDebugger] === EMERGENCY DATA RECOVERY ===');
+
+      // Get current auth user
+      const authUser = localStorage.getItem('authUser');
+      if (!authUser) {
+        alert('❌ No authenticated user found. Please log in first.');
+        return;
+      }
+
+      const user = JSON.parse(authUser);
+      console.log('🚨 [Recovery] User data:', user);
+
+      // Determine correct slug
+      const restaurantId = user.restaurant_id || user.id;
+      const expectedSlug = `restaurant-${restaurantId}`;
+      console.log('🚨 [Recovery] Expected slug:', expectedSlug);
+
+      // Get or create storage data
+      let storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
+      console.log('🚨 [Recovery] Current storage:', storageData);
+
+      // Create missing restaurant data
+      if (!storageData.restaurants[expectedSlug]) {
+        console.log('🚨 [Recovery] Creating missing restaurant data...');
+
+        storageData.restaurants[expectedSlug] = {
+          restaurant: {
+            id: restaurantId,
+            name: user.email ? user.email.split('@')[0] + ' Restaurant' : 'My Restaurant',
+            slug: expectedSlug,
+            address: 'İstanbul, Türkiye',
+            phone: '+90 212 555 0123',
+            hours: '09:00 - 23:00',
+            isActive: true // CRITICAL: Set to active by default
+          },
+          branding: {
+            primaryColor: '#8b5cf6',
+            secondaryColor: '#7c3aed',
+            fontFamily: 'Inter',
+            logoUrl: null,
+            backgroundImage: null,
+            backgroundStyle: 'cover'
+          },
+          menu: {
+            sections: [
+              {
+                id: 1,
+                name: 'Ana Yemekler',
+                items: [
+                  {
+                    id: 1,
+                    name: 'Örnek Yemek',
+                    description: 'Lezzetli örnek yemek açıklaması',
+                    price: 25.00,
+                    image: null,
+                    isAvailable: true
+                  }
+                ]
+              }
+            ]
+          }
+        };
+
+        localStorage.setItem('qr_menu_data', JSON.stringify(storageData));
+        console.log('✅ [Recovery] Created and saved restaurant data');
+
+        // Refresh display
+        inspectStorage();
+
+        alert(`✅ Emergency recovery completed!\n\nCreated restaurant data for: ${expectedSlug}\nMenu status: ACTIVE\n\nYou can now test the QR code.`);
+      } else {
+        // Ensure existing data is active
+        storageData.restaurants[expectedSlug].restaurant.isActive = true;
+        localStorage.setItem('qr_menu_data', JSON.stringify(storageData));
+        console.log('✅ [Recovery] Ensured restaurant is active');
+
+        inspectStorage();
+        alert(`✅ Recovery completed!\n\nRestaurant data exists for: ${expectedSlug}\nMenu status: ACTIVE`);
+      }
+
+    } catch (error) {
+      console.error('❌ [Recovery] Emergency recovery failed:', error);
+      setDebugError(`Recovery Error: ${error.message}`);
+      alert('❌ Emergency recovery failed: ' + error.message);
+    }
+  };
+
   return (
     <div style={{ 
       position: 'fixed', 
@@ -473,6 +563,20 @@ const StorageDebugger = () => {
           }}
         >
           Fix Slug Mismatch
+        </button>
+        <button
+          onClick={emergencyDataRecovery}
+          style={{
+            background: '#dc2626',
+            color: 'white',
+            border: 'none',
+            padding: '5px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '11px'
+          }}
+        >
+          Emergency Recovery
         </button>
         <button
           onClick={testPublicAccess}

@@ -53,6 +53,7 @@ const PublicMenuView = () => {
 
   // Load menu data when component mounts or restaurantSlug changes
   useEffect(() => {
+    console.log('🔍 [PublicMenuView] === PUBLIC MENU VIEW DIAGNOSTICS ===');
     console.log('🔍 [PublicMenuView] useEffect triggered');
     console.log('🔍 [PublicMenuView] restaurantSlug from URL:', restaurantSlug);
     console.log('🔍 [PublicMenuView] isPreview mode:', isPreview);
@@ -63,6 +64,35 @@ const PublicMenuView = () => {
     console.log('🔍 [PublicMenuView] Available restaurant slugs in storage:', Object.keys(storageData.restaurants));
     console.log('🔍 [PublicMenuView] Looking for slug:', restaurantSlug);
     console.log('🔍 [PublicMenuView] Slug exists in storage:', !!storageData.restaurants[restaurantSlug]);
+
+    // CRITICAL: Debug auth data to understand user context
+    const authUser = localStorage.getItem('authUser');
+    console.log('🔍 [PublicMenuView] Auth user exists:', !!authUser);
+    if (authUser) {
+      try {
+        const user = JSON.parse(authUser);
+        console.log('🔍 [PublicMenuView] Auth user data:', user);
+        console.log('🔍 [PublicMenuView] Expected slug from auth:', user.restaurant_id ? `restaurant-${user.restaurant_id}` : `restaurant-${user.id}`);
+      } catch (e) {
+        console.error('❌ [PublicMenuView] Error parsing auth user:', e);
+      }
+    }
+
+    // CRITICAL: Show detailed storage analysis
+    if (Object.keys(storageData.restaurants).length > 0) {
+      console.log('🔍 [PublicMenuView] Detailed storage analysis:');
+      Object.keys(storageData.restaurants).forEach(slug => {
+        const data = storageData.restaurants[slug];
+        console.log(`  - Slug: ${slug}`);
+        console.log(`    Restaurant Name: ${data.restaurant?.name}`);
+        console.log(`    Restaurant Slug: ${data.restaurant?.slug}`);
+        console.log(`    Is Active: ${data.restaurant?.isActive}`);
+        console.log(`    Has Menu: ${!!data.menu}`);
+        console.log(`    Menu Sections: ${data.menu?.sections?.length || 0}`);
+      });
+    } else {
+      console.warn('⚠️ [PublicMenuView] No restaurant data found in storage!');
+    }
 
     if (restaurantSlug) {
       if (isPreview) {
