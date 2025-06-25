@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMenu } from '../../contexts/MenuContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Bars3Icon,
@@ -10,12 +11,15 @@ import {
   QuestionMarkCircleIcon,
   LanguageIcon,
   ChevronDownIcon,
-  ArrowRightStartOnRectangleIcon
+  ArrowRightStartOnRectangleIcon,
+  UserIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 
 const TopBar = ({ onToggleSidebar }) => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { currentRestaurant } = useMenu();
 
   // Safe translation hook with fallback
   let t, i18n;
@@ -31,6 +35,32 @@ const TopBar = ({ onToggleSidebar }) => {
 
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+
+  // Helper function to generate user initials
+  const getUserInitials = () => {
+    if (user?.name) {
+      const nameParts = user.name.trim().split(' ');
+      if (nameParts.length >= 2) {
+        // First letter of first name + first letter of last name
+        return (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+      } else {
+        // Just first two letters of the name
+        return nameParts[0].substring(0, 2).toUpperCase();
+      }
+    } else if (user?.email) {
+      // Use first two letters of email before @
+      const emailPrefix = user.email.split('@')[0];
+      return emailPrefix.substring(0, 2).toUpperCase();
+    }
+    return 'U'; // Default fallback
+  };
+
+  // Helper function to get user display name
+  const getUserDisplayName = () => {
+    if (user?.name) return user.name;
+    if (user?.email) return user.email.split('@')[0];
+    return 'User';
+  };
 
   // Fallback translation function
   const translate = (key, fallback) => {
@@ -169,20 +199,62 @@ const TopBar = ({ onToggleSidebar }) => {
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
             >
               <div className="profile-avatar">
-                <span>aa</span>
+                <span>{getUserInitials()}</span>
               </div>
               <ChevronDownIcon className="w-4 h-4" />
             </button>
 
             {showProfileDropdown && (
               <div className="profile-dropdown">
-                <button
-                  className="profile-option logout-option"
-                  onClick={handleLogout}
-                >
-                  <ArrowRightStartOnRectangleIcon className="w-5 h-5" />
-                  <span>{translate('button_logout', 'Çıkış Yap')}</span>
-                </button>
+                {/* User Info Header */}
+                <div className="profile-header">
+                  <div className="profile-info">
+                    <div className="profile-avatar-large">
+                      <span>{getUserInitials()}</span>
+                    </div>
+                    <div className="profile-details">
+                      <div className="profile-name">{getUserDisplayName()}</div>
+                      {user?.email && (
+                        <div className="profile-email">{user.email}</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Options */}
+                <div className="profile-options">
+                  <button
+                    className="profile-option"
+                    onClick={() => {
+                      setShowProfileDropdown(false);
+                      navigate('/dashboard/settings/restaurant');
+                    }}
+                  >
+                    <UserIcon className="w-5 h-5" />
+                    <span>{translate('profile.settings', 'Hesap Ayarları')}</span>
+                  </button>
+
+                  <button
+                    className="profile-option"
+                    onClick={() => {
+                      setShowProfileDropdown(false);
+                      navigate('/dashboard/settings');
+                    }}
+                  >
+                    <CogIcon className="w-5 h-5" />
+                    <span>{translate('sidebar.settings', 'Ayarlar')}</span>
+                  </button>
+
+                  <hr className="profile-divider" />
+
+                  <button
+                    className="profile-option logout-option"
+                    onClick={handleLogout}
+                  >
+                    <ArrowRightStartOnRectangleIcon className="w-5 h-5" />
+                    <span>{translate('button_logout', 'Çıkış Yap')}</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>

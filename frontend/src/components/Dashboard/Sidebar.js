@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
+import { useMenu } from '../../contexts/MenuContext';
 import {
   HomeIcon,
   ChartBarIcon,
@@ -30,7 +32,27 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
   }
 
   const location = useLocation();
+  const { user } = useAuth();
+  const { currentRestaurant, loadDashboardMenuData } = useMenu();
   const [expandedMenus, setExpandedMenus] = useState({});
+
+  // Load restaurant data when component mounts
+  useEffect(() => {
+    if (user && !currentRestaurant) {
+      loadDashboardMenuData();
+    }
+  }, [user, currentRestaurant, loadDashboardMenuData]);
+
+  // Helper function to get restaurant display name
+  const getRestaurantDisplayName = () => {
+    if (currentRestaurant?.name) {
+      // Truncate long names for display
+      return currentRestaurant.name.length > 20
+        ? currentRestaurant.name.substring(0, 20) + '...'
+        : currentRestaurant.name;
+    }
+    return 'Restaurant'; // Default fallback
+  };
 
   // Fallback translation function
   const translate = (key, fallback) => {
@@ -120,9 +142,18 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
         <div className="sidebar-logo">
           <div className="logo-container">
             <span className="logo-text">finedine</span>
-            <span className="restaurant-name">ww</span>
+            {!collapsed && currentRestaurant?.name && (
+              <span className="restaurant-name" title={currentRestaurant.name}>
+                {getRestaurantDisplayName()}
+              </span>
+            )}
+            {collapsed && currentRestaurant?.name && (
+              <span className="restaurant-name-collapsed" title={currentRestaurant.name}>
+                {currentRestaurant.name.substring(0, 2).toUpperCase()}
+              </span>
+            )}
           </div>
-          <button 
+          <button
             className="sidebar-toggle"
             onClick={onToggle}
           >
