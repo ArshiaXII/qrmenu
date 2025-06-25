@@ -380,12 +380,20 @@ const StorageDebugger = () => {
         
         console.log('🔗 [StorageDebugger] Generated QR URL:', qrURL);
         
-        // Copy to clipboard
-        navigator.clipboard.writeText(qrURL).then(() => {
-          alert(`✅ QR URL copied to clipboard:\n\n${qrURL}\n\nOpen this URL in a new tab or mobile browser to test.`);
-        }).catch(() => {
-          alert(`📋 QR URL:\n\n${qrURL}\n\nCopy this URL manually to test.`);
-        });
+        // Safe clipboard handling with fallback for HTTP environments
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(qrURL).then(() => {
+            alert(`✅ QR URL copied to clipboard:\n\n${qrURL}\n\nOpen this URL in a new tab or mobile browser to test.`);
+          }).catch((clipboardError) => {
+            console.warn('⚠️ [StorageDebugger] Clipboard API failed:', clipboardError);
+            // Fallback for clipboard failure
+            alert(`📋 QR URL (clipboard unavailable):\n\n${qrURL}\n\nPlease copy this URL manually and test it.`);
+          });
+        } else {
+          // Fallback for environments without clipboard API (HTTP, older browsers)
+          console.warn('⚠️ [StorageDebugger] Clipboard API not available (likely HTTP environment)');
+          alert(`📋 QR URL (clipboard unavailable on HTTP):\n\n${qrURL}\n\nPlease copy this URL manually and test it.\n\nNote: Clipboard API requires HTTPS for security.`);
+        }
       } else {
         alert('❌ Cannot generate QR URL - no restaurant slug found');
       }

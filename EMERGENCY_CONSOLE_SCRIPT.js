@@ -161,13 +161,17 @@ function emergencyQRDiagnostics() {
         if (result.qrUrlGeneration.success) {
             console.log('🔗 QR URL to test:', result.qrUrlGeneration.url);
             
-            // Try to copy to clipboard
-            if (navigator.clipboard) {
+            // Safe clipboard handling with fallback for HTTP environments
+            if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(result.qrUrlGeneration.url).then(() => {
                     console.log('📋 QR URL copied to clipboard!');
-                }).catch(() => {
+                }).catch((clipboardError) => {
+                    console.warn('⚠️ Clipboard API failed:', clipboardError);
                     console.log('📋 Could not copy to clipboard, but URL is logged above');
                 });
+            } else {
+                console.warn('⚠️ Clipboard API not available (likely HTTP environment)');
+                console.log('📋 Clipboard unavailable on HTTP - URL logged above for manual copy');
             }
         }
         
