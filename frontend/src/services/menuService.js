@@ -6,7 +6,7 @@ class MenuService {
     this.initializeStorage();
   }
 
-  // Get current user's restaurant slug from auth context
+  // Get current user's restaurant slug (now supports custom slugs)
   getCurrentUserRestaurantSlug() {
     console.log('🔍 [menuService] Getting current user restaurant slug...');
     try {
@@ -18,37 +18,37 @@ class MenuService {
         console.log('🔍 [menuService] Parsed user object:', user);
         console.log('🔍 [menuService] User ID:', user.id);
         console.log('🔍 [menuService] User restaurant_id:', user.restaurant_id);
-        console.log('🔍 [menuService] User email:', user.email);
 
-        // CRITICAL: Handle different user data structures
+        // Get restaurant ID
         let restaurantId = null;
-
         if (user.restaurant_id) {
           restaurantId = user.restaurant_id;
-          console.log('🔍 [menuService] Using user.restaurant_id:', restaurantId);
         } else if (user.id) {
-          // Fallback: use user ID if no restaurant_id
           restaurantId = user.id;
-          console.log('🔍 [menuService] Fallback: using user.id as restaurant_id:', restaurantId);
         }
 
         if (restaurantId) {
-          const slug = `restaurant-${restaurantId}`;
-          console.log('🔍 [menuService] Generated restaurant slug:', slug);
-
-          // CRITICAL: Verify this slug exists in storage
           const storageData = this.getStorageData();
-          const exists = !!storageData.restaurants[slug];
-          console.log('🔍 [menuService] Slug exists in storage:', exists);
-          console.log('🔍 [menuService] Available slugs in storage:', Object.keys(storageData.restaurants));
 
-          if (!exists) {
-            console.warn('⚠️ [menuService] Expected slug not found, attempting auto-creation...');
-            // Auto-create restaurant data if missing
-            this.ensureRestaurantDataExists(slug, user);
+          // PHASE 2: First, try to find restaurant by user ID in any storage key
+          for (const [storageKey, data] of Object.entries(storageData.restaurants)) {
+            if (data.restaurant && data.restaurant.id === restaurantId) {
+              console.log('🔍 [menuService] Found restaurant by ID, using slug:', data.restaurant.slug);
+              return data.restaurant.slug; // Return the custom slug
+            }
           }
 
-          return slug;
+          // Fallback: use old format if no custom slug found
+          const fallbackSlug = `restaurant-${restaurantId}`;
+          console.log('🔍 [menuService] No custom slug found, using fallback:', fallbackSlug);
+
+          // Auto-create restaurant data if missing
+          if (!storageData.restaurants[fallbackSlug]) {
+            console.warn('⚠️ [menuService] Creating missing restaurant data...');
+            this.ensureRestaurantDataExists(fallbackSlug, user);
+          }
+
+          return fallbackSlug;
         } else {
           console.warn('⚠️ [menuService] User has no restaurant_id or id');
         }
@@ -375,20 +375,21 @@ class MenuService {
         }
       };
 
-      // If slug changed, we need to migrate data to new key
+      // Always update the data under the new slug
+      storageData.restaurants[newCustomSlug] = updatedData;
+
+      // If slug changed, remove old data to prevent duplicates
       if (newCustomSlug !== currentSlug) {
-        console.log('🔍 [menuService] Migrating data to new slug:', newCustomSlug);
+        console.log('🔍 [menuService] Migrating data from old slug to new slug');
+        console.log('🔍 [menuService] Old slug:', currentSlug);
+        console.log('🔍 [menuService] New slug:', newCustomSlug);
 
-        // Add data under new slug
-        storageData.restaurants[newCustomSlug] = updatedData;
+        // Remove data from old slug
+        delete storageData.restaurants[currentSlug];
 
-        // Remove data from old slug (but keep for backward compatibility for now)
-        // delete storageData.restaurants[currentSlug];
-
-        console.log('✅ [menuService] Data migrated to new slug');
+        console.log('✅ [menuService] Data migrated to new slug and old data removed');
       } else {
-        // Update existing data
-        storageData.restaurants[currentSlug] = updatedData;
+        console.log('✅ [menuService] Data updated under existing slug');
       }
 
       // Save updated data
@@ -558,9 +559,17 @@ class MenuService {
   // Create default restaurant data
   createDefaultRestaurantData(slug) {
     console.log('🔍 [menuService] Creating default restaurant data for slug:', slug);
+
+    // Extract restaurant ID from slug if it follows old format
+    let restaurantId = Date.now();
+    const slugMatch = slug.match(/^restaurant-(\d+)$/);
+    if (slugMatch) {
+      restaurantId = parseInt(slugMatch[1]);
+    }
+
     return {
       restaurant: {
-        id: Date.now(),
+        id: restaurantId,
         name: 'Yeni Restaurant',
         slug: slug, // CRITICAL: Ensure slug is stored in restaurant object
         address: 'İstanbul, Türkiye',
@@ -686,13 +695,13 @@ class MenuService {
       console.log('🔄 [menuService] restaurantSlug:', restaurantSlug);
       console.log('🔄 [menuService] isActive:', isActive);
 
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+
       // CRITICAL: Ensure restaurant data exists before updating
       console.log('🔄 [menuService] Ensuring restaurant data exists before status update...');
       const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
-      this.ensureRestaurantDataExists(targetSlug || this.getCurrentUserRestaurantSlug(), currentUser);
-
-      // Use current user's restaurant slug if not provided
-      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+      this.ensureRestaurantDataExists(targetSlug, currentUser);
       console.log('🔄 [menuService] targetSlug (final):', targetSlug);
 
       if (!targetSlug) {
