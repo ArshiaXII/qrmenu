@@ -49,7 +49,7 @@ import MenuCreationDemo from './pages/MenuCreationDemo';
 import DesignCustomizationPage from './components/DesignCustomization/DesignCustomizationPage';
 import DesignCustomizationDemo from './pages/DesignCustomizationDemo';
 import DashboardPage from './components/Dashboard/DashboardPage';
-import PublicMenuView from './components/PublicMenu/PublicMenuView';
+import PublicMenuView from './components/PublicMenu/PublicMenuViewSimple';
 import MenuManagementPage from './pages/MenuManagementPage';
 import { MenuProvider } from './contexts/MenuContext';
 // import Sidebar from './components/Layout/Sidebar'; // Ensure this is commented out or removed if not used globally

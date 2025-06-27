@@ -82,49 +82,12 @@ const MenuManagementContent = () => {
 
   // Generate public URL
   const getPublicUrl = () => {
-    if (currentRestaurant) {
-      // CRITICAL: Use the slug that matches the storage key
-      const slug = currentRestaurant.slug;
-      console.log('🔗 [MenuManagementContent] Current restaurant object:', currentRestaurant);
-      console.log('🔗 [MenuManagementContent] Using slug for QR code:', slug);
-
-      // CRITICAL: Verify this slug will work for public access
-      const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
-      const slugExists = !!storageData.restaurants[slug];
-      console.log('🔗 [MenuManagementContent] Slug exists in storage:', slugExists);
-      console.log('🔗 [MenuManagementContent] Available slugs:', Object.keys(storageData.restaurants));
-
-      if (!slugExists) {
-        console.warn('⚠️ [MenuManagementContent] QR slug not found in storage! This will cause "Restaurant not found" error');
-        // Try to find the correct slug
-        for (const [storageSlug, data] of Object.entries(storageData.restaurants)) {
-          if (data.restaurant && data.restaurant.name === currentRestaurant.name) {
-            console.log('🔗 [MenuManagementContent] Found matching restaurant under different slug:', storageSlug);
-            break;
-          }
-        }
-      }
-
-      // Production server URL (port 80, not 3000!)
-      if (window.location.hostname === '45.131.0.36' || window.location.hostname.includes('45.131.0.36')) {
-        const url = `http://45.131.0.36/menu/${slug}`;
-        console.log('🔗 [MenuManagementContent] Generated production QR URL:', url);
-        console.log('🔗 [MenuManagementContent] Restaurant slug:', slug);
-        console.log('🔗 [MenuManagementContent] Restaurant isActive:', currentRestaurant.isActive);
-        console.log('🔗 [MenuManagementContent] Restaurant name:', currentRestaurant.name);
-        return url;
-      }
-      // Local development
-      const url = `${window.location.origin}/menu/${slug}`;
-      console.log('🔗 [MenuManagementContent] Generated local QR URL:', url);
-      console.log('🔗 [MenuManagementContent] Restaurant slug:', slug);
-      console.log('🔗 [MenuManagementContent] Restaurant isActive:', currentRestaurant.isActive);
-      console.log('🔗 [MenuManagementContent] Restaurant name:', currentRestaurant.name);
-      return url;
+    if (currentRestaurant && currentRestaurant.slug) {
+      const baseUrl = window.location.origin;
+      return `${baseUrl}/menu/${currentRestaurant.slug}`;
     }
-    const fallbackUrl = 'http://45.131.0.36/menu/lezzet-restaurant';
-    console.log('🔗 [MenuManagementContent] Using fallback QR URL (no currentRestaurant):', fallbackUrl);
-    return fallbackUrl;
+    // Fallback URL
+    return `${window.location.origin}/menu/example-restaurant`;
   };
 
   const publicUrl = getPublicUrl();
@@ -223,22 +186,13 @@ const MenuManagementContent = () => {
 
   const toggleMenuStatus = async () => {
     try {
-      console.log('🔄 [MenuManagementContent] Toggle button clicked');
-      console.log('🔄 [MenuManagementContent] Current menuStatus:', menuStatus);
-      console.log('🔄 [MenuManagementContent] Current restaurant:', currentRestaurant);
-
-      const newStatus = menuStatus === 'active' ? false : true;
-      console.log('🔄 [MenuManagementContent] New status will be:', newStatus);
-
-      // Use current restaurant's slug instead of hardcoded value
-      const restaurantSlug = currentRestaurant?.slug || null;
-      console.log('🔄 [MenuManagementContent] Using restaurant slug:', restaurantSlug);
-
-      await updateMenuStatus(newStatus, restaurantSlug);
-      console.log('✅ [MenuManagementContent] Menu status updated successfully');
+      const newStatus = menuStatus === 'active' ? 'draft' : 'active';
+      await updateMenuStatus(newStatus);
+      // Reload data to reflect changes
+      await loadDashboardMenuData();
     } catch (error) {
-      console.error('❌ [MenuManagementContent] Failed to update menu status:', error);
-      // You could show a toast notification here
+      console.error('Failed to update menu status:', error);
+      alert('Menü durumu güncellenirken bir hata oluştu.');
     }
   };
 

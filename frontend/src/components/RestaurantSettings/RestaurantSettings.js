@@ -2,60 +2,67 @@ import React, { useState, useEffect } from 'react';
 import { useMenu } from '../../contexts/MenuContext';
 import menuService from '../../services/menuService';
 import './RestaurantSettings.css';
-import { 
-  BuildingStorefrontIcon, 
-  LinkIcon, 
-  CheckCircleIcon, 
+import {
+  BuildingStorefrontIcon,
+  CheckCircleIcon,
   ExclamationTriangleIcon,
   ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 const RestaurantSettings = () => {
   const { currentRestaurant, loadDashboardMenuData } = useMenu();
-  const [formData, setFormData] = useState({
-    name: '',
-    address: '',
-    phone: '',
-    hours: ''
-  });
-  const [customSlug, setCustomSlug] = useState('');
+  const [restaurantName, setRestaurantName] = useState('');
   const [slugPreview, setSlugPreview] = useState('');
   const [nameError, setNameError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Load current restaurant data
+  // Load current restaurant name
   useEffect(() => {
-    if (currentRestaurant) {
-      setFormData({
-        name: currentRestaurant.name || '',
-        address: currentRestaurant.address || '',
-        phone: currentRestaurant.phone || '',
-        hours: currentRestaurant.hours || ''
-      });
-      setCustomSlug(currentRestaurant.slug || '');
+    if (currentRestaurant && currentRestaurant.name) {
+      setRestaurantName(currentRestaurant.name);
     }
   }, [currentRestaurant]);
 
   // Generate slug preview when name changes
   useEffect(() => {
-    if (formData.name.trim()) {
-      const generatedSlug = menuService.generateSlugFromName(formData.name);
+    if (restaurantName.trim()) {
+      const generatedSlug = generateSlugFromName(restaurantName);
       setSlugPreview(generatedSlug);
     } else {
       setSlugPreview('');
     }
-  }, [formData.name]);
+  }, [restaurantName]);
+
+  // Simple slug generation function
+  const generateSlugFromName = (name) => {
+    return name
+      .toLowerCase()
+      .trim()
+      // Replace Turkish characters
+      .replace(/ğ/g, 'g')
+      .replace(/ü/g, 'u')
+      .replace(/ş/g, 's')
+      .replace(/ı/g, 'i')
+      .replace(/ö/g, 'o')
+      .replace(/ç/g, 'c')
+      // Replace spaces and special characters with hyphens
+      .replace(/[^a-z0-9]/g, '-')
+      // Remove multiple consecutive hyphens
+      .replace(/-+/g, '-')
+      // Remove leading/trailing hyphens
+      .replace(/^-|-$/g, '');
+  };
 
   const handleNameChange = (e) => {
     const newName = e.target.value;
-    setFormData(prev => ({ ...prev, name: newName }));
+    setRestaurantName(newName);
     setNameError('');
     setSuccessMessage('');
 
     // Check name uniqueness if not empty
     if (newName.trim()) {
-      const isUnique = menuService.isRestaurantNameUnique(newName, true); // Exclude current user
+      const isUnique = menuService.isRestaurantNameUnique(newName);
       if (!isUnique) {
         setNameError('Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.');
       }
@@ -63,52 +70,34 @@ const RestaurantSettings = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name.trim()) {
+    if (!restaurantName.trim()) {
       setNameError('Restoran adı gereklidir.');
       return;
     }
 
     if (nameError) {
-      return; // Don't save if there's a name error
+      return;
     }
 
     setIsLoading(true);
     setSuccessMessage('');
 
     try {
-      console.log('🔍 [RestaurantSettings] Saving restaurant settings...');
-      
-      // Generate new custom slug from name
-      const newCustomSlug = menuService.generateSlugFromName(formData.name);
-      console.log('🔍 [RestaurantSettings] Generated new slug:', newCustomSlug);
+      const newSlug = generateSlugFromName(restaurantName);
 
-      // Update restaurant data
-      const updateData = {
-        restaurant: {
-          ...currentRestaurant,
-          name: formData.name.trim(),
-          address: formData.address.trim(),
-          phone: formData.phone.trim(),
-          hours: formData.hours.trim(),
-          slug: newCustomSlug // Update to new custom slug
-        }
-      };
+      await menuService.updateRestaurantSettings(restaurantName, newSlug, {
+        address: 'İstanbul, Türkiye',
+        phone: '+90 212 555 0123',
+        hours: '09:00 - 23:00'
+      });
 
-      console.log('🔍 [RestaurantSettings] Updating with data:', updateData);
-
-      // Save using menuService
-      await menuService.updateRestaurantSettings(updateData.restaurant);
-      
-      // Update local state
-      setCustomSlug(newCustomSlug);
       setSuccessMessage('Restoran ayarları başarıyla güncellendi!');
-      
+
       // Reload dashboard data to reflect changes
       await loadDashboardMenuData();
-      
-      console.log('✅ [RestaurantSettings] Restaurant settings saved successfully');
+
     } catch (error) {
-      console.error('❌ [RestaurantSettings] Error saving restaurant settings:', error);
+      console.error('Error saving restaurant settings:', error);
       setNameError('Ayarlar kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
@@ -117,7 +106,7 @@ const RestaurantSettings = () => {
 
   const getCurrentPublicUrl = () => {
     const baseUrl = window.location.origin;
-    const currentSlug = customSlug || slugPreview || 'your-restaurant';
+    const currentSlug = slugPreview || 'your-restaurant';
     return `${baseUrl}/menu/${currentSlug}`;
   };
 
@@ -128,16 +117,16 @@ const RestaurantSettings = () => {
           <BuildingStorefrontIcon className="w-8 h-8 text-purple-600" />
           <div>
             <h1 className="page-title">Restoran Ayarları</h1>
-            <p className="page-subtitle">Restoran bilgilerinizi ve özel URL'nizi yönetin</p>
+            <p className="page-subtitle">Restoran adınızı belirleyin ve özel URL'nizi oluşturun</p>
           </div>
         </div>
       </div>
 
       <div className="settings-content">
-        {/* Restaurant Information */}
+        {/* Restaurant Name */}
         <div className="settings-card">
-          <h2 className="card-title">Restoran Bilgileri</h2>
-          
+          <h2 className="card-title">Restoran Adı</h2>
+
           <div className="form-group">
             <label className="form-label">
               Restoran Adı *
@@ -145,89 +134,41 @@ const RestaurantSettings = () => {
             </label>
             <input
               type="text"
-              value={formData.name}
+              value={restaurantName}
               onChange={handleNameChange}
               className={`form-input ${nameError ? 'error' : ''}`}
               placeholder="Restoran adınızı girin"
               maxLength={100}
             />
-            {!nameError && formData.name && (
+            {!nameError && restaurantName && (
               <div className="success-text">
                 <CheckCircleIcon className="w-4 h-4" />
                 Bu ad kullanılabilir
               </div>
             )}
           </div>
-
-          <div className="form-group">
-            <label className="form-label">Adres</label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              className="form-input"
-              placeholder="Restoran adresinizi girin"
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label">Telefon</label>
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                className="form-input"
-                placeholder="+90 212 555 0123"
-              />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Çalışma Saatleri</label>
-              <input
-                type="text"
-                value={formData.hours}
-                onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
-                className="form-input"
-                placeholder="09:00 - 23:00"
-              />
-            </div>
-          </div>
         </div>
 
-        {/* Custom URL Settings */}
-        <div className="settings-card">
-          <h2 className="card-title">
-            <LinkIcon className="w-5 h-5" />
-            Özel URL Ayarları
-          </h2>
-          
-          <div className="url-preview">
-            <label className="form-label">Mevcut Menü URL'niz</label>
-            <div className="url-display">
-              <span className="url-text">{getCurrentPublicUrl()}</span>
-              <button
-                onClick={() => navigator.clipboard.writeText(getCurrentPublicUrl())}
-                className="copy-btn"
-                title="URL'yi kopyala"
-              >
-                Kopyala
-              </button>
-            </div>
-          </div>
+        {/* URL Preview */}
+        {slugPreview && (
+          <div className="settings-card">
+            <h2 className="card-title">Menü URL'niz</h2>
 
-          {slugPreview && slugPreview !== customSlug && (
-            <div className="slug-preview">
-              <ExclamationTriangleIcon className="w-5 h-5 text-amber-500" />
-              <div>
-                <p className="preview-title">Yeni URL Önizlemesi</p>
-                <p className="preview-url">{window.location.origin}/menu/{slugPreview}</p>
-                <p className="preview-note">
-                  Restoran adını değiştirdiğinizde URL'niz otomatik olarak güncellenecek
-                </p>
+            <div className="url-preview">
+              <label className="form-label">Menü URL'niz</label>
+              <div className="url-display">
+                <span className="url-text">{getCurrentPublicUrl()}</span>
+                <button
+                  onClick={() => navigator.clipboard.writeText(getCurrentPublicUrl())}
+                  className="copy-btn"
+                  title="URL'yi kopyala"
+                >
+                  Kopyala
+                </button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Success Message */}
         {successMessage && (
@@ -241,7 +182,7 @@ const RestaurantSettings = () => {
         <div className="settings-actions">
           <button
             onClick={handleSave}
-            disabled={isLoading || !!nameError || !formData.name.trim()}
+            disabled={isLoading || !!nameError || !restaurantName.trim()}
             className="save-btn"
           >
             {isLoading ? (
