@@ -212,146 +212,72 @@ class MenuService {
     }
   }
 
-  // Get public menu data for a specific restaurant
-  async getPublicMenuData(restaurantSlug) {
+  // SIMPLIFIED: Get public menu data for a specific restaurant
+  async getPublicMenuData(slugFromUrl) {
+    console.log('🔍 [getPublicMenuData] === SIMPLIFIED PUBLIC DATA RETRIEVAL ===');
+    console.log('🔍 [getPublicMenuData] Called with slug:', slugFromUrl);
+
     try {
-      console.log('🔍 [menuService] getPublicMenuData called with slug:', restaurantSlug);
+      // STEP 1: Get the main storage key
+      const storageKey = 'qr_menu_data';
+      console.log('🔍 [getPublicMenuData] Attempting to retrieve from localStorage with key:', storageKey);
 
-      // For development, use localStorage. In production, this would be a real API call
-      const storageData = this.getStorageData();
-      console.log('🔍 [menuService] Available restaurant slugs:', Object.keys(storageData.restaurants));
+      // STEP 2: Get raw data from localStorage
+      const rawDataFromStorage = localStorage.getItem(storageKey);
+      console.log('🔍 [getPublicMenuData] Raw data found for key:', !!rawDataFromStorage);
+      console.log('🔍 [getPublicMenuData] Raw data content:', rawDataFromStorage);
 
-      let restaurantData = storageData.restaurants[restaurantSlug];
-      console.log('🔍 [menuService] Found restaurant data directly:', !!restaurantData);
-
-      // ENHANCED: If not found directly, try comprehensive cross-referencing
-      if (!restaurantData) {
-        console.log('🔍 [menuService] Direct lookup failed, trying comprehensive cross-reference...');
-
-        // Method 1: Check if this might be a user's current restaurant slug
-        const currentUserSlug = this.getCurrentUserRestaurantSlug();
-        console.log('🔍 [menuService] Current user slug:', currentUserSlug);
-
-        if (currentUserSlug && storageData.restaurants[currentUserSlug]) {
-          console.log('🔍 [menuService] Found data under current user slug, checking if it matches...');
-          const currentUserData = storageData.restaurants[currentUserSlug];
-
-          // Check if the restaurant object has the requested slug
-          if (currentUserData.restaurant.slug === restaurantSlug) {
-            console.log('✅ [menuService] Found matching restaurant by user slug cross-reference');
-            restaurantData = currentUserData;
-          }
-        }
-
-        // Method 2: Search all restaurants for matching slug in restaurant object
-        if (!restaurantData) {
-          console.log('🔍 [menuService] Searching all restaurants for matching slug in restaurant.slug field...');
-          for (const [storageSlug, data] of Object.entries(storageData.restaurants)) {
-            if (data.restaurant && data.restaurant.slug === restaurantSlug) {
-              console.log('✅ [menuService] Found restaurant with matching slug:', storageSlug);
-              restaurantData = data;
-              break;
-            }
-          }
-        }
-
-        // Method 3: ENHANCED - Check if the requested slug might be the "expected" slug for existing data
-        if (!restaurantData && Object.keys(storageData.restaurants).length > 0) {
-          console.log('🔍 [menuService] Checking if requested slug matches expected pattern...');
-          
-          // If the requested slug follows the pattern "restaurant-{id}", extract the ID
-          const slugMatch = restaurantSlug.match(/^restaurant-(\d+)$/);
-          if (slugMatch) {
-            const restaurantId = slugMatch[1];
-            console.log('🔍 [menuService] Extracted restaurant ID from slug:', restaurantId);
-            
-            // Check auth user to see if this matches their restaurant_id
-            try {
-              const authUser = localStorage.getItem('authUser');
-              if (authUser) {
-                const user = JSON.parse(authUser);
-                if (user.restaurant_id && user.restaurant_id.toString() === restaurantId) {
-                  console.log('🔍 [menuService] Slug matches current user restaurant ID, checking for any user data...');
-                  
-                  // Find any restaurant data that might belong to this user
-                  const availableSlugs = Object.keys(storageData.restaurants);
-                  if (availableSlugs.length === 1) {
-                    console.log('✅ [menuService] Found single restaurant data, assuming it belongs to current user');
-                    restaurantData = storageData.restaurants[availableSlugs[0]];
-                    
-                    // Update the restaurant slug to match the requested one for consistency
-                    if (restaurantData) {
-                      restaurantData.restaurant.slug = restaurantSlug;
-                      console.log('🔧 [menuService] Updated restaurant.slug to match requested slug');
-                    }
-                  }
-                }
-              }
-            } catch (error) {
-              console.error('❌ [menuService] Error checking auth user for slug matching:', error);
-            }
-          }
-        }
-
-        // Method 4: FALLBACK - If still not found but data exists, try to match by user context
-        if (!restaurantData && Object.keys(storageData.restaurants).length > 0) {
-          console.log('🔍 [menuService] Last resort: checking if any data belongs to current user context...');
-          
-          try {
-            const authUser = localStorage.getItem('authUser');
-            if (authUser) {
-              const user = JSON.parse(authUser);
-              if (user.restaurant_id) {
-                // If there's only one restaurant in storage and we have a logged-in user, assume it's theirs
-                const availableSlugs = Object.keys(storageData.restaurants);
-                if (availableSlugs.length === 1) {
-                  console.log('✅ [menuService] Single restaurant found, assuming it belongs to authenticated user');
-                  restaurantData = storageData.restaurants[availableSlugs[0]];
-                  
-                  // Update the restaurant slug to match what was requested
-                  if (restaurantData) {
-                    restaurantData.restaurant.slug = restaurantSlug;
-                    
-                    // Optionally save this correction back to storage
-                    storageData.restaurants[restaurantSlug] = restaurantData;
-                    delete storageData.restaurants[availableSlugs[0]];
-                    this.saveStorageData(storageData);
-                    console.log('🔧 [menuService] Migrated data to correct slug and saved');
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.error('❌ [menuService] Error in fallback slug matching:', error);
-          }
-        }
-      }
-
-      if (!restaurantData) {
-        console.error('❌ [menuService] Restaurant not found for slug:', restaurantSlug);
-        console.log('🔍 [menuService] Available data:');
-        Object.keys(storageData.restaurants).forEach(slug => {
-          const data = storageData.restaurants[slug];
-          console.log(`  - Storage slug: ${slug}, Restaurant slug: ${data.restaurant?.slug}, Active: ${data.restaurant?.isActive}`);
-        });
+      if (!rawDataFromStorage) {
+        console.error('❌ [getPublicMenuData] No data found in localStorage for key:', storageKey);
         throw new Error('RESTAURANT_NOT_FOUND');
       }
 
-      console.log('🔍 [menuService] Restaurant isActive:', restaurantData.restaurant.isActive);
-      console.log('🔍 [menuService] Full restaurant data:', restaurantData.restaurant);
+      // STEP 3: Parse the storage data
+      let parsedStorageData;
+      try {
+        parsedStorageData = JSON.parse(rawDataFromStorage);
+        console.log('🔍 [getPublicMenuData] Parsed storage data structure:', Object.keys(parsedStorageData));
+        console.log('🔍 [getPublicMenuData] Available restaurant keys:', Object.keys(parsedStorageData.restaurants || {}));
+      } catch (parseError) {
+        console.error('❌ [getPublicMenuData] Failed to parse storage data:', parseError);
+        throw new Error('RESTAURANT_NOT_FOUND');
+      }
 
-      if (!restaurantData.restaurant.isActive) {
-        console.error('❌ [menuService] Menu is inactive for slug:', restaurantSlug);
+      // STEP 4: Look for restaurant data using slugFromUrl as direct key
+      const restaurantKey = slugFromUrl; // Direct key lookup: restaurant-123
+      console.log('🔍 [getPublicMenuData] Looking for restaurant with key:', restaurantKey);
+
+      const restaurantData = parsedStorageData.restaurants[restaurantKey];
+      console.log('🔍 [getPublicMenuData] Restaurant data found:', !!restaurantData);
+
+      // ENHANCED: If not found directly, try comprehensive cross-referencing
+      if (!restaurantData) {
+        console.error('❌ [getPublicMenuData] No restaurant found for key:', restaurantKey);
+        console.log('🔍 [getPublicMenuData] Available keys:', Object.keys(parsedStorageData.restaurants || {}));
+        throw new Error('RESTAURANT_NOT_FOUND');
+      }
+
+      console.log('🔍 [getPublicMenuData] Parsed restaurant data:', restaurantData);
+
+      // STEP 5: Check restaurant status
+      const restaurantStatus = restaurantData.restaurant?.isActive;
+      console.log('🔍 [getPublicMenuData] Restaurant status found:', restaurantStatus);
+      console.log('🔍 [getPublicMenuData] Restaurant object:', restaurantData.restaurant);
+
+      if (!restaurantStatus) {
+        console.error('❌ [getPublicMenuData] Restaurant is not active:', restaurantStatus);
         throw new Error('MENU_INACTIVE');
       }
 
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // STEP 6: Return the data
+      const dataToReturn = restaurantData;
+      console.log('🔍 [getPublicMenuData] Returning from getPublicMenuData:', dataToReturn);
+      console.log('✅ [getPublicMenuData] SUCCESS - Active menu data found and returned');
 
-      console.log('✅ [menuService] Returning active menu data for slug:', restaurantSlug);
-      return restaurantData;
+      return dataToReturn;
     } catch (error) {
-      console.error('❌ [menuService] Error fetching public menu data:', error);
+      console.error('❌ [getPublicMenuData] Error in getPublicMenuData:', error);
+      console.error('❌ [getPublicMenuData] Error message:', error.message);
       throw error;
     }
   }

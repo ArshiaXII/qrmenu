@@ -428,15 +428,17 @@ const StorageDebugger = () => {
       let storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
       console.log('🚨 [Recovery] Current storage:', storageData);
 
-      // Create missing restaurant data
+      // Create missing restaurant data with EXACT structure for simplified lookup
       if (!storageData.restaurants[expectedSlug]) {
         console.log('🚨 [Recovery] Creating missing restaurant data...');
+        console.log('🚨 [Recovery] Using storage key (expectedSlug):', expectedSlug);
 
+        // CRITICAL: Store data under the EXACT key that getPublicMenuData will look for
         storageData.restaurants[expectedSlug] = {
           restaurant: {
             id: restaurantId,
             name: user.email ? user.email.split('@')[0] + ' Restaurant' : 'My Restaurant',
-            slug: expectedSlug,
+            slug: expectedSlug, // CRITICAL: This must match the storage key
             address: 'İstanbul, Türkiye',
             phone: '+90 212 555 0123',
             hours: '09:00 - 23:00',
@@ -469,6 +471,12 @@ const StorageDebugger = () => {
             ]
           }
         };
+
+        console.log('🚨 [Recovery] Created restaurant data structure:');
+        console.log('  - Storage Key:', expectedSlug);
+        console.log('  - Restaurant Name:', storageData.restaurants[expectedSlug].restaurant.name);
+        console.log('  - Restaurant Slug:', storageData.restaurants[expectedSlug].restaurant.slug);
+        console.log('  - Restaurant Active:', storageData.restaurants[expectedSlug].restaurant.isActive);
 
         localStorage.setItem('qr_menu_data', JSON.stringify(storageData));
         console.log('✅ [Recovery] Created and saved restaurant data');

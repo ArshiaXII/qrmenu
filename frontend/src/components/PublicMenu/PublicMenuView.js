@@ -51,73 +51,49 @@ const PublicMenuView = () => {
 
 
 
-  // Load menu data when component mounts or restaurantSlug changes
+  // SIMPLIFIED: Load menu data when component mounts or restaurantSlug changes
   useEffect(() => {
-    console.log('🔍 [PublicMenuView] === PUBLIC MENU VIEW DIAGNOSTICS ===');
-    console.log('🔍 [PublicMenuView] useEffect triggered');
-    console.log('🔍 [PublicMenuView] restaurantSlug from URL:', restaurantSlug);
+    console.log('🔍 [PublicMenuView] === SIMPLIFIED PUBLIC MENU VIEW ===');
+    console.log('🔍 [PublicMenuView] Trying to load menu for slug:', restaurantSlug);
     console.log('🔍 [PublicMenuView] isPreview mode:', isPreview);
     console.log('🔍 [PublicMenuView] Current URL:', window.location.href);
 
-    // CRITICAL: Debug storage data to see what's available
-    const storageData = JSON.parse(localStorage.getItem('qr_menu_data') || '{"restaurants":{}}');
-    console.log('🔍 [PublicMenuView] Available restaurant slugs in storage:', Object.keys(storageData.restaurants));
-    console.log('🔍 [PublicMenuView] Looking for slug:', restaurantSlug);
-    console.log('🔍 [PublicMenuView] Slug exists in storage:', !!storageData.restaurants[restaurantSlug]);
-
-    // CRITICAL: Debug auth data to understand user context
-    const authUser = localStorage.getItem('authUser');
-    console.log('🔍 [PublicMenuView] Auth user exists:', !!authUser);
-    if (authUser) {
-      try {
-        const user = JSON.parse(authUser);
-        console.log('🔍 [PublicMenuView] Auth user data:', user);
-        console.log('🔍 [PublicMenuView] Expected slug from auth:', user.restaurant_id ? `restaurant-${user.restaurant_id}` : `restaurant-${user.id}`);
-      } catch (e) {
-        console.error('❌ [PublicMenuView] Error parsing auth user:', e);
-      }
+    if (!restaurantSlug) {
+      console.error('❌ [PublicMenuView] No restaurant slug found in URL');
+      setMenuUnavailable(true);
+      return;
     }
 
-    // CRITICAL: Show detailed storage analysis
-    if (Object.keys(storageData.restaurants).length > 0) {
-      console.log('🔍 [PublicMenuView] Detailed storage analysis:');
-      Object.keys(storageData.restaurants).forEach(slug => {
-        const data = storageData.restaurants[slug];
-        console.log(`  - Slug: ${slug}`);
-        console.log(`    Restaurant Name: ${data.restaurant?.name}`);
-        console.log(`    Restaurant Slug: ${data.restaurant?.slug}`);
-        console.log(`    Is Active: ${data.restaurant?.isActive}`);
-        console.log(`    Has Menu: ${!!data.menu}`);
-        console.log(`    Menu Sections: ${data.menu?.sections?.length || 0}`);
-      });
-    } else {
-      console.warn('⚠️ [PublicMenuView] No restaurant data found in storage!');
-    }
-
-    if (restaurantSlug) {
-      if (isPreview) {
-        console.log('🔍 [PublicMenuView] Loading preview data for slug:', restaurantSlug);
-        // For preview mode, use loadPreviewMenuData to bypass active status check
-        loadPreviewMenuData(restaurantSlug).catch((error) => {
+    if (isPreview) {
+      console.log('🔍 [PublicMenuView] Loading preview data for slug:', restaurantSlug);
+      loadPreviewMenuData(restaurantSlug)
+        .then((result) => {
+          console.log('✅ [PublicMenuView] Preview data loaded successfully:', result);
+        })
+        .catch((error) => {
           console.error('❌ [PublicMenuView] Failed to load preview menu data:', error);
-          if (error.message === 'RESTAURANT_NOT_FOUND') {
-            setMenuUnavailable(true);
-          }
+          setMenuUnavailable(true);
         });
-      } else {
-        console.log('🔍 [PublicMenuView] Loading public data for slug:', restaurantSlug);
-        // Normal public access
-        loadPublicMenuData(restaurantSlug).catch((error) => {
+    } else {
+      console.log('🔍 [PublicMenuView] Loading public data for slug:', restaurantSlug);
+
+      // Call the simplified getPublicMenuData
+      loadPublicMenuData(restaurantSlug)
+        .then((result) => {
+          console.log('✅ [PublicMenuView] Result from menuService.getPublicMenuData:', result);
+          console.log('✅ [PublicMenuView] Menu data loaded successfully');
+          // The loadPublicMenuData function should handle setting the state
+        })
+        .catch((error) => {
           console.error('❌ [PublicMenuView] Failed to load menu data:', error);
           console.error('❌ [PublicMenuView] Error message:', error.message);
+          console.log('🔍 [PublicMenuView] Decision to render unavailable message based on error:', error.message);
+
           if (error.message === 'MENU_INACTIVE' || error.message === 'RESTAURANT_NOT_FOUND') {
             console.log('🔍 [PublicMenuView] Setting menu unavailable due to:', error.message);
             setMenuUnavailable(true);
           }
         });
-      }
-    } else {
-      console.log('❌ [PublicMenuView] No restaurant slug found in URL');
     }
   }, [restaurantSlug, isPreview, loadPublicMenuData, loadPreviewMenuData]);
 
