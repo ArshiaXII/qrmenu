@@ -433,12 +433,14 @@ const StorageDebugger = () => {
         console.log('🚨 [Recovery] Creating missing restaurant data...');
         console.log('🚨 [Recovery] Using storage key (expectedSlug):', expectedSlug);
 
-        // CRITICAL: Store data under the EXACT key that getPublicMenuData will look for
+        // PHASE 2: Store data under the EXACT key that getPublicMenuData will look for
+        const restaurantName = user.email ? user.email.split('@')[0] + ' Restaurant' : 'My Restaurant';
+
         storageData.restaurants[expectedSlug] = {
           restaurant: {
             id: restaurantId,
-            name: user.email ? user.email.split('@')[0] + ' Restaurant' : 'My Restaurant',
-            slug: expectedSlug, // CRITICAL: This must match the storage key
+            name: restaurantName,
+            slug: expectedSlug, // PHASE 2: For now, use old format. Will be updated when user sets custom name
             address: 'İstanbul, Türkiye',
             phone: '+90 212 555 0123',
             hours: '09:00 - 23:00',

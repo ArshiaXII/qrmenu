@@ -26,7 +26,8 @@ import ManageTemplates from './pages/ManageTemplates'; // This will be 'Appearan
 import ManageQrCode from './pages/ManageQrCode';
 // import ViewAnalytics from './pages/ViewAnalytics'; // Not used anymore
 import ManageBilling from './pages/ManageBilling';
-import RestaurantSettings from './pages/RestaurantSettings'; // This will be 'Restaurant Settings' under main 'Settings'
+// import RestaurantSettings from './pages/RestaurantSettings'; // Old restaurant settings
+import RestaurantSettings from './components/RestaurantSettings/RestaurantSettings'; // PHASE 2: New restaurant settings with custom slugs
 // import PublicMenu from './components/PublicMenu'; // Not used anymore
 // Import new placeholder pages
 import ReportsPage from './pages/ReportsPage';
