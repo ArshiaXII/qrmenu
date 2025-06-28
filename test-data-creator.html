@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Data Creator - Basic Public Menu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success {
+            border-left: 4px solid #10b981;
+            background-color: #f0fdf4;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbeb;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .code {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .button {
+            background-color: #8b5cf6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        .button:hover {
+            background-color: #7c3aed;
+        }
+        .button.danger {
+            background-color: #ef4444;
+        }
+        .button.danger:hover {
+            background-color: #dc2626;
+        }
+        .button.success {
+            background-color: #10b981;
+        }
+        .button.success:hover {
+            background-color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Data Creator - Basic Public Menu</h1>
+    
+    <div class="container">
+        <h2>📋 SIMPLIFIED TESTING PROTOCOL</h2>
+        
+        <div class="warning">
+            <h3>⚠️ IMPORTANT: Use This Exact Testing Sequence</h3>
+            <ol>
+                <li><strong>Deploy</strong> the new build files to your server</li>
+                <li><strong>Open</strong> your dashboard in the browser</li>
+                <li><strong>Open Developer Console</strong> (F12)</li>
+                <li><strong>Click "Create Test Data"</strong> button below</li>
+                <li><strong>Click "Test Public URL"</strong> button below</li>
+                <li><strong>Check Console Logs</strong> for detailed debugging info</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔧 Test Data Management</h2>
+        
+        <button class="button" onclick="createTestData()">
+            Create Test Data (Active Restaurant)
+        </button>
+        
+        <button class="button" onclick="createInactiveTestData()">
+            Create Test Data (Inactive Restaurant)
+        </button>
+        
+        <button class="button success" onclick="testPublicURL()">
+            Test Public URL
+        </button>
+        
+        <button class="button danger" onclick="clearAllData()">
+            Clear All Data
+        </button>
+        
+        <button class="button" onclick="inspectData()">
+            Inspect Current Data
+        </button>
+    </div>
+
+    <div class="container">
+        <h2>📊 Expected Data Structure</h2>
+        
+        <div class="code">
+localStorage['qr_menu_data'] = {
+  "restaurants": {
+    "restaurant-1": {
+      "restaurant": {
+        "id": 1,
+        "name": "Test Restaurant",
+        "slug": "restaurant-1",
+        "address": "İstanbul, Türkiye",
+        "phone": "+90 212 555 0123",
+        "hours": "09:00 - 23:00",
+        "isActive": true  // CRITICAL: Must be true for public access
+      },
+      "menu": {
+        "sections": [
+          {
+            "id": 1,
+            "name": "Ana Yemekler",
+            "items": [
+              {
+                "id": 1,
+                "name": "Köfte",
+                "description": "Lezzetli ev yapımı köfte",
+                "price": 25.00
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Testing URLs</h2>
+        
+        <div class="success">
+            <h3>✅ Test These URLs:</h3>
+            <ul>
+                <li><strong>Active Restaurant:</strong> <code>/menu/restaurant-1</code></li>
+                <li><strong>Inactive Restaurant:</strong> <code>/menu/restaurant-2</code></li>
+                <li><strong>Non-existent:</strong> <code>/menu/non-existent</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function createTestData() {
+            console.log('🧪 Creating test data for ACTIVE restaurant...');
+            
+            const testData = {
+                restaurants: {
+                    "restaurant-1": {
+                        restaurant: {
+                            id: 1,
+                            name: "Test Restaurant",
+                            slug: "restaurant-1",
+                            address: "İstanbul, Türkiye",
+                            phone: "+90 212 555 0123",
+                            hours: "09:00 - 23:00",
+                            isActive: true  // ACTIVE
+                        },
+                        menu: {
+                            sections: [
+                                {
+                                    id: 1,
+                                    name: "Ana Yemekler",
+                                    items: [
+                                        {
+                                            id: 1,
+                                            name: "Köfte",
+                                            description: "Lezzetli ev yapımı köfte",
+                                            price: 25.00
+                                        },
+                                        {
+                                            id: 2,
+                                            name: "Tavuk Şiş",
+                                            description: "Izgara tavuk şiş",
+                                            price: 30.00
+                                        }
+                                    ]
+                                },
+                                {
+                                    id: 2,
+                                    name: "İçecekler",
+                                    items: [
+                                        {
+                                            id: 3,
+                                            name: "Çay",
+                                            description: "Sıcak çay",
+                                            price: 5.00
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            };
+            
+            localStorage.setItem('qr_menu_data', JSON.stringify(testData));
+            console.log('✅ Test data created successfully');
+            console.log('📊 Data:', testData);
+            alert('✅ Active test data created!\n\nYou can now test: /menu/restaurant-1');
+        }
+
+        function createInactiveTestData() {
+            console.log('🧪 Creating test data for INACTIVE restaurant...');
+            
+            const testData = {
+                restaurants: {
+                    "restaurant-2": {
+                        restaurant: {
+                            id: 2,
+                            name: "Inactive Restaurant",
+                            slug: "restaurant-2",
+                            address: "İstanbul, Türkiye",
+                            phone: "+90 212 555 0123",
+                            hours: "09:00 - 23:00",
+                            isActive: false  // INACTIVE
+                        },
+                        menu: {
+                            sections: [
+                                {
+                                    id: 1,
+                                    name: "Test Section",
+                                    items: [
+                                        {
+                                            id: 1,
+                                            name: "Test Item",
+                                            description: "This should not be visible",
+                                            price: 10.00
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            };
+            
+            localStorage.setItem('qr_menu_data', JSON.stringify(testData));
+            console.log('✅ Inactive test data created successfully');
+            console.log('📊 Data:', testData);
+            alert('✅ Inactive test data created!\n\nYou can now test: /menu/restaurant-2\n(Should show "unavailable")');
+        }
+
+        function testPublicURL() {
+            console.log('🧪 Testing public URL access...');
+            
+            const baseUrl = window.location.origin;
+            const testUrl = `${baseUrl}/menu/restaurant-1`;
+            
+            console.log('🔗 Opening test URL:', testUrl);
+            window.open(testUrl, '_blank');
+            
+            alert(`🧪 Testing public URL:\n${testUrl}\n\nCheck the new tab and console logs!`);
+        }
+
+        function clearAllData() {
+            console.log('🗑️ Clearing all localStorage data...');
+            localStorage.removeItem('qr_menu_data');
+            localStorage.removeItem('authUser');
+            localStorage.removeItem('authToken');
+            console.log('✅ All data cleared');
+            alert('✅ All localStorage data cleared!');
+        }
+
+        function inspectData() {
+            console.log('🔍 Inspecting current localStorage data...');
+            
+            const data = localStorage.getItem('qr_menu_data');
+            console.log('📊 Raw data:', data);
+            
+            if (data) {
+                try {
+                    const parsed = JSON.parse(data);
+                    console.log('📊 Parsed data:', parsed);
+                    console.log('📊 Available restaurants:', Object.keys(parsed.restaurants || {}));
+                    
+                    let summary = 'Current Data:\n\n';
+                    if (parsed.restaurants) {
+                        Object.keys(parsed.restaurants).forEach(slug => {
+                            const restaurant = parsed.restaurants[slug];
+                            summary += `${slug}:\n`;
+                            summary += `  Name: ${restaurant.restaurant?.name}\n`;
+                            summary += `  Active: ${restaurant.restaurant?.isActive}\n`;
+                            summary += `  Sections: ${restaurant.menu?.sections?.length || 0}\n\n`;
+                        });
+                    } else {
+                        summary += 'No restaurants found';
+                    }
+                    
+                    alert(summary);
+                } catch (error) {
+                    console.error('❌ Error parsing data:', error);
+                    alert('❌ Error parsing data: ' + error.message);
+                }
+            } else {
+                console.log('📊 No data found');
+                alert('📊 No data found in localStorage');
+            }
+        }
+
+        // Auto-inspect data on page load
+        window.addEventListener('load', () => {
+            console.log('🧪 Test Data Creator loaded');
+            inspectData();
+        });
+    </script>
+</body>
+</html>

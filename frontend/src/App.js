@@ -27,7 +27,7 @@ import ManageQrCode from './pages/ManageQrCode';
 // import ViewAnalytics from './pages/ViewAnalytics'; // Not used anymore
 import ManageBilling from './pages/ManageBilling';
 // import RestaurantSettings from './pages/RestaurantSettings'; // Old restaurant settings
-import RestaurantSettings from './components/RestaurantSettings/RestaurantSettings'; // PHASE 2: New restaurant settings with custom slugs
+import RestaurantSettings from './components/RestaurantSettings/RestaurantSettingsFinal'; // FINAL: Complete restaurant settings implementation
 // import PublicMenu from './components/PublicMenu'; // Not used anymore
 // Import new placeholder pages
 import ReportsPage from './pages/ReportsPage';
@@ -49,7 +49,7 @@ import MenuCreationDemo from './pages/MenuCreationDemo';
 import DesignCustomizationPage from './components/DesignCustomization/DesignCustomizationPage';
 import DesignCustomizationDemo from './pages/DesignCustomizationDemo';
 import DashboardPage from './components/Dashboard/DashboardPage';
-import PublicMenuView from './components/PublicMenu/PublicMenuViewSimple';
+import PublicMenuView from './components/PublicMenu/PublicMenuViewFinal';
 import MenuManagementPage from './pages/MenuManagementPage';
 import { MenuProvider } from './contexts/MenuContext';
 // import Sidebar from './components/Layout/Sidebar'; // Ensure this is commented out or removed if not used globally
