@@ -191,18 +191,34 @@ class MenuService {
 
   // Get public menu data by slug (for public access)
   async getPublicMenuData(slug) {
-    const allData = this.getAllRestaurantData();
-    const restaurantData = allData[slug];
+    console.log('🔍 [menuService] getPublicMenuData called with slug:', slug);
+    console.log('🔍 [menuService] User agent:', navigator.userAgent);
 
-    if (!restaurantData) {
-      return null; // Restaurant not found
+    try {
+      const allData = this.getAllRestaurantData();
+      console.log('🔍 [menuService] All data keys:', Object.keys(allData));
+
+      const restaurantData = allData[slug];
+      console.log('🔍 [menuService] Restaurant data for slug:', restaurantData);
+
+      if (!restaurantData) {
+        console.log('❌ [menuService] Restaurant not found for slug:', slug);
+        return null; // Restaurant not found
+      }
+
+      console.log('🔍 [menuService] Restaurant status:', restaurantData.status);
+
+      if (restaurantData.status !== 'active') {
+        console.log('❌ [menuService] Restaurant is not active');
+        return null; // Menu is not active
+      }
+
+      console.log('✅ [menuService] Returning active restaurant data');
+      return restaurantData; // Return the restaurant data
+    } catch (error) {
+      console.error('❌ [menuService] Error in getPublicMenuData:', error);
+      return null;
     }
-
-    if (restaurantData.status !== 'active') {
-      return null; // Menu is not active
-    }
-
-    return restaurantData; // Return the restaurant data
   }
 
   // Get menu data for preview (bypasses status check)

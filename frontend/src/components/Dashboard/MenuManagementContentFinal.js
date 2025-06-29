@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   PencilIcon,
@@ -18,7 +17,6 @@ import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   
   // State
   const [currentRestaurant, setCurrentRestaurant] = useState(null);
@@ -188,9 +186,9 @@ const MenuManagementContent = () => {
       {/* Page Header */}
       <div className="page-header">
         <div className="header-content">
-          <h1 className="page-title">{t('menu_management.title', 'Dijital Menünüzü Yönetin')}</h1>
+          <h1 className="page-title">Dijital Menünüzü Yönetin</h1>
           <p className="page-subtitle">
-            {t('menu_management.subtitle', 'Menünüzü düzenleyin, tasarımını özelleştirin ve QR kod ile paylaşın')}
+            Menünüzü düzenleyin, tasarımını özelleştirin ve QR kod ile paylaşın
           </p>
         </div>
       </div>
@@ -222,15 +220,12 @@ const MenuManagementContent = () => {
             </div>
             <div className="status-text">
               <h3 className="status-title">
-                {menuStatus === 'active' 
-                  ? t('menu_management.active_title', 'Menü Aktif') 
-                  : t('menu_management.draft_title', 'Menü Pasif')
-                }
+                {menuStatus === 'active' ? 'Menü Aktif' : 'Menü Pasif'}
               </h3>
               <p className="status-description">
                 {menuStatus === 'active'
-                  ? t('menu_management.active_description', 'Menünüz yayında, herkes görebilir.')
-                  : t('menu_management.draft_description', 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.')
+                  ? 'Menünüz yayında, herkes görebilir.'
+                  : 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.'
                 }
               </p>
             </div>
@@ -240,7 +235,7 @@ const MenuManagementContent = () => {
             onClick={toggleMenuStatus}
             disabled={isLoading}
           >
-            {isLoading ? t('menu_management.updating', 'Güncelleniyor...') : (menuStatus === 'active' ? t('menu_management.deactivate', 'Pasif Yap') : t('menu_management.activate', 'Aktif Yap'))}
+            {isLoading ? 'Güncelleniyor...' : (menuStatus === 'active' ? 'Pasif Yap' : 'Aktif Yap')}
           </button>
         </div>
       </div>
@@ -254,14 +249,14 @@ const MenuManagementContent = () => {
               <PencilIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.edit_content.title')}</h3>
+              <h3 className="card-title">Menü İçeriğini Düzenle</h3>
               <p className="card-description">
-                {t('menu_management.edit_content.description')}
+                Kategoriler, ürünler ve fiyatları düzenleyin
               </p>
             </div>
           </div>
           <button onClick={handleEditContent} className="card-action-btn edit-btn">
-            {t('menu_management.edit_content.button')}
+            İçeriği Düzenle
           </button>
         </div>
 
@@ -272,14 +267,14 @@ const MenuManagementContent = () => {
               <PaintBrushIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.design.title')}</h3>
+              <h3 className="card-title">Tasarım Özelleştirme</h3>
               <p className="card-description">
-                {t('menu_management.design.description')}
+                Menünüzün görünümünü ve stilini özelleştirin
               </p>
             </div>
           </div>
           <button onClick={handleDesignCustomization} className="card-action-btn design-btn">
-            {t('menu_management.design.button')}
+            Tasarımı Özelleştir
           </button>
         </div>
 
@@ -290,9 +285,9 @@ const MenuManagementContent = () => {
               <QrCodeIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.view_share.title')}</h3>
+              <h3 className="card-title">Menüyü Görüntüle ve Paylaş</h3>
               <p className="card-description">
-                {t('menu_management.view_share.description')}
+                QR kod ile menünüzü paylaşın ve önizleyin
               </p>
             </div>
           </div>
