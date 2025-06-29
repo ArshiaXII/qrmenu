@@ -103,163 +103,62 @@ const PublicMenuView = () => {
 
   // Success state - render menu
   return (
-    <div className="public-menu-view" style={{
-      fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-      lineHeight: '1.6',
-      color: '#1f2937',
-      backgroundColor: '#f9fafb',
-      minHeight: '100vh',
-      padding: '0',
-      margin: '0'
-    }}>
+    <div className="public-menu-view">
       {/* Preview Banner */}
       {isPreview && (
-        <div className="preview-banner" style={{
-          backgroundColor: '#fef3c7',
-          padding: '12px 20px',
-          textAlign: 'center',
-          borderBottom: '1px solid #f59e0b',
-          fontSize: '14px',
-          fontWeight: '500'
-        }}>
-          <p style={{ margin: '0' }}>🔍 <strong>Önizleme Modu</strong> - Bu menünün nasıl görüneceğini inceliyorsunuz</p>
+        <div className="preview-banner">
+          <p>🔍 <strong>Önizleme Modu</strong> - Bu menünün nasıl görüneceğini inceliyorsunuz</p>
         </div>
       )}
 
       {/* Restaurant Header */}
-      <div className="restaurant-header" style={{
-        backgroundColor: '#ffffff',
-        padding: '24px 20px',
-        textAlign: 'center',
-        borderBottom: '1px solid #e5e7eb',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-      }}>
-        <h1 className="restaurant-name" style={{
-          fontSize: '28px',
-          fontWeight: '700',
-          color: '#1f2937',
-          margin: '0 0 16px 0'
-        }}>{menuData.name || 'Restaurant'}</h1>
+      <div className="restaurant-header">
+        <h1 className="restaurant-name">{menuData.name || 'Restaurant'}</h1>
 
         {menuData.address && (
-          <div className="restaurant-info" style={{ marginBottom: '12px' }}>
-            <p className="restaurant-address" style={{
-              fontSize: '16px',
-              color: '#6b7280',
-              margin: '0',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}>📍 {menuData.address}</p>
+          <div className="restaurant-info">
+            <p className="restaurant-address">📍 {menuData.address}</p>
           </div>
         )}
 
-        <div className="restaurant-contact" style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '8px',
-          alignItems: 'center'
-        }}>
+        <div className="restaurant-contact">
           {menuData.phone && (
-            <p className="restaurant-phone" style={{
-              fontSize: '16px',
-              color: '#6b7280',
-              margin: '0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>📞 {menuData.phone}</p>
+            <p className="restaurant-phone">📞 {menuData.phone}</p>
           )}
           {menuData.hours && (
-            <p className="restaurant-hours" style={{
-              fontSize: '16px',
-              color: '#6b7280',
-              margin: '0',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>🕒 {menuData.hours}</p>
+            <p className="restaurant-hours">🕒 {menuData.hours}</p>
           )}
         </div>
       </div>
 
       {/* Menu Content */}
-      <div className="menu-content" style={{
-        padding: '20px',
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
+      <div className="menu-content">
         {menuData.menu && menuData.menu.sections && menuData.menu.sections.length > 0 ? (
           <div className="menu-sections">
             {menuData.menu.sections.map((section, sectionIndex) => (
-              <div key={section.id || sectionIndex} className="menu-section" style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                padding: '24px',
-                marginBottom: '24px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                border: '1px solid #e5e7eb'
-              }}>
-                <h2 className="section-title" style={{
-                  fontSize: '24px',
-                  fontWeight: '600',
-                  color: '#1f2937',
-                  marginBottom: '20px',
-                  paddingBottom: '12px',
-                  borderBottom: '2px solid #8b5cf6'
-                }}>
+              <div key={section.id || sectionIndex} className="menu-section">
+                <h2 className="section-title">
                   {getText(section.name || section.title, `Kategori ${sectionIndex + 1}`)}
                 </h2>
 
                 {section.items && section.items.length > 0 ? (
-                  <div className="menu-items" style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px'
-                  }}>
+                  <div className="menu-items">
                     {section.items.map((item, itemIndex) => (
-                      <div key={item.id || itemIndex} className="menu-item" style={{
-                        padding: '16px',
-                        backgroundColor: '#f9fafb',
-                        borderRadius: '8px',
-                        border: '1px solid #e5e7eb',
-                        transition: 'all 0.2s ease'
-                      }}>
-                        <div className="item-content" style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: '16px'
-                        }}>
-                          <div className="item-info" style={{ flex: '1' }}>
-                            <h3 className="item-name" style={{
-                              fontSize: '18px',
-                              fontWeight: '600',
-                              color: '#1f2937',
-                              margin: '0 0 8px 0'
-                            }}>
+                      <div key={item.id || itemIndex} className="menu-item">
+                        <div className="item-content">
+                          <div className="item-info">
+                            <h3 className="item-name">
                               {getText(item.name || item.title, 'Ürün')}
                             </h3>
                             {(item.description || (typeof item.description === 'object' && item.description)) && (
-                              <p className="item-description" style={{
-                                fontSize: '14px',
-                                color: '#6b7280',
-                                margin: '0',
-                                lineHeight: '1.5'
-                              }}>
+                              <p className="item-description">
                                 {getText(item.description)}
                               </p>
                             )}
                           </div>
                           <div className="item-price">
                             {item.price && (
-                              <span className="price" style={{
-                                fontSize: '18px',
-                                fontWeight: '700',
-                                color: '#8b5cf6',
-                                whiteSpace: 'nowrap'
-                              }}>₺{Number(item.price).toFixed(2)}</span>
+                              <span className="price">₺{Number(item.price).toFixed(2)}</span>
                             )}
                           </div>
                         </div>
@@ -267,115 +166,28 @@ const PublicMenuView = () => {
                     ))}
                   </div>
                 ) : (
-                  <div className="no-items" style={{
-                    textAlign: 'center',
-                    padding: '40px 20px',
-                    color: '#6b7280'
-                  }}>
-                    <p style={{ margin: '0', fontSize: '16px' }}>Bu kategoride henüz ürün bulunmuyor.</p>
+                  <div className="no-items">
+                    <p>Bu kategoride henüz ürün bulunmuyor.</p>
                   </div>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="no-menu" style={{
-            textAlign: 'center',
-            padding: '60px 20px',
-            backgroundColor: '#ffffff',
-            borderRadius: '12px',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-          }}>
+          <div className="no-menu">
             <div className="no-menu-content">
-              <h2 style={{
-                fontSize: '24px',
-                fontWeight: '600',
-                color: '#1f2937',
-                marginBottom: '12px'
-              }}>Henüz Menü Oluşturulmamış</h2>
-              <p style={{
-                fontSize: '16px',
-                color: '#6b7280',
-                margin: '0'
-              }}>Bu restoran henüz menüsünü hazırlamamış.</p>
+              <h2>Henüz Menü Oluşturulmamış</h2>
+              <p>Bu restoran henüz menüsünü hazırlamamış.</p>
             </div>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="menu-footer" style={{
-        backgroundColor: '#1f2937',
-        color: '#ffffff',
-        textAlign: 'center',
-        padding: '24px 20px',
-        marginTop: '40px'
-      }}>
-        <p style={{
-          margin: '0 0 8px 0',
-          fontSize: '14px',
-          opacity: '0.8'
-        }}>Bu menü dijital olarak oluşturulmuştur.</p>
-        <p className="powered-by" style={{
-          margin: '0',
-          fontSize: '12px',
-          opacity: '0.6'
-        }}>QR Menu Platform ile hazırlanmıştır</p>
+      <div className="menu-footer">
+        <p>Bu menü dijital olarak oluşturulmuştur.</p>
+        <p className="powered-by">QR Menu Platform ile hazırlanmıştır</p>
       </div>
-
-      {/* Mobile Responsive Styles */}
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .public-menu-view {
-            font-size: 14px;
-          }
-          .restaurant-header h1 {
-            font-size: 24px !important;
-          }
-          .menu-content {
-            padding: 16px !important;
-          }
-          .menu-section {
-            padding: 20px !important;
-            margin-bottom: 20px !important;
-          }
-          .section-title {
-            font-size: 20px !important;
-          }
-          .item-content {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            gap: 12px !important;
-          }
-          .item-name {
-            font-size: 16px !important;
-          }
-          .item-price {
-            align-self: flex-end;
-          }
-          .restaurant-contact {
-            flex-direction: column !important;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .restaurant-header {
-            padding: 20px 16px !important;
-          }
-          .menu-content {
-            padding: 12px !important;
-          }
-          .menu-section {
-            padding: 16px !important;
-          }
-          .section-title {
-            font-size: 18px !important;
-          }
-          .item-name {
-            font-size: 15px !important;
-          }
-        }
-      `}</style>
     </div>
   );
 };
