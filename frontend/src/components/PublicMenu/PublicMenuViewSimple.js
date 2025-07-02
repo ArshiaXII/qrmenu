@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import menuService from '../../services/menuService';
+import menuService from '../../services/menuServiceSimple';
 import './PublicMenuView.css';
 
 const PublicMenuView = () => {

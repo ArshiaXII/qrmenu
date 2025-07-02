@@ -18,23 +18,17 @@ import { useMenu } from '../../contexts/MenuContext';
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
-  // Safe translation hook with fallback
-  let t;
-  try {
-    const translation = useTranslation();
-    t = (key, fallback) => {
-      try {
-        const result = translation.t(key);
-        // If translation returns the key itself, use fallback
-        return result === key ? fallback : result;
-      } catch (error) {
-        return fallback || key;
-      }
-    };
-  } catch (error) {
-    console.warn('Translation hook error:', error);
-    t = (key, fallback) => fallback || key;
-  }
+  // FIXED: Proper translation hook usage
+  const { t, i18n } = useTranslation();
+
+  // Debug i18n state
+  console.log('🔍 [MenuManagementContent] i18n ready:', i18n.isInitialized);
+  console.log('🔍 [MenuManagementContent] Current language:', i18n.language);
+  console.log('🔍 [MenuManagementContent] Available languages:', i18n.languages);
+
+  // Test translation
+  const testTranslation = t('menu_management.title');
+  console.log('🔍 [MenuManagementContent] Test translation result:', testTranslation);
 
   const navigate = useNavigate();
   const {
@@ -291,9 +285,9 @@ const MenuManagementContent = () => {
 
           <div className="design-preview">
             <div className="color-swatches">
-              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors.accentColor || '#8b5cf6' }}></div>
-              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors.textColor || '#1f2937' }}></div>
-              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors.backgroundColor || '#ffffff', border: '1px solid #e5e7eb' }}></div>
+              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6' }}></div>
+              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors?.textColor || '#1f2937' }}></div>
+              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors?.backgroundColor || '#ffffff', border: '1px solid #e5e7eb' }}></div>
             </div>
             <span className="preview-label">{t('menu_management.customize_design.current_palette')}</span>
           </div>

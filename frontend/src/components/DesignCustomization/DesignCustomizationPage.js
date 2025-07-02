@@ -139,7 +139,10 @@ const DesignCustomizationPage = () => {
   // Update local state when branding data loads
   useEffect(() => {
     if (currentBranding) {
-      setColors(currentBranding.colors);
+      // Only update colors if they exist, otherwise keep defaults
+      if (currentBranding.colors) {
+        setColors(currentBranding.colors);
+      }
       if (currentBranding.logo) {
         setLogoPreview(currentBranding.logo);
       }
@@ -325,6 +328,13 @@ const DesignCustomizationPage = () => {
     navigate('/dashboard/menu-management');
   };
 
+  // Ensure colors is never undefined
+  const safeColors = colors || {
+    textColor: '#1f2937',
+    backgroundColor: '#ffffff',
+    accentColor: '#8b5cf6'
+  };
+
   return (
     <div className="design-customization-page">
       {/* Progress Indicator */}
@@ -401,15 +411,15 @@ const DesignCustomizationPage = () => {
                 <div className="color-input-group">
                   <input
                     type="color"
-                    value={colors.textColor}
+                    value={safeColors.textColor}
                     onChange={(e) => handleColorChange('textColor', e.target.value)}
                     className="color-picker"
                   />
-                  <div 
+                  <div
                     className="color-swatch"
-                    style={{ backgroundColor: colors.textColor }}
+                    style={{ backgroundColor: safeColors.textColor }}
                   ></div>
-                  <span className="color-value">{colors.textColor}</span>
+                  <span className="color-value">{safeColors.textColor}</span>
                 </div>
               </div>
 
@@ -418,15 +428,15 @@ const DesignCustomizationPage = () => {
                 <div className="color-input-group">
                   <input
                     type="color"
-                    value={colors.backgroundColor}
+                    value={safeColors.backgroundColor}
                     onChange={(e) => handleColorChange('backgroundColor', e.target.value)}
                     className="color-picker"
                   />
-                  <div 
+                  <div
                     className="color-swatch"
-                    style={{ backgroundColor: colors.backgroundColor }}
+                    style={{ backgroundColor: safeColors.backgroundColor }}
                   ></div>
-                  <span className="color-value">{colors.backgroundColor}</span>
+                  <span className="color-value">{safeColors.backgroundColor}</span>
                 </div>
               </div>
 
@@ -435,15 +445,15 @@ const DesignCustomizationPage = () => {
                 <div className="color-input-group">
                   <input
                     type="color"
-                    value={colors.accentColor}
+                    value={safeColors.accentColor}
                     onChange={(e) => handleColorChange('accentColor', e.target.value)}
                     className="color-picker"
                   />
-                  <div 
+                  <div
                     className="color-swatch"
-                    style={{ backgroundColor: colors.accentColor }}
+                    style={{ backgroundColor: safeColors.accentColor }}
                   ></div>
-                  <span className="color-value">{colors.accentColor}</span>
+                  <span className="color-value">{safeColors.accentColor}</span>
                 </div>
               </div>
             </div>
@@ -722,7 +732,7 @@ const DesignCustomizationPage = () => {
             <div
               className="phone-content"
               style={{
-                backgroundColor: colors.backgroundColor,
+                backgroundColor: safeColors.backgroundColor,
                 ...(backgroundImagePreview && {
                   backgroundImage: `url(${backgroundImagePreview})`,
                   backgroundRepeat: backgroundSettings.repeat,
@@ -776,21 +786,21 @@ const DesignCustomizationPage = () => {
 
               {/* Restaurant Name */}
               <div className="preview-restaurant-name">
-                <h2 style={{ color: colors.textColor }}>{currentRestaurant?.name || 'Restaurant Adı'}</h2>
+                <h2 style={{ color: safeColors.textColor }}>{currentRestaurant?.name || 'Restaurant Adı'}</h2>
               </div>
 
               {/* Language Selector */}
               <div className="preview-language-selector">
-                <span style={{ color: colors.textColor }}>Türkçe</span>
-                <ChevronDownIcon className="dropdown-icon" style={{ color: colors.textColor }} />
+                <span style={{ color: safeColors.textColor }}>Türkçe</span>
+                <ChevronDownIcon className="dropdown-icon" style={{ color: safeColors.textColor }} />
               </div>
 
               {/* Main Menu Button */}
-              <button 
+              <button
                 className="preview-menu-button"
-                style={{ 
-                  backgroundColor: colors.accentColor,
-                  color: colors.textColor
+                style={{
+                  backgroundColor: safeColors.accentColor,
+                  color: safeColors.textColor
                 }}
               >
                 Menüye Giriş
@@ -809,14 +819,14 @@ const DesignCustomizationPage = () => {
                     zIndex: 1
                   }}
                 >
-                  <h4 style={{ color: colors.textColor, margin: '0 0 8px 0' }}>Ana Yemekler</h4>
+                  <h4 style={{ color: safeColors.textColor, margin: '0 0 8px 0' }}>Ana Yemekler</h4>
                   <div className="preview-menu-item">
-                    <span style={{ color: colors.textColor, fontSize: '14px' }}>Izgara Somon</span>
-                    <span style={{ color: colors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}85</span>
+                    <span style={{ color: safeColors.textColor, fontSize: '14px' }}>Izgara Somon</span>
+                    <span style={{ color: safeColors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}85</span>
                   </div>
                   <div className="preview-menu-item">
-                    <span style={{ color: colors.textColor, fontSize: '14px' }}>Kuzu Pirzola</span>
-                    <span style={{ color: colors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}95</span>
+                    <span style={{ color: safeColors.textColor, fontSize: '14px' }}>Kuzu Pirzola</span>
+                    <span style={{ color: safeColors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}95</span>
                   </div>
                 </div>
 
@@ -831,14 +841,14 @@ const DesignCustomizationPage = () => {
                     zIndex: 1
                   }}
                 >
-                  <h4 style={{ color: colors.textColor, margin: '0 0 8px 0' }}>İçecekler</h4>
+                  <h4 style={{ color: safeColors.textColor, margin: '0 0 8px 0' }}>İçecekler</h4>
                   <div className="preview-menu-item">
-                    <span style={{ color: colors.textColor, fontSize: '14px' }}>Taze Sıkılmış Portakal</span>
-                    <span style={{ color: colors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}25</span>
+                    <span style={{ color: safeColors.textColor, fontSize: '14px' }}>Taze Sıkılmış Portakal</span>
+                    <span style={{ color: safeColors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}25</span>
                   </div>
                   <div className="preview-menu-item">
-                    <span style={{ color: colors.textColor, fontSize: '14px' }}>Türk Kahvesi</span>
-                    <span style={{ color: colors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}15</span>
+                    <span style={{ color: safeColors.textColor, fontSize: '14px' }}>Türk Kahvesi</span>
+                    <span style={{ color: safeColors.accentColor, fontSize: '14px', fontWeight: 'bold' }}>{currencySymbol}15</span>
                   </div>
                 </div>
               </div>
@@ -846,18 +856,18 @@ const DesignCustomizationPage = () => {
               {/* Menu Links */}
               <div className="preview-menu-links">
                 <div className="preview-link">
-                  <ClockIcon className="link-icon" style={{ color: colors.accentColor }} />
-                  <span style={{ color: colors.textColor }}>Rezervasyon Oluştur</span>
+                  <ClockIcon className="link-icon" style={{ color: safeColors.accentColor }} />
+                  <span style={{ color: safeColors.textColor }}>Rezervasyon Oluştur</span>
                 </div>
 
                 <div className="preview-link">
-                  <ChatBubbleLeftRightIcon className="link-icon" style={{ color: colors.accentColor }} />
-                  <span style={{ color: colors.textColor }}>Geri Bildirim Ver</span>
+                  <ChatBubbleLeftRightIcon className="link-icon" style={{ color: safeColors.accentColor }} />
+                  <span style={{ color: safeColors.textColor }}>Geri Bildirim Ver</span>
                 </div>
 
                 <div className="preview-link">
-                  <InformationCircleIcon className="link-icon" style={{ color: colors.accentColor }} />
-                  <span style={{ color: colors.textColor }}>İşletme Bilgisi</span>
+                  <InformationCircleIcon className="link-icon" style={{ color: safeColors.accentColor }} />
+                  <span style={{ color: safeColors.textColor }}>İşletme Bilgisi</span>
                 </div>
               </div>
             </div>

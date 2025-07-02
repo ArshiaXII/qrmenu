@@ -90,11 +90,58 @@ class MenuService {
     // Find current user's restaurant
     for (const [slug, restaurantData] of Object.entries(allData)) {
       if (restaurantData.userId === currentUser.id) {
+        console.log('✅ [menuService] Found restaurant data for user:', currentUser.id);
         return restaurantData;
       }
     }
 
-    return null;
+    console.log('⚠️ [menuService] No restaurant data found for user:', currentUser.id);
+    console.log('🔧 [menuService] Creating default restaurant data...');
+
+    // Create default restaurant data for new user
+    return this.createDefaultRestaurantData(currentUser);
+  }
+
+  // Create default restaurant data for a user
+  createDefaultRestaurantData(user) {
+    const slug = `restaurant-${user.id}`;
+    const defaultData = {
+      userId: user.id,
+      name: user.name || 'Yeni Restaurant',
+      slug: slug,
+      address: 'İstanbul, Türkiye',
+      phone: '+90 212 555 0123',
+      hours: '09:00 - 23:00',
+      status: 'draft',
+      menu: {
+        sections: [
+          {
+            id: 'section-1',
+            name: 'Ana Yemekler',
+            items: [
+              {
+                id: 'item-1',
+                name: 'Örnek Ürün',
+                description: 'Lezzetli örnek ürün açıklaması',
+                price: 25.00
+              }
+            ]
+          }
+        ]
+      }
+    };
+
+    // Save the new restaurant data
+    const allData = this.getAllRestaurantData();
+    allData[slug] = defaultData;
+
+    if (this.saveAllRestaurantData(allData)) {
+      console.log('✅ [menuService] Created default restaurant data for user:', user.id);
+      return defaultData;
+    } else {
+      console.error('❌ [menuService] Failed to save default restaurant data');
+      return null;
+    }
   }
 
   // Save/Update restaurant settings (name, slug, etc.)

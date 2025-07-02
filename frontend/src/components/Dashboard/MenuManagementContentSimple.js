@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   PencilIcon,
@@ -17,24 +16,6 @@ import menuService from '../../services/menuServiceSimple';
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
-  // Safe translation hook with fallback
-  let t;
-  try {
-    const translation = useTranslation();
-    t = (key, fallback) => {
-      try {
-        const result = translation.t(key);
-        // If translation returns the key itself, use fallback
-        return result === key ? fallback : result;
-      } catch (error) {
-        return fallback || key;
-      }
-    };
-  } catch (error) {
-    console.warn('Translation hook error:', error);
-    t = (key, fallback) => fallback || key;
-  }
-
   const navigate = useNavigate();
   const [restaurantData, setRestaurantData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,9 +24,13 @@ const MenuManagementContent = () => {
 
   // Load restaurant data on mount
   useEffect(() => {
+    loadRestaurantData();
+  }, []);
+
+  const loadRestaurantData = () => {
     const data = menuService.getCurrentUserRestaurant();
     setRestaurantData(data);
-  }, []);
+  };
 
   // Generate public URL using custom slug
   const getPublicUrl = () => {
@@ -64,10 +49,9 @@ const MenuManagementContent = () => {
     try {
       const newStatus = restaurantData.status === 'active' ? 'draft' : 'active';
       await menuService.updateMenuStatus(newStatus);
-
+      
       // Reload data to reflect changes
-      const updatedData = menuService.getCurrentUserRestaurant();
-      setRestaurantData(updatedData);
+      loadRestaurantData();
     } catch (error) {
       alert('Menü durumu güncellenirken bir hata oluştu: ' + error.message);
     } finally {
@@ -79,7 +63,7 @@ const MenuManagementContent = () => {
   const handleCopyUrl = async () => {
     const url = getPublicUrl();
     try {
-      if (navigator.clipboard) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url);
       } else {
         // Fallback for older browsers
@@ -94,60 +78,39 @@ const MenuManagementContent = () => {
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
-      console.error('Failed to copy URL:', error);
-      alert('Link kopyalanamadı. Lütfen manuel olarak kopyalayın.');
+      alert('URL kopyalanamadı');
     }
   };
 
   // Download QR code
   const handleDownloadQR = () => {
-    if (qrCodeRef.current) {
-      const svg = qrCodeRef.current.querySelector('svg');
-      if (svg) {
-        // Create a canvas to convert SVG to PNG
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        
-        // Convert SVG to data URL
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
-        
-        img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-          
-          // Download as PNG
-          canvas.toBlob((blob) => {
-            const link = document.createElement('a');
-            link.download = `${restaurantData?.name || 'restaurant'}-qr-code.png`;
-            link.href = URL.createObjectURL(blob);
-            
-            // Trigger download
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            // Clean up
-            URL.revokeObjectURL(link.href);
-          });
-          
-          // Clean up
-          URL.revokeObjectURL(url);
-        };
-        
-        img.src = url;
-      }
-    }
+    if (!qrCodeRef.current) return;
+
+    const svg = qrCodeRef.current.querySelector('svg');
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      
+      const pngFile = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `${restaurantData?.slug || 'menu'}-qr-code.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+    };
+
+    img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
   };
 
   // Preview menu
   const handlePreviewMenu = () => {
-    if (restaurantData && restaurantData.slug) {
-      window.open(`/menu/${restaurantData.slug}?preview=true`, '_blank');
-    }
+    const url = getPublicUrl() + '?preview=true';
+    window.open(url, '_blank');
   };
 
   // Navigation handlers
@@ -175,7 +138,7 @@ const MenuManagementContent = () => {
     return (
       <div className="menu-management-loading">
         <div className="loading-spinner"></div>
-        <p>{t('menu_management.loading', 'Menü bilgileri yükleniyor...')}</p>
+        <p>Menü bilgileri yükleniyor...</p>
       </div>
     );
   }
@@ -185,32 +148,31 @@ const MenuManagementContent = () => {
       {/* Page Header */}
       <div className="page-header">
         <div className="header-content">
-          <h1 className="page-title">{t('menu_management.title', 'Dijital Menünüzü Yönetin')}</h1>
+          <h1 className="page-title">Dijital Menünüzü Yönetin</h1>
           <p className="page-subtitle">
-            {t('menu_management.subtitle', 'Menünüzü düzenleyin, tasarımını özelleştirin ve QR kod ile paylaşın')}
+            Menünüzü düzenleyin, tasarımını özelleştirin ve QR kod ile paylaşın
           </p>
         </div>
+      </div>
 
-        {/* Menu Status Card */}
-        <div className="menu-status-card">
-          <div className="status-info">
-            <div className={`status-indicator ${restaurantData.status === 'active' ? 'active' : ''}`}>
+      {/* Status Card */}
+      <div className="status-card">
+        <div className="status-content">
+          <div className="status-indicator">
+            <div className={`status-badge ${restaurantData.status}`}>
               {restaurantData.status === 'active' ? (
                 <CheckCircleIcon className="status-icon" />
               ) : (
                 <ExclamationTriangleIcon className="status-icon" />
               )}
               <span className="status-text">
-                {restaurantData.status === 'active'
-                  ? t('menu_management.active_title', 'Menü Aktif')
-                  : t('menu_management.draft_title', 'Menü Pasif')
-                }
+                {restaurantData.status === 'active' ? 'Menü Aktif' : 'Menü Pasif'}
               </span>
             </div>
             <p className="status-description">
               {restaurantData.status === 'active'
-                ? t('menu_management.active_description', 'Menünüz yayında, herkes görebilir.')
-                : t('menu_management.draft_description', 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.')
+                ? 'Menünüz yayında, herkes görebilir.'
+                : 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.'
               }
             </p>
           </div>
@@ -219,7 +181,7 @@ const MenuManagementContent = () => {
             onClick={toggleMenuStatus}
             disabled={isLoading}
           >
-            {isLoading ? t('menu_management.updating', 'Güncelleniyor...') : (restaurantData.status === 'active' ? t('menu_management.deactivate', 'Pasif Yap') : t('menu_management.activate', 'Aktif Yap'))}
+            {isLoading ? 'Güncelleniyor...' : (restaurantData.status === 'active' ? 'Pasif Yap' : 'Aktif Yap')}
           </button>
         </div>
       </div>
@@ -228,15 +190,17 @@ const MenuManagementContent = () => {
       <div className="restaurant-stats-section">
         <div className="restaurant-info">
           <h2 className="restaurant-name">
-            {restaurantData?.name || t('menu_management.no_restaurant_name', 'Restoran Adı Belirtilmemiş')}
+            {restaurantData.name || 'Restaurant'}
           </h2>
-          <div className="restaurant-stats">
-            <span className="stat">
-              <strong>{menuStats.totalSections}</strong> {t('menu_management.categories', 'Kategori')}
-            </span>
-            <span className="stat">
-              <strong>{menuStats.totalItems}</strong> {t('menu_management.items', 'Ürün')}
-            </span>
+          <div className="menu-stats">
+            <div className="stat-item">
+              <span className="stat-number">{menuStats.totalSections}</span>
+              <span className="stat-label">Kategori</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{menuStats.totalItems}</span>
+              <span className="stat-label">Ürün</span>
+            </div>
           </div>
         </div>
       </div>
@@ -250,14 +214,14 @@ const MenuManagementContent = () => {
               <PencilIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.edit_content.title', 'Menü İçeriğini Düzenle')}</h3>
+              <h3 className="card-title">Menü İçeriğini Düzenle</h3>
               <p className="card-description">
-                {t('menu_management.edit_content.description', 'Kategoriler, ürünler ve fiyatları düzenleyin')}
+                Kategoriler, ürünler ve fiyatları düzenleyin
               </p>
             </div>
           </div>
           <button onClick={handleEditContent} className="card-action-btn edit-btn">
-            {t('menu_management.edit_content.button', 'İçeriği Düzenle')}
+            İçeriği Düzenle
           </button>
         </div>
 
@@ -268,14 +232,14 @@ const MenuManagementContent = () => {
               <PaintBrushIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.design.title', 'Tasarım Özelleştirme')}</h3>
+              <h3 className="card-title">Tasarım Özelleştirme</h3>
               <p className="card-description">
-                {t('menu_management.design.description', 'Menünüzün görünümünü ve stilini özelleştirin')}
+                Menünüzün görünümünü ve stilini özelleştirin
               </p>
             </div>
           </div>
           <button onClick={handleDesignCustomization} className="card-action-btn design-btn">
-            {t('menu_management.design.button', 'Tasarımı Özelleştir')}
+            Tasarımı Özelleştir
           </button>
         </div>
 
@@ -286,9 +250,9 @@ const MenuManagementContent = () => {
               <QrCodeIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.view_share.title', 'Menüyü Görüntüle ve Paylaş')}</h3>
+              <h3 className="card-title">Menüyü Görüntüle ve Paylaş</h3>
               <p className="card-description">
-                {t('menu_management.view_share.description', 'QR kod ile menünüzü paylaşın ve önizleyin')}
+                QR kod ile menünüzü paylaşın ve önizleyin
               </p>
             </div>
           </div>
@@ -308,7 +272,7 @@ const MenuManagementContent = () => {
               <div className="qr-actions">
                 <button onClick={handleDownloadQR} className="qr-action-btn">
                   <ArrowDownTrayIcon className="w-4 h-4" />
-                  {t('menu_management.download', 'İndir')}
+                  İndir
                 </button>
               </div>
             </div>
@@ -320,7 +284,7 @@ const MenuManagementContent = () => {
                 <button
                   onClick={handleCopyUrl}
                   className={`copy-btn ${copySuccess ? 'success' : ''}`}
-                  title={t('menu_management.copy_url', 'URL\'yi kopyala')}
+                  title="URL'yi kopyala"
                 >
                   {copySuccess ? (
                     <CheckCircleIcon className="w-4 h-4" />
@@ -329,11 +293,11 @@ const MenuManagementContent = () => {
                   )}
                 </button>
               </div>
-
+              
               <div className="share-actions">
                 <button onClick={handlePreviewMenu} className="preview-btn">
                   <EyeIcon className="w-4 h-4" />
-                  {t('menu_management.preview', 'Önizleme')}
+                  Önizleme
                 </button>
               </div>
             </div>
@@ -347,14 +311,14 @@ const MenuManagementContent = () => {
               <BuildingStorefrontIcon className="icon" />
             </div>
             <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.restaurant_settings.title', 'Restoran Ayarları')}</h3>
+              <h3 className="card-title">Restoran Ayarları</h3>
               <p className="card-description">
-                {t('menu_management.restaurant_settings.description', 'Restoran adı, adres ve iletişim bilgilerini düzenleyin')}
+                Restoran adı, adres ve iletişim bilgilerini düzenleyin
               </p>
             </div>
           </div>
           <button onClick={handleRestaurantSettings} className="card-action-btn settings-btn">
-            {t('menu_management.restaurant_settings.button', 'Ayarları Düzenle')}
+            Ayarları Düzenle
           </button>
         </div>
       </div>

@@ -140,27 +140,19 @@ const MenuCreationPage = () => {
 
   // Load existing menu data when component mounts
   useEffect(() => {
-    console.log('🔍 MenuCreationPage: Component mounted, calling loadDashboardMenuData');
-    console.log('🔍 MenuCreationPage: localStorage authUser:', localStorage.getItem('authUser'));
-    console.log('🔍 MenuCreationPage: localStorage qr_menu_data:', localStorage.getItem('qr_menu_data'));
+    console.log('🔍 [MenuCreationPage] Component mounted, calling loadDashboardMenuData');
+    console.log('🔍 [MenuCreationPage] Current restaurant:', currentRestaurant);
+    console.log('🔍 [MenuCreationPage] localStorage authUser:', localStorage.getItem('authUser'));
+    console.log('🔍 [MenuCreationPage] localStorage qr_menu_data:', localStorage.getItem('qr_menu_data'));
 
-    // TEMPORARY: Clear storage to test fresh start (DISABLED for testing persistence)
-    // menuService.clearStorageData();
-
-    // TEMPORARY: Create test user for debugging
-    const testUser = {
-      id: 1,
-      email: 'test@example.com',
-      restaurant_id: 456  // Changed to different restaurant_id to test isolation
-    };
-    localStorage.setItem('authUser', JSON.stringify(testUser));
-    console.log('🔍 Created test user:', testUser);
-
+    // Load the dashboard menu data for the current authenticated user
     loadDashboardMenuData();
   }, [loadDashboardMenuData]);
 
-  // Update local sections when menu data loads
+  // Update local sections when menu data loads - FIXED for new data structure
   useEffect(() => {
+    console.log('🔍 [MenuCreationPage] Loading menu data, currentMenu:', currentMenu);
+
     if (currentMenu && currentMenu.sections) {
       const sectionsWithUI = currentMenu.sections.map(section => ({
         ...section,
@@ -169,20 +161,30 @@ const MenuCreationPage = () => {
         description: normalizeToMultiLanguage(section.description),
         expanded: true,
         imagePreview: section.image, // Use existing image URL as preview
-        items: section.items.map(item => ({
+        items: (section.items || []).map(item => ({
           ...item,
           // Convert old string format to multi-language format
           title: normalizeToMultiLanguage(item.title),
           description: normalizeToMultiLanguage(item.description),
+          price: item.price || '0.00', // FIXED: Ensure price is always set
+          isAvailable: item.isAvailable !== false, // FIXED: Ensure availability is set
           imagePreview: item.image // Use existing image URL as preview
         }))
       }));
+
+      console.log('🔍 [MenuCreationPage] Processed sections:', sectionsWithUI);
       setSections(sectionsWithUI);
+    } else {
+      console.log('🔍 [MenuCreationPage] No current menu data, starting with empty sections');
+      setSections([]);
     }
   }, [currentMenu]);
 
-  // Save menu data to backend
+  // Save menu data - FIXED with proper logging and error handling
   const saveMenuData = async () => {
+    console.log('🔍 [MenuCreationPage] Saving menu data...');
+    console.log('🔍 [MenuCreationPage] Current sections:', sections);
+
     try {
       // Convert sections to the format expected by the backend
       const menuData = {
@@ -192,7 +194,7 @@ const MenuCreationPage = () => {
           description: section.description,
           image: section.image && typeof section.image === 'string' ? section.image : section.imagePreview,
           order: index + 1,
-          items: section.items.map((item, itemIndex) => ({
+          items: (section.items || []).map((item, itemIndex) => ({
             id: item.id,
             title: item.title,
             description: item.description,
@@ -204,15 +206,22 @@ const MenuCreationPage = () => {
         }))
       };
 
+      console.log('🔍 [MenuCreationPage] Formatted menu data for save:', menuData);
+
       await saveMenuContent(menuData);
       setHasUnsavedChanges(false);
 
+      console.log('✅ [MenuCreationPage] Menu data saved successfully');
+
     } catch (error) {
-      console.error('Failed to save menu:', error);
+      console.error('❌ [MenuCreationPage] Failed to save menu:', error);
+      alert('Menü kaydedilirken hata oluştu. Lütfen tekrar deneyin.');
     }
   };
 
   const addSection = () => {
+    console.log('🔍 [MenuCreationPage] Adding new section');
+
     const newSection = {
       id: `section-${Date.now()}`,
       title: { [DEFAULT_LANGUAGE]: 'Yeni Bölüm' },
@@ -222,11 +231,15 @@ const MenuCreationPage = () => {
       imagePreview: null,
       items: []
     };
+
+    console.log('🔍 [MenuCreationPage] New section created:', newSection);
     setSections([...sections, newSection]);
     setHasUnsavedChanges(true);
   };
 
   const updateSection = (sectionId, field, value) => {
+    console.log('🔍 [MenuCreationPage] Updating section:', sectionId, 'field:', field, 'value:', value);
+
     setSections(sections.map(section =>
       section.id === sectionId
         ? { ...section, [field]: value }
@@ -236,6 +249,8 @@ const MenuCreationPage = () => {
   };
 
   const deleteSection = (sectionId) => {
+    console.log('🔍 [MenuCreationPage] Deleting section:', sectionId);
+
     setSections(sections.filter(section => section.id !== sectionId));
     setHasUnsavedChanges(true);
   };
@@ -249,6 +264,8 @@ const MenuCreationPage = () => {
   };
 
   const addItem = (sectionId) => {
+    console.log('🔍 [MenuCreationPage] Adding new item to section:', sectionId);
+
     const newItem = {
       id: `item-${Date.now()}`,
       title: { [DEFAULT_LANGUAGE]: 'Yeni Ürün' },
@@ -259,20 +276,23 @@ const MenuCreationPage = () => {
       isAvailable: true
     };
 
+    console.log('🔍 [MenuCreationPage] New item created:', newItem);
     setSections(sections.map(section =>
       section.id === sectionId
-        ? { ...section, items: [...section.items, newItem] }
+        ? { ...section, items: [...(section.items || []), newItem] }
         : section
     ));
     setHasUnsavedChanges(true);
   };
 
   const updateItem = (sectionId, itemId, field, value) => {
+    console.log('🔍 [MenuCreationPage] Updating item:', itemId, 'in section:', sectionId, 'field:', field, 'value:', value);
+
     setSections(sections.map(section =>
       section.id === sectionId
         ? {
             ...section,
-            items: section.items.map(item =>
+            items: (section.items || []).map(item =>
               item.id === itemId
                 ? { ...item, [field]: value }
                 : item
@@ -284,36 +304,53 @@ const MenuCreationPage = () => {
   };
 
   const deleteItem = (sectionId, itemId) => {
+    console.log('🔍 [MenuCreationPage] Deleting item:', itemId, 'from section:', sectionId);
+
     setSections(sections.map(section =>
       section.id === sectionId
-        ? { ...section, items: section.items.filter(item => item.id !== itemId) }
+        ? { ...section, items: (section.items || []).filter(item => item.id !== itemId) }
         : section
     ));
     setHasUnsavedChanges(true);
   };
 
   const onDragEnd = (result) => {
-    if (!result.destination) return;
+    console.log('🔍 [MenuCreationPage] Drag end result:', result);
+
+    if (!result.destination) {
+      console.log('🔍 [MenuCreationPage] No destination, canceling drag');
+      return;
+    }
 
     const { source, destination, type } = result;
 
     if (type === 'section') {
+      console.log('🔍 [MenuCreationPage] Reordering sections');
       const newSections = Array.from(sections);
       const [reorderedSection] = newSections.splice(source.index, 1);
       newSections.splice(destination.index, 0, reorderedSection);
       setSections(newSections);
+      setHasUnsavedChanges(true);
     } else if (type === 'item') {
+      console.log('🔍 [MenuCreationPage] Reordering items in section:', source.droppableId);
       const sectionId = source.droppableId;
       const section = sections.find(s => s.id === sectionId);
+
+      if (!section || !section.items) {
+        console.warn('⚠️ [MenuCreationPage] Section or items not found for reordering');
+        return;
+      }
+
       const newItems = Array.from(section.items);
       const [reorderedItem] = newItems.splice(source.index, 1);
       newItems.splice(destination.index, 0, reorderedItem);
-      
-      setSections(sections.map(s => 
-        s.id === sectionId 
+
+      setSections(sections.map(s =>
+        s.id === sectionId
           ? { ...s, items: newItems }
           : s
       ));
+      setHasUnsavedChanges(true);
     }
   };
 

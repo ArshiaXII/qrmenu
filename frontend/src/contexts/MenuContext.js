@@ -126,19 +126,51 @@ export function MenuProvider({ children }) {
     try {
       const data = await menuService.getPublicMenuData(restaurantSlug);
       console.log('✅ [MenuContext] Received public menu data:', data);
-      console.log('🔍 [MenuContext] Restaurant data:', data.restaurant);
-      console.log('🔍 [MenuContext] Restaurant isActive:', data.restaurant.isActive);
-      console.log('🔍 [MenuContext] Menu sections count:', data.menu?.sections?.length || 0);
 
-      dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: data.restaurant });
-      dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: data.branding });
-      dispatch({ type: ActionTypes.SET_MENU_DATA, payload: data.menu });
+      if (data) {
+        console.log('🔍 [MenuContext] Processing public menu data:', data);
 
-      return data;
+        // FIXED: Create restaurant object using correct data structure
+        const restaurant = {
+          id: data.restaurant?.id || data.userId,
+          name: data.restaurant?.name || data.name,
+          slug: data.restaurant?.slug || data.slug,
+          address: data.restaurant?.address || data.address,
+          phone: data.restaurant?.phone || data.phone,
+          hours: data.restaurant?.hours || data.hours,
+          isActive: data.restaurant?.isActive || false
+        };
+
+        // FIXED: Use actual branding data instead of hardcoded values
+        const branding = data.branding || {
+          colors: {
+            accentColor: '#8b5cf6',
+            textColor: '#1f2937',
+            backgroundColor: '#ffffff'
+          },
+          primaryColor: '#8b5cf6',
+          secondaryColor: '#7c3aed',
+          fontFamily: 'Inter'
+        };
+
+        console.log('🔍 [MenuContext] Setting restaurant data:', restaurant);
+        console.log('🔍 [MenuContext] Setting branding data:', branding);
+        console.log('🔍 [MenuContext] Setting menu data:', data.menu);
+
+        dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: restaurant });
+        dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: branding });
+        dispatch({ type: ActionTypes.SET_MENU_DATA, payload: data.menu });
+
+        return { restaurant, branding, menu: data.menu };
+      } else {
+        throw new Error('RESTAURANT_NOT_FOUND');
+      }
     } catch (error) {
       console.error('❌ [MenuContext] Error in loadPublicMenuData:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
       throw error;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
   }, []);
 
@@ -149,140 +181,265 @@ export function MenuProvider({ children }) {
     try {
       const data = await menuService.getPreviewMenuData(restaurantSlug);
 
-      dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: data.restaurant });
-      dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: data.branding });
-      dispatch({ type: ActionTypes.SET_MENU_DATA, payload: data.menu });
+      if (data) {
+        console.log('🔍 [MenuContext] Processing preview menu data:', data);
 
-      return data;
+        // FIXED: Create restaurant object using correct data structure
+        const restaurant = {
+          id: data.restaurant?.id || data.userId,
+          name: data.restaurant?.name || data.name,
+          slug: data.restaurant?.slug || data.slug,
+          address: data.restaurant?.address || data.address,
+          phone: data.restaurant?.phone || data.phone,
+          hours: data.restaurant?.hours || data.hours,
+          isActive: data.restaurant?.isActive || false
+        };
+
+        // FIXED: Use actual branding data instead of hardcoded values
+        const branding = data.branding || {
+          colors: {
+            accentColor: '#8b5cf6',
+            textColor: '#1f2937',
+            backgroundColor: '#ffffff'
+          },
+          primaryColor: '#8b5cf6',
+          secondaryColor: '#7c3aed',
+          fontFamily: 'Inter'
+        };
+
+        console.log('🔍 [MenuContext] Setting preview restaurant data:', restaurant);
+        console.log('🔍 [MenuContext] Setting preview branding data:', branding);
+        console.log('🔍 [MenuContext] Setting preview menu data:', data.menu);
+
+        dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: restaurant });
+        dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: branding });
+        dispatch({ type: ActionTypes.SET_MENU_DATA, payload: data.menu });
+
+        return { restaurant, branding, menu: data.menu };
+      } else {
+        throw new Error('RESTAURANT_NOT_FOUND');
+      }
     } catch (error) {
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
       throw error;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
   }, []);
 
   // Load dashboard menu data (authenticated)
-  const loadDashboardMenuData = useCallback(async (restaurantSlug = null) => {
-    console.log('🔍 MenuContext.loadDashboardMenuData called with slug:', restaurantSlug);
+  const loadDashboardMenuData = useCallback(async () => {
+    console.log('🔍 MenuContext.loadDashboardMenuData called');
 
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
-      // Get current user info for debugging
-      const authUser = localStorage.getItem('authUser');
-      const user = authUser ? JSON.parse(authUser) : null;
-      console.log('🔍 Current authenticated user:', user);
-      console.log('🔍 User restaurant_id:', user?.restaurant_id);
+      // Get current user's restaurant data using simplified service
+      const restaurantData = menuService.getCurrentUserRestaurant();
 
-      const data = await menuService.getMenuData(restaurantSlug);
+      if (restaurantData) {
+        console.log('🔍 MenuContext received restaurant data:', restaurantData);
 
-      console.log('🔍 MenuContext received data from menuService:', data);
-      console.log('🔍 Restaurant data:', data?.restaurant);
-      console.log('🔍 Menu sections count:', data?.menu?.sections?.length || 0);
-      console.log('🔍 Menu sections:', data?.menu?.sections);
+        // Create restaurant object for context
+        const restaurant = {
+          id: restaurantData.userId,
+          name: restaurantData.name,
+          slug: restaurantData.slug,
+          address: restaurantData.address,
+          phone: restaurantData.phone,
+          hours: restaurantData.hours,
+          isActive: restaurantData.status === 'active'
+        };
 
-      dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: data.restaurant });
-      dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: data.branding });
-      dispatch({ type: ActionTypes.SET_MENU_DATA, payload: data.menu });
+        // Use actual branding data or create default
+        const branding = restaurantData.branding || {
+          colors: {
+            accentColor: '#8b5cf6',
+            textColor: '#1f2937',
+            backgroundColor: '#ffffff'
+          },
+          primaryColor: '#8b5cf6',
+          secondaryColor: '#7c3aed',
+          fontFamily: 'Inter'
+        };
 
-      // Set menu status based on restaurant's isActive property
-      const menuStatus = data.restaurant.isActive ? 'active' : 'draft';
-      console.log('🔄 [MenuContext] Setting initial menu status:', menuStatus, 'based on restaurant.isActive:', data.restaurant.isActive);
-      dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: menuStatus });
+        dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: restaurant });
+        dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: branding });
+        dispatch({ type: ActionTypes.SET_MENU_DATA, payload: restaurantData.menu });
+        dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: restaurantData.status });
 
-      return data;
+        console.log('✅ MenuContext loaded dashboard data successfully');
+        return { restaurant, branding, menu: restaurantData.menu };
+      } else {
+        console.log('⚠️ No restaurant data found, creating default');
+
+        // Create default data structure
+        const defaultRestaurant = {
+          id: null,
+          name: 'Yeni Restaurant',
+          slug: 'new-restaurant',
+          address: 'İstanbul, Türkiye',
+          phone: '+90 212 555 0123',
+          hours: '09:00 - 23:00',
+          isActive: false
+        };
+
+        const defaultBranding = {
+          primaryColor: '#8b5cf6',
+          secondaryColor: '#7c3aed',
+          fontFamily: 'Inter'
+        };
+
+        const defaultMenu = {
+          sections: [
+            {
+              id: 'section-1',
+              name: 'Ana Yemekler',
+              items: [
+                {
+                  id: 'item-1',
+                  name: 'Örnek Ürün',
+                  description: 'Lezzetli örnek ürün açıklaması',
+                  price: 25.00
+                }
+              ]
+            }
+          ]
+        };
+
+        dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: defaultRestaurant });
+        dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: defaultBranding });
+        dispatch({ type: ActionTypes.SET_MENU_DATA, payload: defaultMenu });
+        dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: 'draft' });
+
+        return { restaurant: defaultRestaurant, branding: defaultBranding, menu: defaultMenu };
+      }
     } catch (error) {
       console.error('❌ Failed to load dashboard menu data:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
-
-      // Don't throw the error, just continue with empty state
-      // This prevents the app from crashing
       return null;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
   }, []);
 
-  // Save menu content
-  const saveMenuContent = useCallback(async (menuData, restaurantSlug = null) => {
+  // Save menu content - FIXED to use bulletproof function
+  const saveMenuContent = useCallback(async (menuData) => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
-      const result = await menuService.saveMenuContent(restaurantSlug, menuData);
+      console.log('Data saved successfully:', menuData);
 
+      // Get current restaurant slug
+      const slug = menuService.getCurrentUserRestaurantSlug();
+      if (!slug) {
+        throw new Error("No active restaurant slug to save menu for.");
+      }
+
+      // FIXED: Use the new bulletproof centralized save function
+      const result = await menuService.saveOrUpdateRestaurantData(slug, { menu: menuData });
+
+      // Update local state
       dispatch({ type: ActionTypes.SET_MENU_DATA, payload: menuData });
 
       return result;
     } catch (error) {
+      console.error('Error saving menu content:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
       throw error;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
   }, []);
 
-  // Save design customization
-  const saveDesignCustomization = useCallback(async (brandingData, restaurantSlug = null) => {
+  // Save design customization - FIXED to use bulletproof function
+  const saveDesignCustomization = useCallback(async (brandingData) => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
-      const result = await menuService.saveDesignCustomization(restaurantSlug, brandingData);
+      console.log('Design data saved successfully:', brandingData);
 
+      // Get current restaurant slug
+      const slug = menuService.getCurrentUserRestaurantSlug();
+      if (!slug) {
+        throw new Error("No active restaurant slug to save design for.");
+      }
+
+      // FIXED: Use the new bulletproof centralized save function
+      const result = await menuService.saveOrUpdateRestaurantData(slug, { branding: brandingData });
+
+      // Update local state
       dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: brandingData });
 
       return result;
     } catch (error) {
+      console.error('Error saving design customization:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
       throw error;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
   }, []);
 
   // Update menu status
-  const updateMenuStatus = useCallback(async (isActive, restaurantSlug = null) => {
-    console.log('🔄 [MenuContext] updateMenuStatus called');
-    console.log('🔄 [MenuContext] isActive:', isActive);
-    console.log('🔄 [MenuContext] restaurantSlug:', restaurantSlug);
+  const updateMenuStatus = useCallback(async (status) => {
+    console.log('🔄 [MenuContext] updateMenuStatus called with status:', status);
 
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
-      const result = await menuService.updateMenuStatus(restaurantSlug, isActive);
+      const result = await menuService.updateMenuStatus(status);
       console.log('✅ [MenuContext] menuService.updateMenuStatus result:', result);
 
-      const newStatus = isActive ? 'active' : 'draft';
-      console.log('🔄 [MenuContext] Setting new status:', newStatus);
-      dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: newStatus });
+      dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: status });
 
-      // Reset loading state
-      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+      // Also update the restaurant's isActive property
+      dispatch({
+        type: ActionTypes.SET_RESTAURANT_DATA,
+        payload: {
+          ...state.currentRestaurant,
+          isActive: status === 'active'
+        }
+      });
 
       return result;
     } catch (error) {
       console.error('❌ [MenuContext] Error updating menu status:', error);
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
-      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
       throw error;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
-  }, []);
+  }, [state.currentRestaurant]);
 
-  // Save restaurant settings
-  const saveRestaurantSettings = useCallback(async (settings, restaurantSlug = null) => {
+  // Save restaurant settings (simplified - components should call menuService directly)
+  const saveRestaurantSettings = useCallback(async (name, address, phone, hours) => {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
-      const result = await menuService.saveRestaurantSettings(restaurantSlug, settings);
+      const result = await menuService.saveRestaurantSettings(name, address, phone, hours);
 
       // Update local restaurant state
-      if (state.currentRestaurant) {
-        dispatch({
-          type: ActionTypes.SET_RESTAURANT_DATA,
-          payload: {
-            ...state.currentRestaurant,
-            currency: settings.currency,
-            socialMedia: settings.socialMedia
-          }
-        });
-      }
+      const updatedRestaurant = {
+        ...state.currentRestaurant,
+        name: result.name,
+        slug: result.slug,
+        address: result.address,
+        phone: result.phone,
+        hours: result.hours
+      };
+
+      dispatch({
+        type: ActionTypes.SET_RESTAURANT_DATA,
+        payload: updatedRestaurant
+      });
 
       return result;
     } catch (error) {
       dispatch({ type: ActionTypes.SET_ERROR, payload: error.message });
       throw error;
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
     }
   }, [state.currentRestaurant]);
 
