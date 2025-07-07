@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import menuService from '../services/menuService';
 
@@ -26,19 +26,85 @@ const OnboardingWizard = ({ onComplete }) => {
     // logo_path will be handled separately if we add upload here
   });
 
+  // Name validation states (like Instagram username validation)
+  const [nameValidation, setNameValidation] = useState({ isValid: true, message: '' });
+  const [isCheckingName, setIsCheckingName] = useState(false);
+
   const handleNext = () => {
     setCurrentStep(prev => prev + 1);
   };
 
   const handleRestaurantDetailsChange = (e) => {
-    setRestaurantData({ ...restaurantData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setRestaurantData({ ...restaurantData, [name]: value });
+
+    // Real-time name validation (like Instagram)
+    if (name === 'name') {
+      setError(''); // Clear general error
+
+      if (!value.trim()) {
+        setNameValidation({ isValid: true, message: '' });
+        setIsCheckingName(false);
+        return;
+      }
+
+      // Show checking state
+      setIsCheckingName(true);
+      setNameValidation({ isValid: true, message: '' });
+
+      // Debounce validation check (like Instagram)
+      setTimeout(async () => {
+        try {
+          const isUnique = await menuService.checkRestaurantNameUnique(value.trim());
+          if (!isUnique) {
+            setNameValidation({
+              isValid: false,
+              message: 'Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.'
+            });
+          } else {
+            setNameValidation({ isValid: true, message: 'Bu ad kullanılabilir!' });
+          }
+        } catch (error) {
+          console.error('Error checking name uniqueness:', error);
+          setNameValidation({
+            isValid: false,
+            message: 'Ad kontrolü yapılırken hata oluştu.'
+          });
+        } finally {
+          setIsCheckingName(false);
+        }
+      }, 500); // 500ms debounce
+    }
   };
 
   const handleSaveRestaurantDetails = async () => {
     setIsLoading(true);
     setError('');
+
+    // Validation checks
     if (!restaurantData.name.trim()) {
       setError('Restaurant name is required.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if name validation failed
+    if (!nameValidation.isValid) {
+      setError('Please fix the restaurant name issue before continuing.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Double-check name uniqueness before saving
+    try {
+      const isUnique = await menuService.checkRestaurantNameUnique(restaurantData.name.trim());
+      if (!isUnique) {
+        setError('Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.');
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      setError('Name validation failed. Please try again.');
       setIsLoading(false);
       return;
     }
@@ -105,9 +171,46 @@ const OnboardingWizard = ({ onComplete }) => {
       {error && <p className="text-red-500 bg-red-100 p-3 rounded-md text-sm mb-4">{error}</p>}
       <form onSubmit={(e) => { e.preventDefault(); handleSaveRestaurantDetails(); }} className="space-y-4">
          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Restaurant Name *</label>
-            <input type="text" name="name" id="name" value={restaurantData.name} onChange={handleRestaurantDetailsChange} required
-                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"/>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+              Restaurant Name *
+              <span className="text-xs text-gray-500">(This will be your unique URL)</span>
+            </label>
+            <input
+              type="text"
+              name="name"
+              id="name"
+              value={restaurantData.name}
+              onChange={handleRestaurantDetailsChange}
+              required
+              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none sm:text-sm ${
+                !nameValidation.isValid
+                  ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                  : nameValidation.message && nameValidation.isValid
+                  ? 'border-green-300 focus:ring-green-500 focus:border-green-500'
+                  : 'border-gray-300 focus:ring-indigo-500 focus:border-indigo-500'
+              }`}
+              placeholder="e.g., Lezzet Durağı"
+            />
+
+            {/* Validation Messages (Instagram-style) */}
+            {isCheckingName && (
+              <div className="mt-1 text-sm text-gray-500 flex items-center">
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-500 mr-2"></div>
+                Checking availability...
+              </div>
+            )}
+            {!isCheckingName && nameValidation.message && (
+              <div className={`mt-1 text-sm ${nameValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
+                {nameValidation.isValid ? '✅' : '❌'} {nameValidation.message}
+              </div>
+            )}
+            {restaurantData.name && !isCheckingName && nameValidation.isValid && (
+              <div className="mt-1 text-xs text-gray-500">
+                Your URL will be: <span className="font-mono bg-gray-100 px-1 rounded">
+                  /menu/{restaurantData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}
+                </span>
+              </div>
+            )}
           </div>
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">Short Description (Optional)</label>
@@ -126,9 +229,12 @@ const OnboardingWizard = ({ onComplete }) => {
             </div>
             {/* TODO: Add Logo Upload Step later if desired */}
          <div className="pt-4 flex justify-end">
-             <button type="submit" disabled={isLoading}
-                    className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
-              {isLoading ? 'Saving...' : 'Next'}
+             <button
+               type="submit"
+               disabled={isLoading || !nameValidation.isValid || isCheckingName || !restaurantData.name.trim()}
+               className="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+             >
+              {isLoading ? 'Saving...' : isCheckingName ? 'Checking...' : 'Next'}
             </button>
          </div>
       </form>
