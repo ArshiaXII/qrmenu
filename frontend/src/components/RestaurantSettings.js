@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/NewAuthContext';
 import menuService from '../services/menuService';
+import './RestaurantSettings/RestaurantSettings.css';
 
 const RestaurantSettings = () => {
   const { user, currentRestaurant, updateRestaurant } = useAuth();
@@ -29,9 +30,9 @@ const RestaurantSettings = () => {
     try {
       // RULE 1: Check if name is taken by another restaurant
       const currentSlug = currentRestaurant?.slug;
-      const isNameTaken = menuService.isNameTaken(restaurantName.trim(), currentSlug);
-      
-      if (isNameTaken) {
+      const isNameUnique = await menuService.checkRestaurantNameUnique(restaurantName.trim(), currentSlug);
+
+      if (!isNameUnique) {
         setError('Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.');
         setLoading(false);
         return;
@@ -139,137 +140,6 @@ const RestaurantSettings = () => {
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .restaurant-settings {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-        }
-
-        .settings-card {
-          background: white;
-          border-radius: 8px;
-          padding: 24px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-group {
-          margin-bottom: 20px;
-        }
-
-        label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 600;
-          color: #374151;
-        }
-
-        input {
-          width: 100%;
-          padding: 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 16px;
-        }
-
-        input:focus {
-          outline: none;
-          border-color: #8b5cf6;
-          box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-        }
-
-        .help-text {
-          display: block;
-          margin-top: 4px;
-          color: #6b7280;
-          font-size: 14px;
-        }
-
-        .url-preview {
-          margin-bottom: 20px;
-          padding: 16px;
-          background: #f9fafb;
-          border-radius: 6px;
-        }
-
-        .url-display {
-          margin-top: 8px;
-        }
-
-        .url-display code {
-          background: white;
-          padding: 8px 12px;
-          border-radius: 4px;
-          border: 1px solid #e5e7eb;
-          font-family: monospace;
-          word-break: break-all;
-        }
-
-        .error-message {
-          background: #fef2f2;
-          color: #dc2626;
-          padding: 12px;
-          border-radius: 6px;
-          margin-bottom: 20px;
-          border: 1px solid #fecaca;
-        }
-
-        .success-message {
-          background: #f0fdf4;
-          color: #16a34a;
-          padding: 12px;
-          border-radius: 6px;
-          margin-bottom: 20px;
-          border: 1px solid #bbf7d0;
-        }
-
-        .save-button {
-          background: #8b5cf6;
-          color: white;
-          padding: 12px 24px;
-          border: none;
-          border-radius: 6px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-
-        .save-button:hover:not(:disabled) {
-          background: #7c3aed;
-        }
-
-        .save-button:disabled {
-          background: #9ca3af;
-          cursor: not-allowed;
-        }
-
-        .current-info {
-          margin-top: 32px;
-          padding-top: 24px;
-          border-top: 1px solid #e5e7eb;
-        }
-
-        .current-info h3 {
-          margin-bottom: 16px;
-          color: #374151;
-        }
-
-        .current-info p {
-          margin-bottom: 8px;
-          color: #6b7280;
-        }
-
-        .current-info a {
-          color: #8b5cf6;
-          text-decoration: none;
-        }
-
-        .current-info a:hover {
-          text-decoration: underline;
-        }
-      `}</style>
     </div>
   );
 };

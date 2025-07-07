@@ -62,10 +62,13 @@ const RestaurantSettings = () => {
 
     // Check name uniqueness if not empty
     if (newName.trim()) {
-      const isUnique = menuService.isRestaurantNameUnique(newName);
-      if (!isUnique) {
-        setNameError('Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.');
-      }
+      menuService.checkRestaurantNameUnique(newName).then(isUnique => {
+        if (!isUnique) {
+          setNameError('Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.');
+        }
+      }).catch(error => {
+        console.error('Error checking name uniqueness:', error);
+      });
     }
   };
 
