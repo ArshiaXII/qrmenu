@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import menuService from '../services/menuService';
 
 // Define steps
 const STEPS = {
@@ -16,7 +16,7 @@ const OnboardingWizard = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { user, login } = useAuth(); // Need login to potentially refresh user data after profile save
+  const { user } = useAuth();
 
   // State for Restaurant Details step
   const [restaurantData, setRestaurantData] = useState({
@@ -44,26 +44,30 @@ const OnboardingWizard = ({ onComplete }) => {
     }
 
     try {
-      // Use the same upsert endpoint as RestaurantSettings
-      // This will also mark onboarding as complete on the backend
-      const response = await api.put('/restaurants/me', {
-        name: restaurantData.name,
-        description: restaurantData.description,
-        currency_code: restaurantData.currency_code,
-        // Not handling logo here for simplicity, user can add in settings
-      });
+      console.log("Onboarding: Saving restaurant details to localStorage...");
 
-      if (response.status === 200 && response.data.restaurant) {
-         console.log("Onboarding: Restaurant details saved.");
-         // Optionally: Refresh user context if needed, though profile save marks complete
-         // await login(user.email, /* need password? */); // Re-login might be complex
-         handleNext(); // Move to finish step
+      // Create restaurant data for localStorage
+      const restaurantInfo = {
+        name: restaurantData.name.trim(),
+        description: restaurantData.description || '',
+        currency: restaurantData.currency_code || 'TRY',
+        status: 'active',
+        userId: user.id,
+        onboarding_completed: true
+      };
+
+      // Save using menuService
+      const result = await menuService.saveRestaurantName(restaurantInfo.name);
+
+      if (result) {
+        console.log("Onboarding: Restaurant details saved successfully.");
+        handleNext(); // Move to finish step
       } else {
         throw new Error('Failed to save restaurant details');
       }
     } catch (err) {
       console.error("Error saving restaurant details during onboarding:", err);
-      setError(err.response?.data?.message || 'Failed to save details.');
+      setError(err.message || 'Failed to save details.');
     } finally {
       setIsLoading(false);
     }
