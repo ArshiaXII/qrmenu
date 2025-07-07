@@ -352,22 +352,29 @@ class MenuService {
   // Check if restaurant name is unique
   async checkRestaurantNameUnique(name, excludeSlug = null) {
     try {
-      const storageData = this.getStorageData();
-      const restaurants = storageData.restaurants || {};
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) return false;
+
+      const normalizedName = name.toLowerCase().trim();
+      const allData = this.getAllRestaurantData();
 
       // Check if any restaurant has the same name (case-insensitive)
-      for (const [slug, data] of Object.entries(restaurants)) {
+      for (const [slug, restaurantData] of Object.entries(allData)) {
+        // Skip current user's restaurant if excludeSlug is provided
         if (excludeSlug && slug === excludeSlug) continue;
 
-        if (data.restaurant?.name?.toLowerCase() === name.toLowerCase()) {
-          return false; // Name is not unique
+        // Skip current user's restaurant by userId
+        if (restaurantData.userId === currentUser.id) continue;
+
+        if (restaurantData.name && restaurantData.name.toLowerCase().trim() === normalizedName) {
+          return false; // Name already exists
         }
       }
 
       return true; // Name is unique
     } catch (error) {
       console.error('Error checking restaurant name uniqueness:', error);
-      throw error;
+      return false; // Return false on error to be safe
     }
   }
 
