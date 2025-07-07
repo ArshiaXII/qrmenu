@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const RootRedirect = () => {
-  const { authUser, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
     return (
@@ -14,7 +14,7 @@ const RootRedirect = () => {
 
   // If user is authenticated, redirect to dashboard
   // If not authenticated, redirect to login
-  return authUser ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+  return isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
 };
 
 export default RootRedirect;
