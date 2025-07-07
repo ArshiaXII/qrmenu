@@ -388,7 +388,9 @@ export function MenuProvider({ children }) {
     dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
     try {
-      const result = await menuService.updateMenuStatus(status);
+      // Convert status to boolean for menuService
+      const isActive = status === 'active';
+      const result = await menuService.updateMenuStatus(null, isActive);
       console.log('✅ [MenuContext] menuService.updateMenuStatus result:', result);
 
       dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: status });

@@ -12,7 +12,7 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 // Page Components
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import DashboardOverview from './pages/DashboardOverview';
+import DashboardPage from './components/Dashboard/DashboardPage';
 import RestaurantSettings from './pages/RestaurantSettings';
 
 // Dashboard Content Components
@@ -53,7 +53,7 @@ function App() {
                     <Route element={<ProtectedRouteWrapper />}>
                       <Route path="/dashboard" element={<DashboardLayout />}>
                         <Route index element={<Navigate to="overview" replace />} />
-                        <Route path="overview" element={<DashboardOverview />} />
+                        <Route path="overview" element={<DashboardPage />} />
 
                         {/* Menu Management */}
                         <Route path="menu-management" element={<MenuManagementContent />} />
