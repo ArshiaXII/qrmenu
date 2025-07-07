@@ -147,6 +147,14 @@ class MenuService {
         }
       };
     }
+
+    // Save the updated data to localStorage
+    const saved = this.saveAllRestaurantData(allData);
+    if (saved) {
+      return { success: true, slug: newSlug, name: name };
+    } else {
+      throw new Error('Failed to save restaurant data to localStorage');
+    }
   }
 
   // Save menu content
