@@ -72,8 +72,41 @@ export const AuthProvider = ({ children }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Added logout to dependency array if it were used inside, but it's defined outside effect scope
 
-    // Original Login Function (Uses API)
-    const login = async (email, password) => { // Changed username back to email
+    // Development Login Function (Bypasses API for testing)
+    const login = async (email, password) => {
+        try {
+            // For development: allow any email/password combination
+            if (email && password) {
+                console.log('[AuthContext] Development login - bypassing API');
+
+                const mockUser = {
+                    id: 1,
+                    email: email,
+                    name: email.split('@')[0],
+                    role: 'user'
+                };
+
+                const mockToken = 'dev-token-' + Date.now();
+
+                setUser(mockUser);
+                setToken(mockToken);
+                safeLocalStorage.setItem('authUser', JSON.stringify(mockUser));
+                safeLocalStorage.setItem('authToken', mockToken);
+
+                console.log('[AuthContext] Development login successful');
+                return { success: true, user: mockUser };
+            } else {
+                throw new Error('Email and password are required');
+            }
+        } catch (error) {
+            console.error('[AuthContext] Login error:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    // Original Login Function (Uses API) - commented out for development
+    /*
+    const loginWithAPI = async (email, password) => {
         try {
             console.log(`[AuthContext] Making login request to ${api.defaults.baseURL}/auth/login`);
             // Use the api instance
@@ -143,37 +176,22 @@ export const AuthProvider = ({ children }) => {
             };
         }
     };
+    */
 
-    // Original Signup Function (Uses API)
-    const signup = async (email, password) => { // Changed username back to email
-         try {
-             console.log(`[AuthContext] Making signup request to ${api.defaults.baseURL}/auth/register`); // Use /register endpoint
-             // Use the api instance
-             const response = await api.post('/auth/register', { email, password }); // Use email
-             console.log("[AuthContext] Signup successful:", response.data);
-             // Assuming backend returns a success message upon registration
-             return { success: true, message: response.data.message || 'Signup successful! Please log in.' };
-         } catch (error) {
-             console.error('[AuthContext] Signup error:');
-             if (error.response) {
-                 // Server responded with a status code outside of 2xx range
-                 console.error('  Status:', error.response.status);
-                 console.error('  Data:', error.response.data);
-                 console.error('  Headers:', error.response.headers);
-             } else if (error.request) {
-                 // Request was made but no response received
-                 console.error('  No response received:', error.request);
-             } else {
-                 // Something happened in setting up the request
-                 console.error('  Error message:', error.message);
-             }
-             console.error('  Error config:', error.config);
-
-            return {
-                success: false,
-                message: error.response?.data?.message || 'Signup failed. Please try again and ensure the server is running.'
-            };
-         }
+    // Development Signup Function (Bypasses API for testing)
+    const signup = async (email, password) => {
+        try {
+            // For development: allow any email/password combination
+            if (email && password) {
+                console.log('[AuthContext] Development signup - bypassing API');
+                return { success: true, message: 'Signup successful! Please log in.' };
+            } else {
+                throw new Error('Email and password are required');
+            }
+        } catch (error) {
+            console.error('[AuthContext] Signup error:', error);
+            return { success: false, message: error.message };
+        }
     };
 
     const logout = () => {
