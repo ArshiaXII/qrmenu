@@ -14,7 +14,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import { useMenu } from '../../contexts/MenuContext';
-import StorageDebugger from '../Debug/StorageDebugger';
+
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
@@ -244,8 +244,7 @@ const MenuManagementContent = () => {
 
   return (
     <div className="menu-management-content">
-      {/* Debug component - remove in production */}
-      <StorageDebugger />
+
       {/* Page Header */}
       <div className="page-header">
         <div className="header-content">

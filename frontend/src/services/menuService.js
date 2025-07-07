@@ -480,14 +480,14 @@ class MenuService {
       console.log('🔄 [menuService] restaurantSlug:', restaurantSlug);
       console.log('🔄 [menuService] isActive:', isActive);
 
-      // CRITICAL: Ensure restaurant data exists before updating
-      console.log('🔄 [menuService] Ensuring restaurant data exists before status update...');
-      const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
-      this.ensureRestaurantDataExists(targetSlug || this.getCurrentUserRestaurantSlug(), currentUser);
-
       // Use current user's restaurant slug if not provided
       const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
       console.log('🔄 [menuService] targetSlug (final):', targetSlug);
+
+      // CRITICAL: Ensure restaurant data exists before updating
+      console.log('🔄 [menuService] Ensuring restaurant data exists before status update...');
+      const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+      this.ensureRestaurantDataExists(targetSlug, currentUser);
 
       if (!targetSlug) {
         console.error('❌ [menuService] No restaurant slug available');
