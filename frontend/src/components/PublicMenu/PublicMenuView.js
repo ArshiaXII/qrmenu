@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import {
   MagnifyingGlassIcon,
@@ -189,7 +189,7 @@ const PublicMenuView = () => {
   console.log('🔍 [PublicMenuView] Status check - currentRestaurant.isActive:', currentRestaurant?.isActive);
   console.log('🔍 [PublicMenuView] Status check - currentRestaurant:', currentRestaurant);
 
-  if (!isPreview && !currentRestaurant.isActive) {
+  if (!isPreview && !currentRestaurant?.isActive) {
     console.log('❌ [PublicMenuView] Menu is inactive, showing unavailable message');
     return (
       <div className="public-menu-unavailable">
@@ -220,17 +220,17 @@ const PublicMenuView = () => {
 
   // Dynamic styles based on branding
   const pageStyle = {
-    backgroundColor: currentBranding.colors.backgroundColor,
-    color: currentBranding.colors.textColor,
-    '--accent-color': currentBranding.colors.accentColor,
-    '--text-color': currentBranding.colors.textColor,
-    '--bg-color': currentBranding.colors.backgroundColor,
+    backgroundColor: currentBranding?.colors?.backgroundColor || '#f9fafb',
+    color: currentBranding?.colors?.textColor || '#1f2937',
+    '--accent-color': currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6',
+    '--text-color': currentBranding?.colors?.textColor || '#1f2937',
+    '--bg-color': currentBranding?.colors?.backgroundColor || '#f9fafb',
     position: 'relative'
   };
 
   // Background image and theme styles
   const backgroundStyle = {};
-  if (currentBranding.backgroundImage) {
+  if (currentBranding?.backgroundImage) {
     backgroundStyle.backgroundImage = `url(${currentBranding.backgroundImage})`;
     backgroundStyle.backgroundRepeat = currentBranding.backgroundSettings?.repeat || 'no-repeat';
     backgroundStyle.backgroundSize = currentBranding.backgroundSettings?.size || 'cover';
@@ -239,12 +239,12 @@ const PublicMenuView = () => {
     if (currentBranding.backgroundSettings?.opacity !== undefined) {
       backgroundStyle.opacity = currentBranding.backgroundSettings.opacity / 100;
     }
-  } else if (currentBranding.selectedTheme) {
+  } else if (currentBranding?.selectedTheme) {
     Object.assign(backgroundStyle, currentBranding.selectedTheme.style);
   }
 
   // Card styles for menu items and sections
-  const cardStyle = currentBranding.cardStyles ? {
+  const cardStyle = currentBranding?.cardStyles ? {
     backgroundColor: `rgba(${parseInt(currentBranding.cardStyles.backgroundColor?.slice(1, 3) || 'ff', 16)}, ${parseInt(currentBranding.cardStyles.backgroundColor?.slice(3, 5) || 'ff', 16)}, ${parseInt(currentBranding.cardStyles.backgroundColor?.slice(5, 7) || 'ff', 16)}, ${(currentBranding.cardStyles.backgroundOpacity || 95) / 100})`,
     border: `${currentBranding.cardStyles.borderWidth || 1}px ${currentBranding.cardStyles.borderStyle || 'solid'} ${currentBranding.cardStyles.borderColor || '#e5e7eb'}`,
     borderRadius: `${currentBranding.cardStyles.cornerRadius || 8}px`,
@@ -254,7 +254,7 @@ const PublicMenuView = () => {
   return (
     <div className="public-menu-view" style={{...pageStyle, ...backgroundStyle}}>
       {/* Background Overlay */}
-      {(currentBranding.backgroundImage || currentBranding.selectedTheme) && currentBranding.overlayOpacity > 0 && (
+      {(currentBranding?.backgroundImage || currentBranding?.selectedTheme) && (currentBranding?.overlayOpacity || 0) > 0 && (
         <div
           className="background-overlay"
           style={{
@@ -263,8 +263,8 @@ const PublicMenuView = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: currentBranding.overlayColor || '#000000',
-            opacity: (currentBranding.overlayOpacity || 0) / 100,
+            backgroundColor: currentBranding?.overlayColor || '#000000',
+            opacity: (currentBranding?.overlayOpacity || 0) / 100,
             pointerEvents: 'none',
             zIndex: 1
           }}
@@ -283,21 +283,21 @@ const PublicMenuView = () => {
             fontSize: '14px',
             fontWeight: '500'
           }}>
-            📱 Önizleme Modu - Bu menü şu anda {currentRestaurant.isActive ? 'aktif' : 'taslak'} durumda
+            📱 Önizleme Modu - Bu menü şu anda {currentRestaurant?.isActive ? 'aktif' : 'taslak'} durumda
           </div>
         )}
 
       {/* Header */}
-      <header className="menu-header" style={{ backgroundColor: currentBranding.colors.backgroundColor }}>
+      <header className="menu-header" style={{ backgroundColor: currentBranding?.colors?.backgroundColor || '#ffffff' }}>
         <div className="header-content">
 
 
           {/* Logo */}
           <div className="restaurant-logo">
-            {currentBranding.logo ? (
+            {currentBranding?.logo ? (
               <img
                 src={currentBranding.logo}
-                alt={currentRestaurant.name}
+                alt={currentRestaurant?.name || 'Restaurant'}
                 onError={(e) => {
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'flex';
@@ -306,7 +306,7 @@ const PublicMenuView = () => {
             ) : null}
             <div
               className="logo-placeholder"
-              style={{ display: currentBranding.logo ? 'none' : 'flex' }}
+              style={{ display: currentBranding?.logo ? 'none' : 'flex' }}
             >
               <PhotoIcon className="logo-icon" />
             </div>
@@ -314,19 +314,19 @@ const PublicMenuView = () => {
 
           {/* Restaurant Info */}
           <div className="restaurant-info">
-            <h1 className="restaurant-name">{currentRestaurant.name}</h1>
+            <h1 className="restaurant-name">{currentRestaurant?.name || 'Restaurant'}</h1>
             <div className="restaurant-details">
               <div className="detail-item">
                 <MapPinIcon className="detail-icon" />
-                <span>{currentRestaurant.address}</span>
+                <span>{currentRestaurant?.address || 'Address not available'}</span>
               </div>
               <div className="detail-item">
                 <ClockIcon className="detail-icon" />
-                <span>{currentRestaurant.hours}</span>
+                <span>{currentRestaurant?.hours || 'Hours not available'}</span>
               </div>
               <div className="detail-item">
                 <PhoneIcon className="detail-icon" />
-                <span>{currentRestaurant.phone}</span>
+                <span>{currentRestaurant?.phone || 'Phone not available'}</span>
               </div>
             </div>
           </div>
@@ -377,7 +377,7 @@ const PublicMenuView = () => {
                 section={section}
                 isActive={activeSection === index}
                 onClick={() => scrollToSection(index)}
-                accentColor={currentBranding.colors.accentColor}
+                accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
                 selectedLanguage={selectedLanguage}
               />
             ))}
@@ -401,8 +401,8 @@ const PublicMenuView = () => {
                     item={item}
                     showSection={true}
                     sectionTitle={item.sectionTitle}
-                    textColor={currentBranding.colors.textColor}
-                    accentColor={currentBranding.colors.accentColor}
+                    textColor={currentBranding?.colors?.textColor || '#1f2937'}
+                    accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
                     cardStyle={cardStyle}
                     currencySymbol={currencySymbol}
                     selectedLanguage={selectedLanguage}
@@ -453,8 +453,8 @@ const PublicMenuView = () => {
                     <MenuItemCard
                       key={item.id}
                       item={item}
-                      textColor={currentBranding.colors.textColor}
-                      accentColor={currentBranding.colors.accentColor}
+                      textColor={currentBranding?.colors?.textColor || '#1f2937'}
+                      accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
                       cardStyle={cardStyle}
                       currencySymbol={currencySymbol}
                       selectedLanguage={selectedLanguage}

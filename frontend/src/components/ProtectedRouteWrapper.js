@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Navigate } from 'react-router-dom';
-import api from '../services/api';
+// import api from '../services/api'; // DISABLED: Using localStorage instead
 import { useAuth } from '../contexts/AuthContext';
 import OnboardingWizard from './OnboardingWizard'; // Import the wizard
+import menuService from '../services/menuService'; // ADDED: For localStorage-based restaurant data
 
 const ProtectedRouteWrapper = () => {
   const { user, isLoading: authLoading, logout } = useAuth();
@@ -11,12 +12,12 @@ const ProtectedRouteWrapper = () => {
   const [profileError, setProfileError] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // New state to trigger refresh
 
-  // Define fetchProfile once, in the component scope
+  // FIXED: Define fetchProfile to use localStorage instead of API
   const fetchProfile = async () => {
     if (!user || authLoading) {
       // If auth is still loading or no user, don't attempt to fetch profile yet.
       // For the case where user becomes available, useEffect will trigger it.
-      if (!authLoading && !user) { 
+      if (!authLoading && !user) {
         setProfileLoading(false); // Not loading profile if no user
       }
       return;
@@ -25,16 +26,32 @@ const ProtectedRouteWrapper = () => {
     setProfileLoading(true);
     setProfileError(null);
     try {
-      console.log("[ProtectedRouteWrapper] Fetching restaurant profile...");
-      const response = await api.get('/restaurants/me');
-      console.log("[ProtectedRouteWrapper] Profile response:", response.data);
-      setRestaurantProfile(response.data.restaurant);
+      console.log("[ProtectedRouteWrapper] Fetching restaurant profile from localStorage...");
+
+      // FIXED: Use localStorage-based restaurant data instead of API
+      const restaurantData = menuService.getCurrentUserRestaurant();
+
+      if (restaurantData) {
+        console.log("[ProtectedRouteWrapper] Found restaurant data:", restaurantData);
+
+        // Create profile object in the format expected by the component
+        const profile = {
+          id: restaurantData.userId || user.id,
+          name: restaurantData.name || 'New Restaurant',
+          slug: restaurantData.slug,
+          onboarding_completed: true // For localStorage demo, assume onboarding is complete
+        };
+
+        setRestaurantProfile(profile);
+        console.log("[ProtectedRouteWrapper] Profile set successfully:", profile);
+      } else {
+        console.log("[ProtectedRouteWrapper] No restaurant data found, user needs onboarding");
+        // No restaurant data means user needs to complete onboarding
+        setRestaurantProfile(null);
+      }
     } catch (error) {
       console.error("[ProtectedRouteWrapper] Error fetching restaurant profile:", error);
-      if (error.response?.status !== 401) {
-        setProfileError("Could not load restaurant data.");
-      }
-      // If 401, api interceptor should handle logout/redirect
+      setProfileError("Could not load restaurant data from localStorage.");
     } finally {
       setProfileLoading(false);
     }
