@@ -127,43 +127,26 @@ class MenuService {
           sections: [
             {
               id: 'section-1',
-              name: 'Ana Yemekler',
+              title: 'Başlangıçlar',
+              description: 'Lezzetli başlangıç yemekleri',
+              image: null,
+              order: 1,
               items: [
                 {
                   id: 'item-1',
-                  name: 'Örnek Ürün',
-                  description: 'Lezzetli örnek ürün açıklaması',
-                  price: 25.00
+                  title: 'Örnek Ürün',
+                  description: 'Ürün açıklaması buraya gelecek',
+                  price: '25.00',
+                  image: null,
+                  order: 1,
+                  isAvailable: true
                 }
               ]
             }
           ]
         }
-<<<<<<< HEAD
-      },
-      menu: {
-        sections: [
-          {
-            id: 'section-1',
-            title: 'Başlangıçlar',
-            description: 'Lezzetli başlangıç yemekleri',
-            image: null,
-            order: 1,
-            items: [
-              {
-                id: 'item-1',
-                title: 'Örnek Ürün',
-                description: 'Ürün açıklaması buraya gelecek',
-                price: '25.00',
-                image: null,
-                order: 1,
-                isAvailable: true
-              }
-            ]
-          }
-        ]
-      }
-    };
+      };
+    }
   }
 
   // Save menu content
@@ -347,63 +330,79 @@ class MenuService {
         message: 'Image uploaded successfully',
         imageUrl: dataUrl,
         fileName: file.name
-=======
->>>>>>> 24336214777066ccefca4da34363232ec381a45d
       };
-    }
 
-    if (this.saveAllRestaurantData(allData)) {
-      return { name, slug: newSlug };
-    } else {
-      throw new Error('Kaydetme işlemi başarısız');
+      return result;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
     }
   }
 
-  // Update menu status
-  async updateMenuStatus(status) {
-    const currentUser = this.getCurrentUser();
-    if (!currentUser) {
-      throw new Error('No authenticated user');
-    }
+  // Helper method to convert file to data URL
+  fileToDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
 
-    const allData = this.getAllRestaurantData();
+  // Check if restaurant name is unique
+  async checkRestaurantNameUnique(name, excludeSlug = null) {
+    try {
+      const storageData = this.getStorageData();
+      const restaurants = storageData.restaurants || {};
 
-    // Find and update current user's restaurant status
-    for (const [slug, restaurantData] of Object.entries(allData)) {
-      if (restaurantData.userId === currentUser.id) {
-        restaurantData.status = status;
-        
-        if (this.saveAllRestaurantData(allData)) {
-          return true;
-        } else {
-          throw new Error('Status güncellenemedi');
+      // Check if any restaurant has the same name (case-insensitive)
+      for (const [slug, data] of Object.entries(restaurants)) {
+        if (excludeSlug && slug === excludeSlug) continue;
+
+        if (data.restaurant?.name?.toLowerCase() === name.toLowerCase()) {
+          return false; // Name is not unique
         }
       }
-    }
 
-    throw new Error('Restaurant not found');
+      return true; // Name is unique
+    } catch (error) {
+      console.error('Error checking restaurant name uniqueness:', error);
+      throw error;
+    }
   }
 
-  // Get public menu data by slug (for public access)
-  async getPublicMenuData(slug) {
-    const allData = this.getAllRestaurantData();
-    const restaurantData = allData[slug];
+  // Update restaurant name
+  async updateRestaurantName(newName, restaurantSlug = null) {
+    try {
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
 
-    if (!restaurantData) {
-      return null; // Restaurant not found
+      if (!targetSlug) {
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
+      // Check if name is unique
+      const isUnique = await this.checkRestaurantNameUnique(newName, targetSlug);
+      if (!isUnique) {
+        throw new Error('RESTAURANT_NAME_EXISTS');
+      }
+
+      const storageData = this.getStorageData();
+
+      if (!storageData.restaurants[targetSlug]) {
+        throw new Error('Restaurant not found');
+      }
+
+      // Update restaurant name
+      storageData.restaurants[targetSlug].restaurant.name = newName;
+
+      // Save to localStorage
+      this.saveStorageData(storageData);
+
+      return { success: true, message: 'Restaurant name updated successfully' };
+    } catch (error) {
+      console.error('Error updating restaurant name:', error);
+      throw error;
     }
-
-    if (restaurantData.status !== 'active') {
-      return null; // Menu is not active
-    }
-
-    return restaurantData; // Return the restaurant data
-  }
-
-  // Get menu data for preview (bypasses status check)
-  async getPreviewMenuData(slug) {
-    const allData = this.getAllRestaurantData();
-    return allData[slug] || null;
   }
 }
 
