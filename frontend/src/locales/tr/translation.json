@@ -60,7 +60,23 @@
       "total_categories": "Toplam Kategori:",
       "total_products": "Toplam Ürün:",
       "loading": "Yükleniyor..."
-    }
+    },
+    "copy_error": "Link kopyalanamadı. Lütfen manuel olarak kopyalayın.",
+    "status_update_error": "Menü durumu güncellenirken bir hata oluştu.",
+    "categories": "Kategori",
+    "products": "Ürün",
+    "last_updated": "Son Güncelleme",
+    "today": "Bugün",
+    "most_used": "En Çok Kullanılan",
+    "creative": "Yaratıcı",
+    "essential": "Temel",
+    "unlimited_access": "Sınırsız Erişim",
+    "always_available": "Her Zaman Açık",
+    "analytics": {
+      "title": "Menü Analitikleri",
+      "subtitle": "Menünüzün performansını takip edin"
+    },
+    "no_restaurant_error": "Restoran bilgisi bulunamadı. Lütfen sayfayı yenileyin."
   },
   "common": {
     "save": "Kaydet",

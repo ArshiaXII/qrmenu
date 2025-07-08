@@ -23,6 +23,10 @@ import DesignCustomizationPage from './components/DesignCustomization/DesignCust
 // Public Components
 import PublicMenuView from './components/PublicMenu/PublicMenuView';
 
+// Debug Components
+import MenuStatusTest from './components/Debug/MenuStatusTest';
+import OnboardingTest from './components/Debug/OnboardingTest';
+
 // Protected Route Components
 import ProtectedRoute from './components/ProtectedRoute';
 import ProtectedRouteWrapper from './components/ProtectedRouteWrapper';
@@ -63,6 +67,10 @@ function App() {
                         {/* Settings */}
                         <Route path="settings" element={<Navigate to="restaurant" replace />} />
                         <Route path="settings/restaurant" element={<RestaurantSettings />} />
+
+                        {/* Debug Routes */}
+                        <Route path="debug/menu-status" element={<MenuStatusTest />} />
+                        <Route path="debug/onboarding" element={<OnboardingTest />} />
                       </Route>
                     </Route>
                   </Route>

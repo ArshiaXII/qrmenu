@@ -54,37 +54,64 @@ class MenuService {
     const currentUser = this.getCurrentUser();
     if (!currentUser) return null;
 
-    const allData = this.getAllRestaurantData();
-    
-    // Find current user's restaurant by userId
-    for (const [slug, restaurantData] of Object.entries(allData)) {
-      if (restaurantData.userId === currentUser.id) {
-        return restaurantData;
+    const storageData = this.getStorageData();
+
+    // Find current user's restaurant by userId in the new structure
+    for (const [slug, data] of Object.entries(storageData.restaurants || {})) {
+      if (data.restaurant && data.restaurant.userId === currentUser.id) {
+        console.log('✅ [menuService] Found restaurant data for user:', currentUser.id);
+        return {
+          ...data.restaurant,
+          menu: data.menu,
+          branding: data.branding
+        };
       }
+    }
+
+    console.log('⚠️ [menuService] No restaurant data found for user:', currentUser.id);
+    console.log('🔧 [menuService] Auto-creating restaurant data...');
+
+    // Auto-create restaurant data if it doesn't exist
+    const restaurantSlug = currentUser.restaurantSlug || `restaurant-${currentUser.id}`;
+    this.ensureRestaurantDataExists(restaurantSlug, currentUser);
+
+    // Try to get the data again after creation
+    const updatedStorageData = this.getStorageData();
+    if (updatedStorageData.restaurants[restaurantSlug]) {
+      const data = updatedStorageData.restaurants[restaurantSlug];
+      console.log('✅ [menuService] Auto-created and returning restaurant data');
+      return {
+        ...data.restaurant,
+        menu: data.menu,
+        branding: data.branding
+      };
     }
 
     return null;
   }
 
-  // Check if restaurant name is unique (case-insensitive)
-  async checkRestaurantNameUnique(name) {
+  // Get current user's restaurant slug
+  getCurrentUserRestaurantSlug() {
     const currentUser = this.getCurrentUser();
-    if (!currentUser) return false;
+    if (!currentUser) return null;
 
-    const normalizedName = name.toLowerCase().trim();
-    const allData = this.getAllRestaurantData();
+    const storageData = this.getStorageData();
 
-    for (const [slug, restaurantData] of Object.entries(allData)) {
-      // Skip current user's restaurant
-      if (restaurantData.userId === currentUser.id) continue;
-      
-      if (restaurantData.name && restaurantData.name.toLowerCase().trim() === normalizedName) {
-        return false; // Name already exists
+    // Find current user's restaurant slug
+    for (const [slug, data] of Object.entries(storageData.restaurants || {})) {
+      if (data.restaurant && data.restaurant.userId === currentUser.id) {
+        console.log('✅ [menuService] Found restaurant slug for user:', slug);
+        return slug;
       }
     }
 
-    return true; // Name is unique
+    // If no restaurant found, generate a default slug
+    const defaultSlug = `restaurant-${currentUser.id}`;
+    console.log('⚠️ [menuService] No restaurant slug found, using default:', defaultSlug);
+    return defaultSlug;
   }
+
+  // Removed duplicate function - using the more complete version below
 
   // Save restaurant name and generate new slug
   async saveRestaurantName(name) {
@@ -275,6 +302,14 @@ class MenuService {
       storageData.restaurants[targetSlug].restaurant.isActive = isActive;
       console.log('🔄 [menuService] Updated restaurant data:', storageData.restaurants[targetSlug].restaurant);
 
+      // Also update the user's restaurantSlug in authUser for consistency
+      const authUser = this.getCurrentUser();
+      if (authUser) {
+        authUser.restaurantSlug = targetSlug;
+        localStorage.setItem('authUser', JSON.stringify(authUser));
+        console.log('🔄 [menuService] Updated authUser with restaurantSlug:', targetSlug);
+      }
+
       // Save to localStorage
       this.saveStorageData(storageData);
       console.log('✅ [menuService] Data saved to localStorage');
@@ -419,6 +454,220 @@ class MenuService {
       throw error;
     }
   }
+
+  // Ensure restaurant data exists for a user
+  ensureRestaurantDataExists(slug, user) {
+    console.log('🔧 [menuService] ensureRestaurantDataExists called for:', slug);
+
+    const storageData = this.getStorageData();
+
+    if (!storageData.restaurants) {
+      storageData.restaurants = {};
+    }
+
+    if (!storageData.restaurants[slug]) {
+      console.log('🔧 [menuService] Creating missing restaurant data for:', slug);
+      storageData.restaurants[slug] = this.createDefaultRestaurantData(slug, user);
+      this.saveStorageData(storageData);
+      console.log('✅ [menuService] Created and saved restaurant data for:', slug);
+    }
+  }
+
+  // Create default restaurant data structure
+  createDefaultRestaurantData(slug, user = null) {
+    console.log('🔧 [menuService] createDefaultRestaurantData called for:', slug);
+
+    const currentUser = user || this.getCurrentUser();
+    if (!currentUser) {
+      throw new Error('No user provided for creating restaurant data');
+    }
+
+    return {
+      restaurant: {
+        userId: currentUser.id,
+        name: currentUser.name || 'Yeni Restaurant',
+        slug: slug,
+        address: 'İstanbul, Türkiye',
+        phone: '+90 212 555 0123',
+        hours: '09:00 - 23:00',
+        isActive: false, // Default to inactive
+        onboarding_completed: false // Default to not completed
+      },
+      menu: {
+        sections: [
+          {
+            id: 'section-1',
+            name: 'Ana Yemekler',
+            items: [
+              {
+                id: 'item-1',
+                name: 'Örnek Ürün',
+                description: 'Lezzetli örnek ürün açıklaması',
+                price: 25.00
+              }
+            ]
+          }
+        ]
+      },
+      branding: {
+        colors: {
+          accentColor: '#8b5cf6',
+          textColor: '#1f2937',
+          backgroundColor: '#ffffff'
+        },
+        primaryColor: '#8b5cf6',
+        secondaryColor: '#7c3aed',
+        fontFamily: 'Inter'
+      }
+    };
+  }
+
+  // Get storage data with new structure
+  getStorageData() {
+    try {
+      const data = localStorage.getItem('qr_menu_storage');
+      return data ? JSON.parse(data) : { restaurants: {} };
+    } catch (error) {
+      console.error('Error reading storage data:', error);
+      return { restaurants: {} };
+    }
+  }
+
+  // Save storage data with new structure
+  saveStorageData(data) {
+    try {
+      localStorage.setItem('qr_menu_storage', JSON.stringify(data));
+      console.log('✅ [menuService] Storage data saved successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ [menuService] Error saving storage data:', error);
+      return false;
+    }
+  }
+
+  // Get menu data for preview (bypasses status check)
+  async getPreviewMenuData(slug) {
+    try {
+      console.log('🔍 [menuService] getPreviewMenuData called with slug:', slug);
+
+      const storageData = this.getStorageData();
+      console.log('🔍 [menuService] Available restaurant slugs:', Object.keys(storageData.restaurants));
+
+      if (!storageData.restaurants[slug]) {
+        console.log('❌ [menuService] Restaurant not found for preview slug:', slug);
+        return null;
+      }
+
+      const restaurantData = storageData.restaurants[slug];
+      console.log('✅ [menuService] Found restaurant data for preview:', restaurantData.restaurant.name);
+
+      // Return the complete restaurant data for preview (regardless of status)
+      return {
+        ...restaurantData.restaurant,
+        menu: restaurantData.menu,
+        branding: restaurantData.branding
+      };
+    } catch (error) {
+      console.error('❌ [menuService] Error in getPreviewMenuData:', error);
+      return null;
+    }
+  }
+
+  // Get public menu data (checks if menu is active)
+  async getPublicMenuData(slug) {
+    try {
+      console.log('🔍 [menuService] getPublicMenuData called with slug:', slug);
+
+      const storageData = this.getStorageData();
+
+      if (!storageData.restaurants[slug]) {
+        console.log('❌ [menuService] Restaurant not found for public slug:', slug);
+        return null;
+      }
+
+      const restaurantData = storageData.restaurants[slug];
+
+      // Check if menu is active for public access
+      if (!restaurantData.restaurant.isActive) {
+        console.log('❌ [menuService] Restaurant menu is not active for public access');
+        return null;
+      }
+
+      console.log('✅ [menuService] Returning active restaurant data for public access');
+      return {
+        ...restaurantData.restaurant,
+        menu: restaurantData.menu,
+        branding: restaurantData.branding
+      };
+    } catch (error) {
+      console.error('❌ [menuService] Error in getPublicMenuData:', error);
+      return null;
+    }
+  }
+
+  // Save or update restaurant data (unified function for menu, branding, etc.)
+  async saveOrUpdateRestaurantData(restaurantSlug, dataToUpdate) {
+    try {
+      console.log('🔄 [menuService] saveOrUpdateRestaurantData called');
+      console.log('🔄 [menuService] restaurantSlug:', restaurantSlug);
+      console.log('🔄 [menuService] dataToUpdate:', dataToUpdate);
+
+      // Use current user's restaurant slug if not provided
+      const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
+      console.log('🔄 [menuService] targetSlug (final):', targetSlug);
+
+      if (!targetSlug) {
+        console.error('❌ [menuService] No restaurant slug available');
+        throw new Error('USER_NO_RESTAURANT');
+      }
+
+      // Ensure restaurant data exists
+      const currentUser = this.getCurrentUser();
+      this.ensureRestaurantDataExists(targetSlug, currentUser);
+
+      const storageData = this.getStorageData();
+      console.log('🔄 [menuService] Current storage data:', Object.keys(storageData.restaurants));
+
+      if (!storageData.restaurants[targetSlug]) {
+        console.error('❌ [menuService] Restaurant not found in storage:', targetSlug);
+        throw new Error('Restaurant not found');
+      }
+
+      // Update the restaurant data with the provided updates
+      const restaurantData = storageData.restaurants[targetSlug];
+
+      // Merge the updates into the existing data
+      if (dataToUpdate.menu) {
+        restaurantData.menu = { ...restaurantData.menu, ...dataToUpdate.menu };
+        console.log('🔄 [menuService] Updated menu data');
+      }
+
+      if (dataToUpdate.branding) {
+        restaurantData.branding = { ...restaurantData.branding, ...dataToUpdate.branding };
+        console.log('🔄 [menuService] Updated branding data');
+      }
+
+      if (dataToUpdate.restaurant) {
+        restaurantData.restaurant = { ...restaurantData.restaurant, ...dataToUpdate.restaurant };
+        console.log('🔄 [menuService] Updated restaurant data');
+      }
+
+      // Save to localStorage
+      this.saveStorageData(storageData);
+      console.log('✅ [menuService] Restaurant data saved successfully');
+
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const result = { success: true, message: 'Restaurant data updated successfully' };
+      console.log('✅ [menuService] Returning result:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [menuService] Error saving restaurant data:', error);
+      throw error;
+    }
+  }
 }
 
-export default new MenuService();
+const menuService = new MenuService();
+export default menuService;

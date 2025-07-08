@@ -141,9 +141,9 @@ const DashboardContent = () => {
           <div className="today-stats">
             <div className="stats-header">
               <h2>Bugün</h2>
-              <a href="#" className="reports-link">
+              <button className="reports-link" onClick={() => console.log('Reports clicked')}>
                 Raporlar <ArrowRightIcon className="w-4 h-4" />
-              </a>
+              </button>
             </div>
             
             <div className="stats-grid">
@@ -157,9 +157,9 @@ const DashboardContent = () => {
           <div className="recent-reviews">
             <div className="reviews-header">
               <h2>Recent Reviews</h2>
-              <a href="#" className="view-all-link">
+              <button className="view-all-link" onClick={() => console.log('View all reviews clicked')}>
                 Tümünü Görüntüle <ArrowRightIcon className="w-4 h-4" />
-              </a>
+              </button>
             </div>
             
             <div className="reviews-placeholder">

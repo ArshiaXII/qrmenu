@@ -88,12 +88,22 @@ export const AuthProvider = ({ children }) => {
 
                 const mockToken = 'dev-token-' + Date.now();
 
+                // Initialize restaurant data for the user
+                const menuService = await import('../services/menuService');
+                const restaurantSlug = `restaurant-${mockUser.id}`;
+
+                // Add restaurant slug to user data
+                mockUser.restaurantSlug = restaurantSlug;
+
+                // Ensure restaurant data exists
+                menuService.default.ensureRestaurantDataExists(restaurantSlug, mockUser);
+
                 setUser(mockUser);
                 setToken(mockToken);
                 safeLocalStorage.setItem('authUser', JSON.stringify(mockUser));
                 safeLocalStorage.setItem('authToken', mockToken);
 
-                console.log('[AuthContext] Development login successful');
+                console.log('[AuthContext] Development login successful with restaurant data initialized');
                 return { success: true, user: mockUser };
             } else {
                 throw new Error('Email and password are required');

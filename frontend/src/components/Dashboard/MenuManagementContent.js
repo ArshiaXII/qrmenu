@@ -5,30 +5,41 @@ import { QRCodeSVG } from 'qrcode.react';
 import {
   PencilIcon,
   PaintBrushIcon,
-  QrCodeIcon,
-  LinkIcon,
   ArrowDownTrayIcon,
   EyeIcon,
   DocumentDuplicateIcon,
   CheckCircleIcon,
-  ExclamationTriangleIcon
+  SparklesIcon,
+  ChartBarIcon,
+  ShareIcon,
+  CogIcon,
+  PlayIcon,
+  PauseIcon,
+  ClockIcon,
+  UserGroupIcon,
+  DevicePhoneMobileIcon,
+  GlobeAltIcon
 } from '@heroicons/react/24/outline';
 import { useMenu } from '../../contexts/MenuContext';
 
 import '../../styles/MenuManagement.css';
 
 const MenuManagementContent = () => {
-  // FIXED: Proper translation hook usage
-  const { t, i18n } = useTranslation();
+  // Safe translation hook with fallback
+  const { t, ready } = useTranslation();
 
-  // Debug i18n state
-  console.log('🔍 [MenuManagementContent] i18n ready:', i18n.isInitialized);
-  console.log('🔍 [MenuManagementContent] Current language:', i18n.language);
-  console.log('🔍 [MenuManagementContent] Available languages:', i18n.languages);
-
-  // Test translation
-  const testTranslation = t('menu_management.title');
-  console.log('🔍 [MenuManagementContent] Test translation result:', testTranslation);
+  // Safe translation function with fallbacks
+  const safeT = (key, fallback = key) => {
+    try {
+      if (ready && t) {
+        return t(key, fallback);
+      }
+      return fallback;
+    } catch (error) {
+      console.warn('Translation error for key:', key, error);
+      return fallback;
+    }
+  };
 
   const navigate = useNavigate();
   const {
@@ -45,9 +56,25 @@ const MenuManagementContent = () => {
 
   // Load dashboard data when component mounts
   useEffect(() => {
+    console.log('🔄 [MenuManagement] Component mounted, loading dashboard data...');
     // Use current user's restaurant data (no hardcoded slug)
-    loadDashboardMenuData();
+    loadDashboardMenuData()
+      .then(() => {
+        console.log('✅ [MenuManagement] Dashboard data loaded successfully');
+      })
+      .catch((error) => {
+        console.error('❌ [MenuManagement] Failed to load dashboard data:', error);
+      });
   }, [loadDashboardMenuData]);
+
+  // Debug current state
+  console.log('🔍 [MenuManagement] Current state:', {
+    isLoading,
+    currentRestaurant,
+    currentMenu,
+    menuStatus,
+    currentBranding
+  });
 
   // Show loading state
   if (isLoading && !currentRestaurant) {
@@ -62,7 +89,7 @@ const MenuManagementContent = () => {
           gap: '16px'
         }}>
           <div className="loading-spinner"></div>
-          <p>Menü verileri yükleniyor...</p>
+          <p>{safeT('common.loading', 'Yükleniyor...')}</p>
         </div>
       </div>
     );
@@ -115,7 +142,15 @@ const MenuManagementContent = () => {
         document.body.appendChild(textArea);
         textArea.focus();
         textArea.select();
-        document.execCommand('copy');
+        // Use the deprecated method only as fallback
+        try {
+          const successful = document.execCommand('copy');
+          if (!successful) {
+            throw new Error('Copy command failed');
+          }
+        } catch (execError) {
+          throw new Error('Copy not supported');
+        }
         document.body.removeChild(textArea);
       }
       setCopySuccess(true);
@@ -123,7 +158,7 @@ const MenuManagementContent = () => {
     } catch (err) {
       console.error('Failed to copy link:', err);
       // Show error to user
-      alert('Link kopyalanamadı. Lütfen manuel olarak kopyalayın.');
+      alert(safeT('menu_management.copy_error', 'Link kopyalanamadı. Lütfen manuel olarak kopyalayın.'));
     }
   };
 
@@ -169,238 +204,381 @@ const MenuManagementContent = () => {
   };
 
   const handlePreviewMenu = () => {
-    // Open public menu view in new tab with preview parameter
-    if (currentRestaurant && currentRestaurant.slug) {
-      window.open(`/menu/${currentRestaurant.slug}?preview=true`, '_blank');
+    // Get current user's restaurant slug
+    const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+    const restaurantSlug = currentUser.restaurantSlug || currentRestaurant?.slug;
+
+    console.log('🔍 [MenuManagement] Preview menu clicked');
+    console.log('🔍 [MenuManagement] Current user:', currentUser);
+    console.log('🔍 [MenuManagement] Restaurant slug:', restaurantSlug);
+    console.log('🔍 [MenuManagement] Current restaurant:', currentRestaurant);
+
+    if (restaurantSlug) {
+      const previewUrl = `/menu/${restaurantSlug}?preview=true`;
+      console.log('🔍 [MenuManagement] Opening preview URL:', previewUrl);
+      window.open(previewUrl, '_blank');
     } else {
-      // Fallback to default restaurant slug
-      window.open('/menu/lezzet-restaurant?preview=true', '_blank');
+      // Show error message if no restaurant slug is available
+      alert(safeT('menu_management.no_restaurant_error', 'Restoran bilgisi bulunamadı. Lütfen sayfayı yenileyin.'));
+      console.error('❌ [MenuManagement] No restaurant slug available for preview');
     }
   };
 
   const toggleMenuStatus = async () => {
+    console.log('🔄 [MenuManagement] Toggle button clicked');
+    console.log('🔄 [MenuManagement] Current menuStatus:', menuStatus);
+    console.log('🔄 [MenuManagement] Current restaurant:', currentRestaurant);
+
     try {
       const newStatus = menuStatus === 'active' ? 'draft' : 'active';
-      await updateMenuStatus(newStatus);
+      console.log('🔄 [MenuManagement] New status will be:', newStatus);
+
+      const result = await updateMenuStatus(newStatus);
+      console.log('✅ [MenuManagement] Status update result:', result);
+
       // Reload data to reflect changes
       await loadDashboardMenuData();
+      console.log('✅ [MenuManagement] Data reloaded successfully');
+
     } catch (error) {
-      console.error('Failed to update menu status:', error);
-      alert('Menü durumu güncellenirken bir hata oluştu.');
+      console.error('❌ [MenuManagement] Failed to update menu status:', error);
+      alert(safeT('menu_management.status_update_error', 'Menü durumu güncellenirken bir hata oluştu.'));
     }
   };
 
   return (
     <div className="menu-management-content">
-
-      {/* Page Header */}
-      <div className="page-header">
-        <div className="header-content">
-          <h1 className="page-title">{t('menu_management.title', 'Dijital Menünüzü Yönetin')}</h1>
-          <p className="page-subtitle">
-            {t('menu_management.subtitle', 'Menünüzün içeriğini düzenleyin, tasarımını özelleştirin ve müşterilerinizle paylaşın.')}
-          </p>
-        </div>
-
-        {/* Menu Status */}
-        <div className="menu-status-card">
-          <div className="status-info">
-            <div className={`status-indicator ${menuStatus}`}>
-              {menuStatus === 'active' ? (
-                <CheckCircleIcon className="status-icon" />
-              ) : (
-                <ExclamationTriangleIcon className="status-icon" />
-              )}
-              <span className="status-text">
-                {menuStatus === 'active' ? t('menu_management.menu_active', 'Menü Aktif') : t('menu_management.menu_draft', 'Menü Taslak')}
-              </span>
-            </div>
-            <p className="status-description">
-              {menuStatus === 'active'
-                ? t('menu_management.active_description', 'Menünüz müşterileriniz tarafından görülebilir.')
-                : t('menu_management.draft_description', 'Menünüz henüz yayınlanmamış, sadece siz görebilirsiniz.')
-              }
+      {/* Hero Section */}
+      <div className="hero-section">
+        <div className="hero-content">
+          <div className="hero-text">
+            <h1 className="hero-title">
+              <SparklesIcon className="hero-icon" />
+              {safeT('menu_management.title', 'Dijital Menünüzü Yönetin')}
+            </h1>
+            <p className="hero-subtitle">
+              {safeT('menu_management.subtitle', 'Menünüzün içeriğini düzenleyin, tasarımını özelleştirin ve müşterilerinizle paylaşın.')}
             </p>
+            <div className="hero-stats">
+              <div className="stat-badge">
+                <ChartBarIcon className="stat-icon" />
+                <span>{menuStats.totalSections} {safeT('menu_management.categories', 'Kategori')}</span>
+              </div>
+              <div className="stat-badge">
+                <UserGroupIcon className="stat-icon" />
+                <span>{menuStats.totalItems} {safeT('menu_management.products', 'Ürün')}</span>
+              </div>
+              <div className="stat-badge">
+                <ClockIcon className="stat-icon" />
+                <span>{safeT('menu_management.last_updated', 'Son Güncelleme')}: {safeT('menu_management.today', 'Bugün')}</span>
+              </div>
+            </div>
           </div>
-          <button
-            className={`status-toggle ${menuStatus}`}
-            onClick={toggleMenuStatus}
-            disabled={isLoading}
-          >
-            {isLoading ? t('menu_management.updating', 'Güncelleniyor...') : (menuStatus === 'active' ? t('menu_management.deactivate', 'Pasif Yap') : t('menu_management.activate', 'Aktif Yap'))}
-          </button>
+
+          {/* Enhanced Status Card */}
+          <div className="enhanced-status-card">
+            <div className="status-header">
+              <div className={`status-indicator-enhanced ${menuStatus}`}>
+                {menuStatus === 'active' ? (
+                  <PlayIcon className="status-icon-enhanced" />
+                ) : (
+                  <PauseIcon className="status-icon-enhanced" />
+                )}
+                <div className="status-text-group">
+                  <span className="status-title">
+                    {menuStatus === 'active' ? safeT('menu_management.menu_active', 'Menü Aktif') : safeT('menu_management.menu_draft', 'Menü Taslak')}
+                  </span>
+                  <span className="status-subtitle">
+                    {menuStatus === 'active'
+                      ? safeT('menu_management.active_description', 'Müşterileriniz tarafından görülebilir')
+                      : safeT('menu_management.draft_description', 'Henüz yayınlanmamış')
+                    }
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="status-actions">
+              <button
+                className={`status-toggle-enhanced ${menuStatus}`}
+                onClick={toggleMenuStatus}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <div className="loading-spinner-small"></div>
+                    {safeT('menu_management.updating', 'Güncelleniyor...')}
+                  </>
+                ) : (
+                  <>
+                    {menuStatus === 'active' ? <PauseIcon className="button-icon" /> : <PlayIcon className="button-icon" />}
+                    {menuStatus === 'active' ? safeT('menu_management.deactivate', 'Pasif Yap') : safeT('menu_management.activate', 'Aktif Yap')}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Action Cards */}
-      <div className="action-cards-grid">
+      {/* Enhanced Action Cards */}
+      <div className="enhanced-cards-grid">
         {/* Edit Menu Content Card */}
-        <div className="action-card">
-          <div className="card-header">
-            <div className="card-icon edit-icon">
-              <PencilIcon className="icon" />
+        <div className="enhanced-card primary-card">
+          <div className="card-glow"></div>
+          <div className="card-header-enhanced">
+            <div className="card-icon-enhanced edit-icon">
+              <PencilIcon className="icon-enhanced" />
             </div>
-            <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.edit_content.title')}</h3>
-              <p className="card-description">
-                {t('menu_management.edit_content.description')}
-              </p>
-            </div>
-          </div>
-          
-          <div className="card-stats">
-            <div className="stat-item">
-              <span className="stat-value">{menuStats.totalSections}</span>
-              <span className="stat-label">{t('menu_management.edit_content.categories')}</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-value">{menuStats.totalItems}</span>
-              <span className="stat-label">{t('menu_management.edit_content.products')}</span>
+            <div className="card-badge">
+              {safeT('menu_management.most_used', 'En Çok Kullanılan')}
             </div>
           </div>
 
-          <div className="card-footer">
-            <button 
-              className="action-button primary"
+          <div className="card-content-enhanced">
+            <h3 className="card-title-enhanced">{safeT('menu_management.edit_content.title', 'Menü İçeriğini Düzenle')}</h3>
+            <p className="card-description-enhanced">
+              {safeT('menu_management.edit_content.description', 'Kategorilerinizi, ürünlerinizi, açıklamalarınızı, fiyatlarınızı ve görsellerinizi buradan düzenleyebilirsiniz.')}
+            </p>
+
+            <div className="card-metrics">
+              <div className="metric-item">
+                <div className="metric-value">{menuStats.totalSections}</div>
+                <div className="metric-label">{safeT('menu_management.edit_content.categories', 'Kategori')}</div>
+              </div>
+              <div className="metric-divider"></div>
+              <div className="metric-item">
+                <div className="metric-value">{menuStats.totalItems}</div>
+                <div className="metric-label">{safeT('menu_management.edit_content.products', 'Ürün')}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card-footer-enhanced">
+            <button
+              className="action-button-enhanced primary"
               onClick={handleEditContent}
             >
-              <PencilIcon className="button-icon" />
-              {t('menu_management.edit_content.button')}
+              <PencilIcon className="button-icon-enhanced" />
+              <span>{safeT('menu_management.edit_content.button', 'İçeriği Düzenle')}</span>
+              <div className="button-shine"></div>
             </button>
           </div>
         </div>
 
         {/* Customize Design Card */}
-        <div className="action-card">
-          <div className="card-header">
-            <div className="card-icon design-icon">
-              <PaintBrushIcon className="icon" />
+        <div className="enhanced-card design-card">
+          <div className="card-glow design-glow"></div>
+          <div className="card-header-enhanced">
+            <div className="card-icon-enhanced design-icon">
+              <PaintBrushIcon className="icon-enhanced" />
             </div>
-            <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.customize_design.title')}</h3>
-              <p className="card-description">
-                {t('menu_management.customize_design.description')}
-              </p>
+            <div className="card-badge design-badge">
+              {safeT('menu_management.creative', 'Yaratıcı')}
             </div>
           </div>
 
-          <div className="design-preview">
-            <div className="color-swatches">
-              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6' }}></div>
-              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors?.textColor || '#1f2937' }}></div>
-              <div className="color-swatch" style={{ backgroundColor: currentBranding?.colors?.backgroundColor || '#ffffff', border: '1px solid #e5e7eb' }}></div>
+          <div className="card-content-enhanced">
+            <h3 className="card-title-enhanced">{safeT('menu_management.customize_design.title', 'Menü Tasarımını Özelleştir')}</h3>
+            <p className="card-description-enhanced">
+              {safeT('menu_management.customize_design.description', 'Menünüzün logosunu, metin rengini, arka plan rengini ve vurgu rengini buradan değiştirebilirsiniz.')}
+            </p>
+
+            <div className="design-preview-enhanced">
+              <div className="color-palette">
+                <div className="palette-label">{safeT('menu_management.customize_design.current_palette', 'Mevcut Renk Paleti')}</div>
+                <div className="color-swatches-enhanced">
+                  <div
+                    className="color-swatch-enhanced primary"
+                    style={{ backgroundColor: currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6' }}
+                    title="Ana Renk"
+                  ></div>
+                  <div
+                    className="color-swatch-enhanced secondary"
+                    style={{ backgroundColor: currentBranding?.colors?.textColor || '#1f2937' }}
+                    title="Metin Rengi"
+                  ></div>
+                  <div
+                    className="color-swatch-enhanced tertiary"
+                    style={{ backgroundColor: currentBranding?.colors?.backgroundColor || '#ffffff', border: '1px solid #e5e7eb' }}
+                    title="Arka Plan Rengi"
+                  ></div>
+                </div>
+              </div>
+              <div className="design-features">
+                <div className="feature-tag">Logo</div>
+                <div className="feature-tag">Renkler</div>
+                <div className="feature-tag">Tipografi</div>
+              </div>
             </div>
-            <span className="preview-label">{t('menu_management.customize_design.current_palette')}</span>
           </div>
 
-          <div className="card-footer">
-            <button 
-              className="action-button secondary"
+          <div className="card-footer-enhanced">
+            <button
+              className="action-button-enhanced secondary"
               onClick={handleCustomizeDesign}
             >
-              <PaintBrushIcon className="button-icon" />
-              {t('menu_management.customize_design.button')}
+              <PaintBrushIcon className="button-icon-enhanced" />
+              <span>{safeT('menu_management.customize_design.button', 'Tasarımı Özelleştir')}</span>
+              <div className="button-shine"></div>
             </button>
           </div>
         </div>
 
         {/* View & Share Menu Card */}
-        <div className="action-card share-card">
-          <div className="card-header">
-            <div className="card-icon share-icon">
-              <QrCodeIcon className="icon" />
+        <div className="enhanced-card share-card">
+          <div className="card-glow share-glow"></div>
+          <div className="card-header-enhanced">
+            <div className="card-icon-enhanced share-icon">
+              <ShareIcon className="icon-enhanced" />
             </div>
-            <div className="card-title-section">
-              <h3 className="card-title">{t('menu_management.view_share.title')}</h3>
-              <p className="card-description">
-                {t('menu_management.view_share.description')}
-              </p>
+            <div className="card-badge share-badge">
+              {safeT('menu_management.essential', 'Temel')}
             </div>
           </div>
 
-          <div className="share-content">
-            {/* QR Code Section */}
-            <div className="qr-section">
-              <div className="qr-code-container" ref={qrCodeRef}>
-                <QRCodeSVG
-                  value={publicUrl}
-                  size={120}
-                  level="M"
-                  bgColor="#ffffff"
-                  fgColor="#000000"
-                />
-              </div>
-              <button
-                className="qr-download-btn"
-                onClick={handleDownloadQR}
-              >
-                <ArrowDownTrayIcon className="button-icon" />
-                {t('menu_management.view_share.download_qr')}
-              </button>
-            </div>
+          <div className="card-content-enhanced">
+            <h3 className="card-title-enhanced">{safeT('menu_management.view_share.title', 'Menüyü Görüntüle ve Paylaş')}</h3>
+            <p className="card-description-enhanced">
+              {safeT('menu_management.view_share.description', 'QR kod ve link ile menünüzü müşterilerinizle paylaşın.')}
+            </p>
 
-            {/* Link Section */}
-            <div className="link-section">
-              <div className="link-container">
-                <LinkIcon className="link-icon" />
-                <div className="link-content">
-                  <span className="link-label">{t('menu_management.view_share.menu_link')}</span>
-                  <span className="link-url" title={publicUrl}>
-                    {publicUrl.length > 50 ? `${publicUrl.substring(0, 47)}...` : publicUrl}
-                  </span>
+            <div className="share-content-enhanced">
+              {/* Enhanced QR Code Section */}
+              <div className="qr-section-enhanced">
+                <div className="qr-container-enhanced">
+                  <div className="qr-code-wrapper" ref={qrCodeRef}>
+                    <QRCodeSVG
+                      value={publicUrl}
+                      size={100}
+                      level="M"
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                    />
+                  </div>
+                  <div className="qr-overlay">
+                    <DevicePhoneMobileIcon className="qr-overlay-icon" />
+                  </div>
+                </div>
+                <div className="qr-actions">
+                  <button
+                    className="qr-action-btn download"
+                    onClick={handleDownloadQR}
+                    title={safeT('menu_management.view_share.download_qr', 'QR Kodu İndir')}
+                  >
+                    <ArrowDownTrayIcon className="qr-action-icon" />
+                  </button>
+                  <button
+                    className="qr-action-btn preview"
+                    onClick={handlePreviewMenu}
+                    title={safeT('menu_management.view_share.preview_menu', 'Menüyü Önizle')}
+                  >
+                    <EyeIcon className="qr-action-icon" />
+                  </button>
                 </div>
               </div>
-              
-              <div className="link-actions">
-                <button 
-                  className={`copy-button ${copySuccess ? 'success' : ''}`}
-                  onClick={handleCopyLink}
-                >
-                  {copySuccess ? (
-                    <>
-                      <CheckCircleIcon className="button-icon" />
-                      {t('menu_management.view_share.copied')}
-                    </>
-                  ) : (
-                    <>
-                      <DocumentDuplicateIcon className="button-icon" />
-                      {t('menu_management.view_share.copy_link')}
-                    </>
-                  )}
-                </button>
-                
-                <button 
-                  className="preview-button"
-                  onClick={handlePreviewMenu}
-                >
-                  <EyeIcon className="button-icon" />
-                  {t('menu_management.view_share.preview_menu')}
-                </button>
+
+              {/* Enhanced Link Section */}
+              <div className="link-section-enhanced">
+                <div className="link-display">
+                  <div className="link-header">
+                    <GlobeAltIcon className="link-header-icon" />
+                    <span className="link-label-enhanced">{safeT('menu_management.view_share.menu_link', 'Menü Linki')}</span>
+                  </div>
+                  <div className="link-container-enhanced">
+                    <div className="link-url-enhanced" title={publicUrl}>
+                      {publicUrl.length > 45 ? `${publicUrl.substring(0, 42)}...` : publicUrl}
+                    </div>
+                    <button
+                      className={`copy-button-enhanced ${copySuccess ? 'success' : ''}`}
+                      onClick={handleCopyLink}
+                    >
+                      {copySuccess ? (
+                        <CheckCircleIcon className="copy-icon" />
+                      ) : (
+                        <DocumentDuplicateIcon className="copy-icon" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="share-stats">
+                  <div className="share-stat">
+                    <span className="stat-number">∞</span>
+                    <span className="stat-text">{safeT('menu_management.unlimited_access', 'Sınırsız Erişim')}</span>
+                  </div>
+                  <div className="share-stat">
+                    <span className="stat-number">24/7</span>
+                    <span className="stat-text">{safeT('menu_management.always_available', 'Her Zaman Açık')}</span>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
+
+          <div className="card-footer-enhanced">
+            <button
+              className="action-button-enhanced tertiary full-width"
+              onClick={handlePreviewMenu}
+            >
+              <EyeIcon className="button-icon-enhanced" />
+              <span>{safeT('menu_management.view_share.preview_menu', 'Canlı Önizleme')}</span>
+              <div className="button-shine"></div>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Menu Information */}
-      <div className="menu-info-section">
-        <h3 className="info-title">{t('menu_management.menu_info.title')}</h3>
-        <div className="info-grid">
-          <div className="info-item">
-            <span className="info-label">{t('menu_management.menu_info.restaurant_name')}</span>
-            <span className="info-value">{currentRestaurant?.name || t('menu_management.menu_info.loading')}</span>
+      {/* Enhanced Analytics Dashboard */}
+      <div className="analytics-dashboard">
+        <div className="dashboard-header">
+          <h3 className="dashboard-title">
+            <ChartBarIcon className="dashboard-icon" />
+            {safeT('menu_management.analytics.title', 'Menü Analitikleri')}
+          </h3>
+          <div className="dashboard-subtitle">
+            {safeT('menu_management.analytics.subtitle', 'Menünüzün performansını takip edin')}
           </div>
-          <div className="info-item">
-            <span className="info-label">{t('menu_management.menu_info.last_update')}</span>
-            <span className="info-value">{new Date().toLocaleDateString('tr-TR')}</span>
+        </div>
+
+        <div className="analytics-grid">
+          <div className="analytics-card">
+            <div className="analytics-icon restaurant">
+              <CogIcon className="analytics-icon-svg" />
+            </div>
+            <div className="analytics-content">
+              <div className="analytics-label">{safeT('menu_management.menu_info.restaurant_name', 'Restoran Adı')}</div>
+              <div className="analytics-value">{currentRestaurant?.name || safeT('menu_management.menu_info.loading', 'Yükleniyor...')}</div>
+            </div>
           </div>
-          <div className="info-item">
-            <span className="info-label">{t('menu_management.menu_info.total_categories')}</span>
-            <span className="info-value">{menuStats.totalSections}</span>
+
+          <div className="analytics-card">
+            <div className="analytics-icon update">
+              <ClockIcon className="analytics-icon-svg" />
+            </div>
+            <div className="analytics-content">
+              <div className="analytics-label">{safeT('menu_management.menu_info.last_update', 'Son Güncelleme')}</div>
+              <div className="analytics-value">{new Date().toLocaleDateString('tr-TR')}</div>
+            </div>
           </div>
-          <div className="info-item">
-            <span className="info-label">{t('menu_management.menu_info.total_products')}</span>
-            <span className="info-value">{menuStats.totalItems}</span>
+
+          <div className="analytics-card">
+            <div className="analytics-icon categories">
+              <ChartBarIcon className="analytics-icon-svg" />
+            </div>
+            <div className="analytics-content">
+              <div className="analytics-label">{safeT('menu_management.menu_info.total_categories', 'Toplam Kategori')}</div>
+              <div className="analytics-value">{menuStats.totalSections}</div>
+            </div>
+          </div>
+
+          <div className="analytics-card">
+            <div className="analytics-icon products">
+              <UserGroupIcon className="analytics-icon-svg" />
+            </div>
+            <div className="analytics-content">
+              <div className="analytics-label">{safeT('menu_management.menu_info.total_products', 'Toplam Ürün')}</div>
+              <div className="analytics-value">{menuStats.totalItems}</div>
+            </div>
           </div>
         </div>
       </div>

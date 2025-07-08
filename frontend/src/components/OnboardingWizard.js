@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import menuService from '../services/menuService';
 
 // Define steps
@@ -15,7 +16,9 @@ const OnboardingWizard = ({ onComplete }) => {
   const [currentStep, setCurrentStep] = useState(STEPS.WELCOME);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [autoNavCountdown, setAutoNavCountdown] = useState(10);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // State for Restaurant Details step
   const [restaurantData, setRestaurantData] = useState({
@@ -222,16 +225,74 @@ const OnboardingWizard = ({ onComplete }) => {
     }
   };
 
-  const handleFinish = () => {
-    // Call the onComplete prop which should likely reload or redirect
-    if (onComplete) {
-      onComplete();
-    } else {
-        // Fallback: reload the page if no handler provided
-        window.location.reload();
+  const handleFinish = async () => {
+    try {
+      console.log("Onboarding: Completing onboarding and saving completion status...");
+
+      // Get current user and ensure restaurant data exists
+      const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+      const restaurantSlug = currentUser.restaurantSlug || `restaurant-${currentUser.id}`;
+
+      console.log("Onboarding: Current user:", currentUser);
+      console.log("Onboarding: Using restaurant slug:", restaurantSlug);
+
+      // Ensure restaurant data exists
+      menuService.ensureRestaurantDataExists(restaurantSlug, currentUser);
+
+      // Get current restaurant data (should exist now)
+      const currentRestaurant = menuService.getCurrentUserRestaurant();
+      console.log("Onboarding: Restaurant data after creation:", currentRestaurant);
+
+      if (currentRestaurant) {
+        // Update the restaurant data to mark onboarding as completed
+        const storageData = menuService.getStorageData();
+        const actualSlug = currentRestaurant.slug;
+
+        if (storageData.restaurants[actualSlug]) {
+          storageData.restaurants[actualSlug].restaurant.onboarding_completed = true;
+          menuService.saveStorageData(storageData);
+          console.log("Onboarding: Completion status saved successfully");
+        } else {
+          console.error("Onboarding: Restaurant data still not found after creation");
+        }
+      } else {
+        console.error("Onboarding: Failed to create restaurant data");
+      }
+
+      // DIRECT NAVIGATION - Use window.location since it works reliably
+      console.log("Onboarding: Navigating directly to dashboard using window.location...");
+
+      // Use window.location.replace for immediate navigation (same as auto-timer)
+      window.location.replace('/dashboard/overview');
+
+    } catch (error) {
+      console.error("Error completing onboarding:", error);
+      // Even if there's an error, still navigate to dashboard using reliable method
+      console.log("Onboarding: Error occurred, but still navigating to dashboard...");
+      window.location.replace('/dashboard/overview');
     }
   };
 
+  // Auto-navigation timer with countdown
+  useEffect(() => {
+    if (currentStep === STEPS.FINISH) {
+      console.log("Finish step reached, setting up auto-navigation timer...");
+      setAutoNavCountdown(10);
+
+      const countdownInterval = setInterval(() => {
+        setAutoNavCountdown(prev => {
+          if (prev <= 1) {
+            console.log("Auto-navigation timer triggered - forcing navigation to dashboard");
+            window.location.replace('/dashboard/overview');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(countdownInterval);
+    }
+  }, [currentStep]);
 
   // --- Render Steps ---
 
@@ -442,18 +503,89 @@ const OnboardingWizard = ({ onComplete }) => {
     </div>
   );
 
-   const renderFinishStep = () => (
-    <div className="text-center">
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">Setup Complete!</h2>
-      <p className="text-gray-600 mb-8">Your basic restaurant profile is saved. You can now start adding menu items and customizing your templates.</p>
-      <button 
-        onClick={handleFinish}
-        className="px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-      >
-        Go to Dashboard
-      </button>
-    </div>
-  );
+   const renderFinishStep = () => {
+     // Emergency navigation function
+     const emergencyNavigate = () => {
+       console.log("Emergency navigation triggered!");
+
+       // Mark onboarding as completed
+       try {
+         const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+         const restaurantSlug = currentUser.restaurantSlug || `restaurant-${currentUser.id}`;
+
+         // Ensure restaurant data exists
+         menuService.ensureRestaurantDataExists(restaurantSlug, currentUser);
+
+         const currentRestaurant = menuService.getCurrentUserRestaurant();
+         if (currentRestaurant) {
+           const storageData = menuService.getStorageData();
+           const actualSlug = currentRestaurant.slug;
+           if (storageData.restaurants[actualSlug]) {
+             storageData.restaurants[actualSlug].restaurant.onboarding_completed = true;
+             menuService.saveStorageData(storageData);
+             console.log("Emergency: Onboarding marked as completed");
+           }
+         }
+       } catch (error) {
+         console.error("Error in emergency navigation:", error);
+       }
+
+       // Set emergency flag and force navigation using reliable method
+       localStorage.setItem('onboarding_completed', 'true');
+       window.location.replace('/dashboard/overview');
+     };
+
+     return (
+       <div className="text-center">
+         <h2 className="text-2xl font-bold text-gray-800 mb-4">Setup Complete!</h2>
+         <p className="text-gray-600 mb-8">Your basic restaurant profile is saved. You can now start adding menu items and customizing your templates.</p>
+
+         <div className="space-y-4">
+           <button
+             onClick={handleFinish}
+             className="block w-full px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+           >
+             Go to Dashboard
+           </button>
+
+           <button
+             onClick={emergencyNavigate}
+             className="block w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+           >
+             Force Go to Dashboard (If above doesn't work)
+           </button>
+
+           <button
+             onClick={() => {
+               console.log("ULTIMATE FALLBACK: Direct URL change");
+               // Clear any potential routing issues
+               localStorage.setItem('onboarding_completed', 'true');
+               // Direct URL change
+               window.location.replace('/dashboard/overview');
+             }}
+             className="block w-full px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+           >
+             🚨 EMERGENCY: Go to Dashboard NOW
+           </button>
+
+           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+             <p className="text-sm text-yellow-800">
+               <strong>Still stuck?</strong> Open browser console (F12) and type: <br/>
+               <code className="bg-yellow-100 px-1 rounded">window.location.href = '/dashboard/overview'</code>
+             </p>
+           </div>
+
+           {autoNavCountdown > 0 && (
+             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
+               <p className="text-sm text-blue-800">
+                 🕒 Auto-navigating to dashboard in <strong>{autoNavCountdown}</strong> seconds...
+               </p>
+             </div>
+           )}
+         </div>
+       </div>
+     );
+   };
 
 
   return (

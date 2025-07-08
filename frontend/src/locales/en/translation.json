@@ -60,7 +60,23 @@
       "total_categories": "Total Categories:",
       "total_products": "Total Products:",
       "loading": "Loading..."
-    }
+    },
+    "copy_error": "Failed to copy link. Please copy manually.",
+    "status_update_error": "An error occurred while updating menu status.",
+    "categories": "Categories",
+    "products": "Products",
+    "last_updated": "Last Updated",
+    "today": "Today",
+    "most_used": "Most Used",
+    "creative": "Creative",
+    "essential": "Essential",
+    "unlimited_access": "Unlimited Access",
+    "always_available": "Always Available",
+    "analytics": {
+      "title": "Menu Analytics",
+      "subtitle": "Track your menu's performance"
+    },
+    "no_restaurant_error": "Restaurant information not found. Please refresh the page."
   },
   "common": {
     "save": "Save",

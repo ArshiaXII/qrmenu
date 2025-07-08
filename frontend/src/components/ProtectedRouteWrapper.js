@@ -39,7 +39,7 @@ const ProtectedRouteWrapper = () => {
           id: restaurantData.userId || user.id,
           name: restaurantData.name || 'New Restaurant',
           slug: restaurantData.slug,
-          onboarding_completed: true // For localStorage demo, assume onboarding is complete
+          onboarding_completed: restaurantData.onboarding_completed || false // Check actual onboarding status
         };
 
         setRestaurantProfile(profile);

@@ -21,6 +21,9 @@ const TopBar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuth();
   const { currentRestaurant } = useMenu();
 
+  // Use currentRestaurant for restaurant name display
+  const restaurantName = currentRestaurant?.name || 'Restoran';
+
   // Safe translation hook with fallback
   let t, i18n;
   try {
@@ -214,6 +217,7 @@ const TopBar = ({ onToggleSidebar }) => {
                     </div>
                     <div className="profile-details">
                       <div className="profile-name">{getUserDisplayName()}</div>
+                      <div className="profile-restaurant">{restaurantName}</div>
                       {user?.email && (
                         <div className="profile-email">{user.email}</div>
                       )}

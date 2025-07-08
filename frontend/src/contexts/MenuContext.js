@@ -248,7 +248,7 @@ export function MenuProvider({ children }) {
           address: restaurantData.address,
           phone: restaurantData.phone,
           hours: restaurantData.hours,
-          isActive: restaurantData.status === 'active'
+          isActive: restaurantData.isActive === true
         };
 
         // Use actual branding data or create default
@@ -266,7 +266,7 @@ export function MenuProvider({ children }) {
         dispatch({ type: ActionTypes.SET_RESTAURANT_DATA, payload: restaurant });
         dispatch({ type: ActionTypes.SET_BRANDING_DATA, payload: branding });
         dispatch({ type: ActionTypes.SET_MENU_DATA, payload: restaurantData.menu });
-        dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: restaurantData.status });
+        dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: restaurantData.isActive ? 'active' : 'draft' });
 
         console.log('✅ MenuContext loaded dashboard data successfully');
         return { restaurant, branding, menu: restaurantData.menu };
@@ -390,7 +390,15 @@ export function MenuProvider({ children }) {
     try {
       // Convert status to boolean for menuService
       const isActive = status === 'active';
-      const result = await menuService.updateMenuStatus(null, isActive);
+
+      // Get current user's restaurant slug
+      const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+      const restaurantSlug = currentUser.restaurantSlug || state.currentRestaurant?.slug;
+
+      console.log('🔄 [MenuContext] Using restaurant slug:', restaurantSlug);
+      console.log('🔄 [MenuContext] Setting isActive to:', isActive);
+
+      const result = await menuService.updateMenuStatus(restaurantSlug, isActive);
       console.log('✅ [MenuContext] menuService.updateMenuStatus result:', result);
 
       dispatch({ type: ActionTypes.SET_MENU_STATUS, payload: status });
