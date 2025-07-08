@@ -579,21 +579,27 @@ class MenuService {
       console.log('🔍 [menuService] getPublicMenuData called with slug:', slug);
 
       const storageData = this.getStorageData();
+      console.log('🔍 [menuService] Available restaurant slugs:', Object.keys(storageData.restaurants));
 
       if (!storageData.restaurants[slug]) {
         console.log('❌ [menuService] Restaurant not found for public slug:', slug);
+        console.log('🔍 [menuService] Available slugs:', Object.keys(storageData.restaurants));
         return null;
       }
 
       const restaurantData = storageData.restaurants[slug];
+      console.log('🔍 [menuService] Found restaurant data:', restaurantData.restaurant);
+      console.log('🔍 [menuService] Restaurant isActive status:', restaurantData.restaurant.isActive);
+      console.log('🔍 [menuService] Restaurant isActive type:', typeof restaurantData.restaurant.isActive);
 
       // Check if menu is active for public access
       if (!restaurantData.restaurant.isActive) {
         console.log('❌ [menuService] Restaurant menu is not active for public access');
+        console.log('🔍 [menuService] Current isActive value:', restaurantData.restaurant.isActive);
         return null;
       }
 
-      console.log('✅ [menuService] Returning active restaurant data for public access');
+      console.log('✅ [menuService] Restaurant is active, returning data for public access');
       return {
         ...restaurantData.restaurant,
         menu: restaurantData.menu,
@@ -602,6 +608,57 @@ class MenuService {
     } catch (error) {
       console.error('❌ [menuService] Error in getPublicMenuData:', error);
       return null;
+    }
+  }
+
+  // Get the public menu URL for current user's restaurant
+  getCurrentUserPublicMenuUrl() {
+    try {
+      const currentUser = this.getCurrentUser();
+      if (!currentUser) {
+        console.log('❌ [menuService] No current user found');
+        return null;
+      }
+
+      const restaurantSlug = this.getCurrentUserRestaurantSlug();
+      if (!restaurantSlug) {
+        console.log('❌ [menuService] No restaurant slug found');
+        return null;
+      }
+
+      const publicUrl = `/menu/${restaurantSlug}`;
+      console.log('✅ [menuService] Public menu URL:', publicUrl);
+      return publicUrl;
+    } catch (error) {
+      console.error('❌ [menuService] Error getting public menu URL:', error);
+      return null;
+    }
+  }
+
+  // Test public menu access (for debugging)
+  async testPublicMenuAccess() {
+    try {
+      const restaurantSlug = this.getCurrentUserRestaurantSlug();
+      console.log('🧪 [menuService] Testing public menu access for slug:', restaurantSlug);
+
+      if (!restaurantSlug) {
+        console.log('❌ [menuService] No restaurant slug available for testing');
+        return false;
+      }
+
+      const publicData = await this.getPublicMenuData(restaurantSlug);
+
+      if (publicData) {
+        console.log('✅ [menuService] Public menu access test PASSED');
+        console.log('🔍 [menuService] Public data:', publicData);
+        return true;
+      } else {
+        console.log('❌ [menuService] Public menu access test FAILED');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ [menuService] Error in public menu access test:', error);
+      return false;
     }
   }
 

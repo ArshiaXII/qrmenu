@@ -224,6 +224,28 @@ const MenuManagementContent = () => {
     }
   };
 
+  // Test public menu access (for debugging)
+  const testPublicMenuAccess = async () => {
+    console.log('🧪 [MenuManagement] Testing public menu access...');
+
+    try {
+      // Import menuService dynamically
+      const menuService = await import('../../services/menuService');
+
+      // Test public menu access
+      const testResult = await menuService.default.testPublicMenuAccess();
+
+      if (testResult) {
+        alert('✅ Public menu access test PASSED! Your menu should be visible.');
+      } else {
+        alert('❌ Public menu access test FAILED! Check console for details.');
+      }
+    } catch (error) {
+      console.error('❌ [MenuManagement] Error testing public menu access:', error);
+      alert('❌ Error testing public menu access. Check console for details.');
+    }
+  };
+
   const toggleMenuStatus = async () => {
     console.log('🔄 [MenuManagement] Toggle button clicked');
     console.log('🔄 [MenuManagement] Current menuStatus:', menuStatus);
@@ -522,6 +544,37 @@ const MenuManagementContent = () => {
             >
               <EyeIcon className="button-icon-enhanced" />
               <span>{safeT('menu_management.view_share.preview_menu', 'Canlı Önizleme')}</span>
+              <div className="button-shine"></div>
+            </button>
+
+            {/* Debug Test Buttons */}
+            <button
+              className="action-button-enhanced secondary full-width"
+              onClick={testPublicMenuAccess}
+              style={{ marginTop: '10px', backgroundColor: '#f59e0b' }}
+            >
+              <CheckCircleIcon className="button-icon-enhanced" />
+              <span>🧪 Test Public Menu Access</span>
+              <div className="button-shine"></div>
+            </button>
+
+            <button
+              className="action-button-enhanced secondary full-width"
+              onClick={() => {
+                const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+                const restaurantSlug = currentUser.restaurantSlug || currentRestaurant?.slug;
+                if (restaurantSlug) {
+                  const publicUrl = `/menu/${restaurantSlug}`;
+                  console.log('🔍 [MenuManagement] Opening public URL:', publicUrl);
+                  window.open(publicUrl, '_blank');
+                } else {
+                  alert('No restaurant slug found');
+                }
+              }}
+              style={{ marginTop: '10px', backgroundColor: '#10b981' }}
+            >
+              <GlobeAltIcon className="button-icon-enhanced" />
+              <span>🌐 Open Public Menu</span>
               <div className="button-shine"></div>
             </button>
           </div>

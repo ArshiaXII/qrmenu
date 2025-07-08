@@ -49,7 +49,25 @@ const PublicMenuView = () => {
   const [menuUnavailable, setMenuUnavailable] = useState(false);
   const sectionRefs = useRef([]);
 
+  // Debug function to log all current state
+  const logCurrentState = () => {
+    console.log('🔍 [PublicMenuView] === CURRENT STATE DEBUG ===');
+    console.log('🔍 [PublicMenuView] restaurantSlug:', restaurantSlug);
+    console.log('🔍 [PublicMenuView] isPreview:', isPreview);
+    console.log('🔍 [PublicMenuView] isLoading:', isLoading);
+    console.log('🔍 [PublicMenuView] error:', error);
+    console.log('🔍 [PublicMenuView] menuUnavailable:', menuUnavailable);
+    console.log('🔍 [PublicMenuView] currentMenu:', currentMenu);
+    console.log('🔍 [PublicMenuView] currentRestaurant:', currentRestaurant);
+    console.log('🔍 [PublicMenuView] currentBranding:', currentBranding);
+    console.log('🔍 [PublicMenuView] currentRestaurant?.isActive:', currentRestaurant?.isActive);
+    console.log('🔍 [PublicMenuView] === END STATE DEBUG ===');
+  };
 
+  // Log state changes
+  useEffect(() => {
+    logCurrentState();
+  }, [isLoading, error, menuUnavailable, currentMenu, currentRestaurant, currentBranding]);
 
   // SIMPLIFIED: Load menu data when component mounts or restaurantSlug changes
   useEffect(() => {
