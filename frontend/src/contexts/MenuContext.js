@@ -128,13 +128,7 @@ export function MenuProvider({ children }) {
       console.log('✅ [MenuContext] Received public menu data:', data);
 
       if (data) {
-        console.log('🔍 [MenuContext] Processing public menu data:', data);
-        console.log('🔍 [MenuContext] data.restaurant:', data.restaurant);
-        console.log('🔍 [MenuContext] data.isActive:', data.isActive);
-        console.log('🔍 [MenuContext] data.restaurant?.isActive:', data.restaurant?.isActive);
-
-        // FIXED: Create restaurant object using correct data structure
-        // The getPublicMenuData returns the restaurant data directly, not nested
+        // Create restaurant object using correct data structure
         const restaurant = {
           id: data.userId || data.id,
           name: data.name,
@@ -142,11 +136,8 @@ export function MenuProvider({ children }) {
           address: data.address,
           phone: data.phone,
           hours: data.hours,
-          isActive: data.isActive // Use data.isActive directly, not data.restaurant.isActive
+          isActive: data.isActive
         };
-
-        console.log('🔍 [MenuContext] Created restaurant object:', restaurant);
-        console.log('🔍 [MenuContext] Restaurant isActive value:', restaurant.isActive);
 
         // FIXED: Use actual branding data instead of hardcoded values
         const branding = data.branding || {

@@ -1,7 +1,8 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
-  "private": true,
+  "name": "qr-menu-platform",
+  "version": "1.0.0",
+  "private": false,
+  "homepage": ".",
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@testing-library/dom": "^10.4.0",

@@ -49,66 +49,24 @@ const PublicMenuView = () => {
   const [menuUnavailable, setMenuUnavailable] = useState(false);
   const sectionRefs = useRef([]);
 
-  // Debug function to log all current state
-  const logCurrentState = () => {
-    console.log('🔍 [PublicMenuView] === CURRENT STATE DEBUG ===');
-    console.log('🔍 [PublicMenuView] restaurantSlug:', restaurantSlug);
-    console.log('🔍 [PublicMenuView] isPreview:', isPreview);
-    console.log('🔍 [PublicMenuView] isLoading:', isLoading);
-    console.log('🔍 [PublicMenuView] error:', error);
-    console.log('🔍 [PublicMenuView] menuUnavailable:', menuUnavailable);
-    console.log('🔍 [PublicMenuView] currentMenu:', currentMenu);
-    console.log('🔍 [PublicMenuView] currentRestaurant:', currentRestaurant);
-    console.log('🔍 [PublicMenuView] currentBranding:', currentBranding);
-    console.log('🔍 [PublicMenuView] currentRestaurant?.isActive:', currentRestaurant?.isActive);
-    console.log('🔍 [PublicMenuView] === END STATE DEBUG ===');
-  };
 
-  // Log state changes
+
+  // Load menu data when component mounts or restaurantSlug changes
   useEffect(() => {
-    logCurrentState();
-  }, [isLoading, error, menuUnavailable, currentMenu, currentRestaurant, currentBranding]);
-
-  // SIMPLIFIED: Load menu data when component mounts or restaurantSlug changes
-  useEffect(() => {
-    console.log('🔍 [PublicMenuView] === SIMPLIFIED PUBLIC MENU VIEW ===');
-    console.log('🔍 [PublicMenuView] Trying to load menu for slug:', restaurantSlug);
-    console.log('🔍 [PublicMenuView] isPreview mode:', isPreview);
-    console.log('🔍 [PublicMenuView] Current URL:', window.location.href);
-
     if (!restaurantSlug) {
-      console.error('❌ [PublicMenuView] No restaurant slug found in URL');
       setMenuUnavailable(true);
       return;
     }
 
     if (isPreview) {
-      console.log('🔍 [PublicMenuView] Loading preview data for slug:', restaurantSlug);
       loadPreviewMenuData(restaurantSlug)
-        .then((result) => {
-          console.log('✅ [PublicMenuView] Preview data loaded successfully:', result);
-        })
-        .catch((error) => {
-          console.error('❌ [PublicMenuView] Failed to load preview menu data:', error);
+        .catch(() => {
           setMenuUnavailable(true);
         });
     } else {
-      console.log('🔍 [PublicMenuView] Loading public data for slug:', restaurantSlug);
-
-      // Call the simplified getPublicMenuData
       loadPublicMenuData(restaurantSlug)
-        .then((result) => {
-          console.log('✅ [PublicMenuView] Result from menuService.getPublicMenuData:', result);
-          console.log('✅ [PublicMenuView] Menu data loaded successfully');
-          // The loadPublicMenuData function should handle setting the state
-        })
         .catch((error) => {
-          console.error('❌ [PublicMenuView] Failed to load menu data:', error);
-          console.error('❌ [PublicMenuView] Error message:', error.message);
-          console.log('🔍 [PublicMenuView] Decision to render unavailable message based on error:', error.message);
-
           if (error.message === 'MENU_INACTIVE' || error.message === 'RESTAURANT_NOT_FOUND') {
-            console.log('🔍 [PublicMenuView] Setting menu unavailable due to:', error.message);
             setMenuUnavailable(true);
           }
         });
@@ -203,12 +161,7 @@ const PublicMenuView = () => {
   }
 
   // Check if menu is active (skip check for preview mode)
-  console.log('🔍 [PublicMenuView] Status check - isPreview:', isPreview);
-  console.log('🔍 [PublicMenuView] Status check - currentRestaurant.isActive:', currentRestaurant?.isActive);
-  console.log('🔍 [PublicMenuView] Status check - currentRestaurant:', currentRestaurant);
-
   if (!isPreview && !currentRestaurant?.isActive) {
-    console.log('❌ [PublicMenuView] Menu is inactive, showing unavailable message');
     return (
       <div className="public-menu-unavailable">
         <div className="unavailable-content">
@@ -220,8 +173,6 @@ const PublicMenuView = () => {
       </div>
     );
   }
-
-  console.log('✅ [PublicMenuView] Menu is active, rendering content');
 
   // Get currency symbol
   const getCurrencySymbol = (currencyCode) => {
