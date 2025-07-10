@@ -300,12 +300,41 @@ const OnboardingWizard = ({ onComplete }) => {
     <div className="text-center">
       <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to QR Menu!</h2>
       <p className="text-gray-600 mb-8">Let's get your restaurant set up quickly.</p>
-      <button 
-        onClick={handleNext}
-        className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        Get Started
-      </button>
+
+      <div className="space-y-4">
+        <button
+          onClick={handleNext}
+          className="w-full px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Create New Restaurant
+        </button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">or</span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => window.location.href = '/login'}
+          className="w-full px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Login to Existing Account
+        </button>
+
+        <p className="text-sm text-gray-500 mt-4">
+          Don't have an account?
+          <button
+            onClick={() => window.location.href = '/register'}
+            className="ml-1 text-indigo-600 hover:text-indigo-500 underline"
+          >
+            Sign up here
+          </button>
+        </p>
+      </div>
     </div>
   );
 
@@ -504,86 +533,37 @@ const OnboardingWizard = ({ onComplete }) => {
   );
 
    const renderFinishStep = () => {
-     // Emergency navigation function
-     const emergencyNavigate = () => {
-       console.log("Emergency navigation triggered!");
-
-       // Mark onboarding as completed
-       try {
-         const currentUser = JSON.parse(localStorage.getItem('authUser') || '{}');
-         const restaurantSlug = currentUser.restaurantSlug || `restaurant-${currentUser.id}`;
-
-         // Ensure restaurant data exists
-         menuService.ensureRestaurantDataExists(restaurantSlug, currentUser);
-
-         const currentRestaurant = menuService.getCurrentUserRestaurant();
-         if (currentRestaurant) {
-           const storageData = menuService.getStorageData();
-           const actualSlug = currentRestaurant.slug;
-           if (storageData.restaurants[actualSlug]) {
-             storageData.restaurants[actualSlug].restaurant.onboarding_completed = true;
-             menuService.saveStorageData(storageData);
-             console.log("Emergency: Onboarding marked as completed");
-           }
-         }
-       } catch (error) {
-         console.error("Error in emergency navigation:", error);
-       }
-
-       // Set emergency flag and force navigation using reliable method
-       localStorage.setItem('onboarding_completed', 'true');
-       window.location.replace('/dashboard/overview');
-     };
-
      return (
        <div className="text-center">
-         <h2 className="text-2xl font-bold text-gray-800 mb-4">Setup Complete!</h2>
-         <p className="text-gray-600 mb-8">Your basic restaurant profile is saved. You can now start adding menu items and customizing your templates.</p>
-
-         <div className="space-y-4">
-           <button
-             onClick={handleFinish}
-             className="block w-full px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-           >
-             Go to Dashboard
-           </button>
-
-           <button
-             onClick={emergencyNavigate}
-             className="block w-full px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-           >
-             Force Go to Dashboard (If above doesn't work)
-           </button>
-
-           <button
-             onClick={() => {
-               console.log("ULTIMATE FALLBACK: Direct URL change");
-               // Clear any potential routing issues
-               localStorage.setItem('onboarding_completed', 'true');
-               // Direct URL change
-               window.location.replace('/dashboard/overview');
-             }}
-             className="block w-full px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-           >
-             🚨 EMERGENCY: Go to Dashboard NOW
-           </button>
-
-           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-             <p className="text-sm text-yellow-800">
-               <strong>Still stuck?</strong> Open browser console (F12) and type: <br/>
-               <code className="bg-yellow-100 px-1 rounded">window.location.href = '/dashboard/overview'</code>
+           <div className="mb-6">
+             <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+               <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+               </svg>
+             </div>
+             <h2 className="text-2xl font-bold text-gray-800 mb-4">Setup Complete!</h2>
+             <p className="text-gray-600 mb-8">
+               Your restaurant profile has been created successfully. You can now start building your digital menu and customizing your QR menu experience.
              </p>
            </div>
 
-           {autoNavCountdown > 0 && (
-             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
-               <p className="text-sm text-blue-800">
-                 🕒 Auto-navigating to dashboard in <strong>{autoNavCountdown}</strong> seconds...
-               </p>
-             </div>
-           )}
+           <div className="space-y-4">
+             <button
+               onClick={handleFinish}
+               className="w-full px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 font-medium"
+             >
+               Go to Dashboard
+             </button>
+
+             {autoNavCountdown > 0 && (
+               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-center">
+                 <p className="text-sm text-blue-800">
+                   Automatically redirecting in <strong>{autoNavCountdown}</strong> seconds...
+                 </p>
+               </div>
+             )}
+           </div>
          </div>
-       </div>
      );
    };
 

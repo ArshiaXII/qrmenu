@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Restaurant Slug</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        input { padding: 10px; width: 300px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Restaurant Slug Fix Tool</h1>
+    
+    <div class="container">
+        <h2>Fix Your Restaurant Slug</h2>
+        <p>Enter your actual restaurant name to generate the correct slug:</p>
+        
+        <div>
+            <label>Restaurant Name:</label><br>
+            <input type="text" id="restaurantName" placeholder="e.g., Güzel Kebapçı, Arshia Sohraby, etc." />
+        </div>
+        
+        <div>
+            <label>Generated Slug Preview:</label><br>
+            <input type="text" id="slugPreview" readonly style="background: #f8f9fa;" />
+        </div>
+        
+        <button onclick="fixSlug()">Fix Restaurant Slug</button>
+        <button onclick="showCurrentData()">Show Current Data</button>
+        <button onclick="clearData()">Clear All Data (Reset)</button>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+        // Generate slug from name
+        function generateSlug(name) {
+            return name
+                .toLowerCase()
+                .trim()
+                .replace(/ğ/g, 'g')
+                .replace(/ü/g, 'u')
+                .replace(/ş/g, 's')
+                .replace(/ı/g, 'i')
+                .replace(/ö/g, 'o')
+                .replace(/ç/g, 'c')
+                .replace(/[^a-z0-9]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        }
+
+        // Update slug preview as user types
+        document.getElementById('restaurantName').addEventListener('input', function(e) {
+            const name = e.target.value;
+            const slug = name ? generateSlug(name) : '';
+            document.getElementById('slugPreview').value = slug;
+        });
+
+        function showMessage(message, type = 'info') {
+            const output = document.getElementById('output');
+            output.innerHTML = `<div class="${type}">${message}</div>` + output.innerHTML;
+        }
+
+        function showCurrentData() {
+            try {
+                const authUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+                const storageData = JSON.parse(localStorage.getItem('qr_menu_storage') || '{"restaurants":{}}');
+                
+                const output = document.getElementById('output');
+                output.innerHTML = `
+                    <div class="container">
+                        <h3>Current Data:</h3>
+                        <h4>Auth User:</h4>
+                        <pre>${JSON.stringify(authUser, null, 2)}</pre>
+                        <h4>Restaurant Storage:</h4>
+                        <pre>${JSON.stringify(storageData, null, 2)}</pre>
+                        <h4>Available Restaurant Slugs:</h4>
+                        <pre>${Object.keys(storageData.restaurants || {}).join(', ') || 'None'}</pre>
+                    </div>
+                ` + output.innerHTML;
+            } catch (error) {
+                showMessage('Error reading current data: ' + error.message, 'error');
+            }
+        }
+
+        function fixSlug() {
+            const restaurantName = document.getElementById('restaurantName').value.trim();
+            
+            if (!restaurantName) {
+                showMessage('Please enter a restaurant name', 'error');
+                return;
+            }
+
+            try {
+                const newSlug = generateSlug(restaurantName);
+                
+                // Get current data
+                const authUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+                const storageData = JSON.parse(localStorage.getItem('qr_menu_storage') || '{"restaurants":{}}');
+                
+                if (!authUser.id) {
+                    showMessage('No authenticated user found', 'error');
+                    return;
+                }
+
+                // Find current user's restaurant
+                let oldSlug = null;
+                let restaurantData = null;
+                
+                for (const [slug, data] of Object.entries(storageData.restaurants || {})) {
+                    if (data.restaurant && data.restaurant.userId === authUser.id) {
+                        oldSlug = slug;
+                        restaurantData = data;
+                        break;
+                    }
+                }
+
+                if (!restaurantData) {
+                    // Create new restaurant data
+                    restaurantData = {
+                        restaurant: {
+                            name: restaurantName,
+                            slug: newSlug,
+                            userId: authUser.id,
+                            status: 'active',
+                            currency: 'TRY',
+                            onboarding_completed: true
+                        },
+                        menu: {
+                            sections: [],
+                            isActive: true
+                        },
+                        branding: {
+                            primaryColor: '#6366f1',
+                            backgroundColor: '#ffffff',
+                            textColor: '#1f2937'
+                        }
+                    };
+                    
+                    showMessage('Created new restaurant data', 'info');
+                } else {
+                    // Update existing restaurant data
+                    restaurantData.restaurant.name = restaurantName;
+                    restaurantData.restaurant.slug = newSlug;
+                    
+                    // Remove old entry if slug changed
+                    if (oldSlug && oldSlug !== newSlug) {
+                        delete storageData.restaurants[oldSlug];
+                        showMessage(`Moved data from old slug: ${oldSlug}`, 'info');
+                    }
+                }
+
+                // Save updated data
+                storageData.restaurants[newSlug] = restaurantData;
+                localStorage.setItem('qr_menu_storage', JSON.stringify(storageData));
+
+                // Update auth user
+                authUser.restaurantSlug = newSlug;
+                localStorage.setItem('authUser', JSON.stringify(authUser));
+
+                showMessage(`✅ Restaurant slug fixed successfully!
+                    Restaurant Name: ${restaurantName}
+                    New Slug: ${newSlug}
+                    Public URL: ${window.location.origin}/menu/${newSlug}`, 'success');
+
+                // Clear form
+                document.getElementById('restaurantName').value = '';
+                document.getElementById('slugPreview').value = '';
+
+            } catch (error) {
+                showMessage('Error fixing slug: ' + error.message, 'error');
+            }
+        }
+
+        function clearData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                localStorage.removeItem('qr_menu_storage');
+                localStorage.removeItem('authUser');
+                showMessage('All data cleared. You will need to log in again.', 'success');
+            }
+        }
+
+        // Show current data on load
+        window.addEventListener('load', showCurrentData);
+    </script>
+</body>
+</html>

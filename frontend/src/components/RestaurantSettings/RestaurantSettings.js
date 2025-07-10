@@ -86,22 +86,30 @@ const RestaurantSettings = () => {
     setSuccessMessage('');
 
     try {
-      const newSlug = generateSlugFromName(restaurantName);
+      const oldSlug = currentRestaurant?.slug;
 
-      await menuService.updateRestaurantSettings(restaurantName, newSlug, {
+      const result = await menuService.updateRestaurantSettings(restaurantName, null, {
         address: 'İstanbul, Türkiye',
         phone: '+90 212 555 0123',
         hours: '09:00 - 23:00'
       });
 
-      setSuccessMessage('Restoran ayarları başarıyla güncellendi!');
+      if (result.newSlug && result.newSlug !== oldSlug) {
+        setSuccessMessage(`Restoran ayarları başarıyla güncellendi! Yeni URL: /menu/${result.newSlug}`);
+      } else {
+        setSuccessMessage('Restoran ayarları başarıyla güncellendi!');
+      }
 
       // Reload dashboard data to reflect changes
       await loadDashboardMenuData();
 
     } catch (error) {
       console.error('Error saving restaurant settings:', error);
-      setNameError('Ayarlar kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      if (error.message === 'RESTAURANT_NAME_EXISTS') {
+        setNameError('Bu restoran adı zaten kullanılıyor. Lütfen farklı bir ad seçin.');
+      } else {
+        setNameError('Ayarlar kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -157,8 +165,28 @@ const RestaurantSettings = () => {
           <div className="settings-card">
             <h2 className="card-title">Menü URL'niz</h2>
 
+            {/* Current URL */}
+            {currentRestaurant?.slug && currentRestaurant.slug !== slugPreview && (
+              <div className="url-preview">
+                <label className="form-label">Mevcut URL</label>
+                <div className="url-display">
+                  <span className="url-text">{window.location.origin}/menu/{currentRestaurant.slug}</span>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(`${window.location.origin}/menu/${currentRestaurant.slug}`)}
+                    className="copy-btn"
+                    title="Mevcut URL'yi kopyala"
+                  >
+                    Kopyala
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* New URL Preview */}
             <div className="url-preview">
-              <label className="form-label">Menü URL'niz</label>
+              <label className="form-label">
+                {currentRestaurant?.slug && currentRestaurant.slug !== slugPreview ? 'Yeni URL (Kaydettikten sonra)' : 'Menü URL\'niz'}
+              </label>
               <div className="url-display">
                 <span className="url-text">{getCurrentPublicUrl()}</span>
                 <button
@@ -169,6 +197,11 @@ const RestaurantSettings = () => {
                   Kopyala
                 </button>
               </div>
+              {currentRestaurant?.slug && currentRestaurant.slug !== slugPreview && (
+                <p className="text-sm text-amber-600 mt-2">
+                  ⚠️ Restoran adını değiştirdiğinizde URL'niz de değişecek
+                </p>
+              )}
             </div>
           </div>
         )}

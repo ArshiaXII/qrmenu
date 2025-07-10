@@ -421,7 +421,7 @@ class MenuService {
     }
   }
 
-  // Update restaurant name
+  // Update restaurant name and slug
   async updateRestaurantName(newName, restaurantSlug = null) {
     try {
       const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
@@ -442,15 +442,58 @@ class MenuService {
         throw new Error('Restaurant not found');
       }
 
-      // Update restaurant name
-      storageData.restaurants[targetSlug].restaurant.name = newName;
+      // Generate new slug from new name
+      const newSlug = this.generateSlug(newName);
+
+      // Get the restaurant data
+      const restaurantData = storageData.restaurants[targetSlug];
+
+      // Update restaurant name and slug
+      restaurantData.restaurant.name = newName;
+      restaurantData.restaurant.slug = newSlug;
+
+      // If slug changed, move data to new slug key
+      if (newSlug !== targetSlug) {
+        // Remove old entry
+        delete storageData.restaurants[targetSlug];
+
+        // Add data under new slug
+        storageData.restaurants[newSlug] = restaurantData;
+
+        // Update user's restaurantSlug reference
+        const currentUser = this.getCurrentUser();
+        if (currentUser) {
+          currentUser.restaurantSlug = newSlug;
+          localStorage.setItem('authUser', JSON.stringify(currentUser));
+        }
+
+        console.log(`Restaurant slug updated from ${targetSlug} to ${newSlug}`);
+      }
 
       // Save to localStorage
       this.saveStorageData(storageData);
 
-      return { success: true, message: 'Restaurant name updated successfully' };
+      return { success: true, newSlug, message: 'Restaurant name and slug updated successfully' };
     } catch (error) {
       console.error('Error updating restaurant name:', error);
+      throw error;
+    }
+  }
+
+  // Update restaurant settings (name, slug, and other settings)
+  async updateRestaurantSettings(newName, newSlug = null, additionalSettings = {}) {
+    try {
+      // Use the updateRestaurantName method which handles slug generation
+      const result = await this.updateRestaurantName(newName);
+
+      // If there are additional settings, save them too
+      if (Object.keys(additionalSettings).length > 0) {
+        await this.saveRestaurantSettings(result.newSlug, additionalSettings);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error updating restaurant settings:', error);
       throw error;
     }
   }

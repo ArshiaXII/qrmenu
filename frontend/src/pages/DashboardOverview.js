@@ -109,11 +109,18 @@ const DashboardOverview = () => {
         </div>
       </div>
 
-      {/* Quick Actions or other info can go here */}
-      {/* <div className="bg-white p-6 rounded-lg shadow-md">
+      {/* Quick Actions */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="text-xl font-semibold text-gray-700 mb-3">Quick Actions</h3>
-         Links to common tasks 
-      </div> */}
+        <div className="space-y-2">
+          <Link to="/dashboard/menu-management" className="block text-indigo-600 hover:text-indigo-800 font-medium">
+            Manage Menu &rarr;
+          </Link>
+          <Link to="/dashboard/restaurant-settings" className="block text-indigo-600 hover:text-indigo-800 font-medium">
+            Restaurant Settings &rarr;
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
