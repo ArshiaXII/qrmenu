@@ -98,6 +98,31 @@ exports.upsertMyRestaurant = async (req, res) => {
         return res.status(400).json({ message: 'Restaurant name is required' });
     }
 
+    // Validate name length and format
+    if (name.length < 2 || name.length > 100) {
+        return res.status(400).json({ message: 'Restaurant name must be between 2 and 100 characters' });
+    }
+
+    // Check for existing restaurant with same name (excluding current user's restaurant)
+    try {
+        const existingNameCheck = await db('restaurants')
+            .where('name', name)
+            .whereNot('user_id', userId)
+            .first();
+
+        if (existingNameCheck) {
+            console.log(`[Restaurant Controller] Duplicate name attempt: "${name}" already exists for user ${existingNameCheck.user_id}`);
+            return res.status(409).json({
+                message: 'Restaurant name already exists. Please choose a different name.',
+                code: 'DUPLICATE_NAME',
+                field: 'name'
+            });
+        }
+    } catch (nameCheckError) {
+        console.error('[Restaurant Controller] Error checking for duplicate name:', nameCheckError);
+        return res.status(500).json({ message: 'Error validating restaurant name' });
+    }
+
     console.log(`[Restaurant Controller] Upsert profile request for user ID: ${userId}`);
 
     try {
@@ -129,12 +154,29 @@ exports.upsertMyRestaurant = async (req, res) => {
         let restaurantIdToFetch;
 
         if (existingRestaurant) {
-            // Update existing restaurant
+            // Update existing restaurant - ONLY update restaurant fields, preserve menu data
             console.log(`[Restaurant Controller] Updating restaurant ID: ${existingRestaurant.id} with slug: ${generatedSlug}`);
+
+            // Create update object with only restaurant-specific fields
+            const updateFields = {
+                name,
+                slug: generatedSlug,
+                description: description || null,
+                logo_path: logo_path || null,
+                currency_code: currency_code || 'USD',
+                allow_remove_branding: allow_remove_branding !== undefined ? !!allow_remove_branding : false,
+                custom_footer_text: custom_footer_text || null,
+                updated_at: db.fn.now()
+            };
+
+            // Only update restaurant table - this preserves all menu relationships
             await db('restaurants')
                 .where({ id: existingRestaurant.id })
-                .update(restaurantData);
+                .update(updateFields);
+
             restaurantIdToFetch = existingRestaurant.id;
+
+            console.log(`[Restaurant Controller] Restaurant updated successfully. Menu data preserved.`);
         } else {
             // Insert new restaurant
             console.log(`[Restaurant Controller] Creating new restaurant with slug: ${generatedSlug}`);

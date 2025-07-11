@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Menu Status</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        input { padding: 8px; width: 300px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Menu Status</h1>
+    
+    <div class="container">
+        <h2>Check Menu Status</h2>
+        <p>Enter your restaurant slug to check why the menu shows as "not available":</p>
+        
+        <div>
+            <label>Restaurant Slug:</label><br>
+            <input type="text" id="restaurantSlug" placeholder="e.g., arshia-sohraby, guzel-kebapci" />
+            <button onclick="checkMenuStatus()">Check Status</button>
+        </div>
+        
+        <div>
+            <button onclick="showAllRestaurants()">Show All Restaurants</button>
+            <button onclick="activateMenu()">Activate Menu</button>
+            <button onclick="fixMenuData()">Fix Menu Data</button>
+        </div>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+        function showMessage(message, type = 'info') {
+            const output = document.getElementById('output');
+            output.innerHTML = `<div class="${type}">${message}</div>` + output.innerHTML;
+        }
+
+        function showAllRestaurants() {
+            try {
+                const storageData = JSON.parse(localStorage.getItem('qr_menu_storage') || '{"restaurants":{}}');
+                const authUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+                
+                const output = document.getElementById('output');
+                output.innerHTML = `
+                    <div class="container">
+                        <h3>Current User:</h3>
+                        <pre>${JSON.stringify(authUser, null, 2)}</pre>
+                        <h3>All Restaurants in Storage:</h3>
+                        <pre>${JSON.stringify(storageData, null, 2)}</pre>
+                        <h3>Available Restaurant Slugs:</h3>
+                        <pre>${Object.keys(storageData.restaurants || {}).join(', ') || 'None found'}</pre>
+                    </div>
+                ` + output.innerHTML;
+            } catch (error) {
+                showMessage('Error reading data: ' + error.message, 'error');
+            }
+        }
+
+        function checkMenuStatus() {
+            const slug = document.getElementById('restaurantSlug').value.trim();
+            
+            if (!slug) {
+                showMessage('Please enter a restaurant slug', 'error');
+                return;
+            }
+
+            try {
+                const storageData = JSON.parse(localStorage.getItem('qr_menu_storage') || '{"restaurants":{}}');
+                
+                if (!storageData.restaurants[slug]) {
+                    showMessage(`❌ Restaurant not found for slug: "${slug}"`, 'error');
+                    showMessage(`Available slugs: ${Object.keys(storageData.restaurants).join(', ')}`, 'info');
+                    return;
+                }
+
+                const restaurantData = storageData.restaurants[slug];
+                const restaurant = restaurantData.restaurant;
+                const menu = restaurantData.menu;
+
+                let status = '✅ Menu should be available';
+                let issues = [];
+
+                // Check restaurant status
+                if (!restaurant) {
+                    issues.push('❌ Restaurant data missing');
+                } else {
+                    if (restaurant.status !== 'active') {
+                        issues.push(`❌ Restaurant status: ${restaurant.status} (should be 'active')`);
+                    }
+                }
+
+                // Check menu status
+                if (!menu) {
+                    issues.push('❌ Menu data missing');
+                } else {
+                    if (!menu.isActive) {
+                        issues.push('❌ Menu is not active (isActive: false)');
+                    }
+                    if (!menu.sections || menu.sections.length === 0) {
+                        issues.push('⚠️ Menu has no sections');
+                    }
+                }
+
+                if (issues.length > 0) {
+                    status = '❌ Menu has issues';
+                }
+
+                const output = document.getElementById('output');
+                output.innerHTML = `
+                    <div class="container">
+                        <h3>Menu Status for "${slug}":</h3>
+                        <div class="${issues.length > 0 ? 'error' : 'success'}">${status}</div>
+                        ${issues.length > 0 ? '<h4>Issues found:</h4><ul>' + issues.map(issue => `<li>${issue}</li>`).join('') + '</ul>' : ''}
+                        <h4>Restaurant Data:</h4>
+                        <pre>${JSON.stringify(restaurant, null, 2)}</pre>
+                        <h4>Menu Data:</h4>
+                        <pre>${JSON.stringify(menu, null, 2)}</pre>
+                    </div>
+                ` + output.innerHTML;
+
+            } catch (error) {
+                showMessage('Error checking menu status: ' + error.message, 'error');
+            }
+        }
+
+        function activateMenu() {
+            const slug = document.getElementById('restaurantSlug').value.trim();
+            
+            if (!slug) {
+                showMessage('Please enter a restaurant slug first', 'error');
+                return;
+            }
+
+            try {
+                const storageData = JSON.parse(localStorage.getItem('qr_menu_storage') || '{"restaurants":{}}');
+                
+                if (!storageData.restaurants[slug]) {
+                    showMessage(`Restaurant not found for slug: "${slug}"`, 'error');
+                    return;
+                }
+
+                // Activate restaurant
+                if (storageData.restaurants[slug].restaurant) {
+                    storageData.restaurants[slug].restaurant.status = 'active';
+                }
+
+                // Activate menu
+                if (storageData.restaurants[slug].menu) {
+                    storageData.restaurants[slug].menu.isActive = true;
+                } else {
+                    // Create basic menu if missing
+                    storageData.restaurants[slug].menu = {
+                        isActive: true,
+                        sections: []
+                    };
+                }
+
+                // Save changes
+                localStorage.setItem('qr_menu_storage', JSON.stringify(storageData));
+
+                showMessage(`✅ Menu activated for "${slug}"! Try accessing the public menu now.`, 'success');
+
+            } catch (error) {
+                showMessage('Error activating menu: ' + error.message, 'error');
+            }
+        }
+
+        function fixMenuData() {
+            const slug = document.getElementById('restaurantSlug').value.trim();
+            
+            if (!slug) {
+                showMessage('Please enter a restaurant slug first', 'error');
+                return;
+            }
+
+            try {
+                const storageData = JSON.parse(localStorage.getItem('qr_menu_storage') || '{"restaurants":{}}');
+                const authUser = JSON.parse(localStorage.getItem('authUser') || '{}');
+                
+                if (!storageData.restaurants[slug]) {
+                    showMessage(`Restaurant not found for slug: "${slug}"`, 'error');
+                    return;
+                }
+
+                const restaurantData = storageData.restaurants[slug];
+
+                // Fix restaurant data
+                if (!restaurantData.restaurant) {
+                    restaurantData.restaurant = {};
+                }
+
+                restaurantData.restaurant = {
+                    ...restaurantData.restaurant,
+                    name: restaurantData.restaurant.name || 'My Restaurant',
+                    slug: slug,
+                    status: 'active',
+                    userId: authUser.id,
+                    onboarding_completed: true,
+                    currency: 'TRY',
+                    address: 'İstanbul, Türkiye',
+                    phone: '+90 212 555 0123',
+                    hours: '09:00 - 23:00'
+                };
+
+                // Fix menu data
+                if (!restaurantData.menu) {
+                    restaurantData.menu = {};
+                }
+
+                restaurantData.menu = {
+                    ...restaurantData.menu,
+                    isActive: true,
+                    sections: restaurantData.menu.sections || []
+                };
+
+                // Fix branding data
+                if (!restaurantData.branding) {
+                    restaurantData.branding = {
+                        primaryColor: '#6366f1',
+                        backgroundColor: '#ffffff',
+                        textColor: '#1f2937'
+                    };
+                }
+
+                // Save changes
+                localStorage.setItem('qr_menu_storage', JSON.stringify(storageData));
+
+                showMessage(`✅ Menu data fixed for "${slug}"! Restaurant and menu are now active.`, 'success');
+
+            } catch (error) {
+                showMessage('Error fixing menu data: ' + error.message, 'error');
+            }
+        }
+
+        // Auto-load current data on page load
+        window.addEventListener('load', showAllRestaurants);
+    </script>
+</body>
+</html>

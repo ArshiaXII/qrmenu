@@ -27,6 +27,7 @@
   },
   "scripts": {
     "start": "craco start",
+    "start:network": "set HOST=0.0.0.0&& craco start",
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",

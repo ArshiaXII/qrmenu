@@ -96,37 +96,62 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' }); // Unauthorized
         }
 
-        // Passwords match, fetch associated restaurant ID
-        console.log("[Auth Controller] Password matched, fetching restaurant ID for user:", user.id);
-        const restaurant = await db('restaurants').where({ user_id: user.id }).select('id').first();
-        const restaurantId = restaurant ? restaurant.id : null; // May be null if profile not created yet
-        console.log("[Auth Controller] Found restaurant ID:", restaurantId);
+        // Passwords match, fetch associated restaurant data
+        console.log("[Auth Controller] Password matched, fetching restaurant data for user:", user.id);
+        const restaurant = await db('restaurants').where({ user_id: user.id }).first();
+        const restaurantId = restaurant ? restaurant.id : null;
+        const restaurantSlug = restaurant ? restaurant.slug : null;
+        console.log("[Auth Controller] Found restaurant:", { id: restaurantId, slug: restaurantSlug });
 
-        // Create JWT payload including restaurantId
-        console.log("[Auth Controller] Generating JWT for email:", email);
-        const payload = {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            restaurant_id: restaurantId // Include restaurant_id
-        };
-        const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        // Import auth utilities for enhanced session management
+        const { generateToken, setAuthCookie } = require('../middleware/authMiddleware');
 
-        console.log("[Auth Controller] Login successful for email:", email);
+        // Generate JWT token with enhanced security
+        console.log("[Auth Controller] Generating enhanced JWT for email:", email);
+        const token = generateToken(user.id, user.email, user.role);
+
+        // Set secure HTTP-only cookie for persistent session
+        setAuthCookie(res, token);
+
+        console.log("[Auth Controller] Login successful with persistent session for email:", email);
         res.json({
             message: 'Login successful',
-            token,
-            user: { 
-                id: user.id, 
-                email: user.email, 
-                role: user.role, 
-                restaurant_id: restaurantId // Include restaurant_id here
-            } 
+            token, // Also send token for client-side storage if needed
+            user: {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                restaurant_id: restaurantId,
+                restaurantSlug: restaurantSlug
+            }
         });
 
     } catch (error) {
         console.error("[Auth Controller] Error during login:", error);
         res.status(500).json({ message: 'Error during login', error: error.message });
+    }
+};
+
+// POST /logout - Clear session and cookies
+exports.logout = async (req, res) => {
+    try {
+        console.log("[Auth Controller] Logout request received");
+
+        // Import auth utilities
+        const { clearAuthCookie } = require('../middleware/authMiddleware');
+
+        // Clear the HTTP-only cookie
+        clearAuthCookie(res);
+
+        console.log("[Auth Controller] User logged out successfully");
+        res.json({
+            message: 'Logged out successfully',
+            success: true
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error during logout:", error);
+        res.status(500).json({ message: 'Error during logout', error: error.message });
     }
 };
 

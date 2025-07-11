@@ -421,7 +421,7 @@ class MenuService {
     }
   }
 
-  // Update restaurant name and slug
+  // Update restaurant name and slug - PRESERVES MENU DATA
   async updateRestaurantName(newName, restaurantSlug = null) {
     try {
       const targetSlug = restaurantSlug || this.getCurrentUserRestaurantSlug();
@@ -445,19 +445,30 @@ class MenuService {
       // Generate new slug from new name
       const newSlug = this.generateSlug(newName);
 
-      // Get the restaurant data
+      // Get the restaurant data - PRESERVE ALL EXISTING DATA
       const restaurantData = storageData.restaurants[targetSlug];
 
-      // Update restaurant name and slug
-      restaurantData.restaurant.name = newName;
-      restaurantData.restaurant.slug = newSlug;
+      // CRITICAL: Only update restaurant fields, preserve menu and branding
+      const preservedMenuData = restaurantData.menu || {};
+      const preservedBrandingData = restaurantData.branding || {};
+
+      // Update ONLY restaurant name and slug, keep everything else
+      restaurantData.restaurant = {
+        ...restaurantData.restaurant, // Preserve all existing restaurant data
+        name: newName,
+        slug: newSlug
+      };
+
+      // Ensure menu and branding data are preserved
+      restaurantData.menu = preservedMenuData;
+      restaurantData.branding = preservedBrandingData;
 
       // If slug changed, move data to new slug key
       if (newSlug !== targetSlug) {
         // Remove old entry
         delete storageData.restaurants[targetSlug];
 
-        // Add data under new slug
+        // Add complete data under new slug (with preserved menu/branding)
         storageData.restaurants[newSlug] = restaurantData;
 
         // Update user's restaurantSlug reference
@@ -467,13 +478,21 @@ class MenuService {
           localStorage.setItem('authUser', JSON.stringify(currentUser));
         }
 
-        console.log(`Restaurant slug updated from ${targetSlug} to ${newSlug}`);
+        console.log(`Restaurant slug updated from ${targetSlug} to ${newSlug} - Menu data preserved`);
+      } else {
+        // Same slug, just update in place
+        storageData.restaurants[targetSlug] = restaurantData;
       }
 
       // Save to localStorage
       this.saveStorageData(storageData);
 
-      return { success: true, newSlug, message: 'Restaurant name and slug updated successfully' };
+      console.log('Restaurant update completed - Menu data preserved:', {
+        menuSections: restaurantData.menu?.sections?.length || 0,
+        brandingPreserved: !!restaurantData.branding
+      });
+
+      return { success: true, newSlug, message: 'Restaurant name and slug updated successfully - Menu data preserved' };
     } catch (error) {
       console.error('Error updating restaurant name:', error);
       throw error;

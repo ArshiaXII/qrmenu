@@ -16,7 +16,13 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://45.131.0.36:3000', 'http://localhost:3000'],
+    origin: [
+        'http://45.131.0.36:3000',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://192.168.1.3:3001', // Your computer's IP for mobile access
+        'http://127.0.0.1:3001'
+    ],
     credentials: true
 }));
 app.use(express.json());
@@ -62,10 +68,14 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
-    // console.log(`Database connection status checked in db.js`); // Connection check is now in db.js
     console.log(`Using database: ${process.env.DB_NAME} on ${process.env.DB_HOST}:${process.env.DB_PORT}`);
     console.log(`Make sure your .env file is configured correctly.`);
-    console.log(`Access the API at http://localhost:${PORT}`);
+    console.log(`Access the API at:`);
+    console.log(`  Local:    http://localhost:${PORT}`);
+    console.log(`  Network:  http://192.168.1.3:${PORT}`);
+    console.log(`Frontend should be accessible at:`);
+    console.log(`  Local:    http://localhost:3001`);
+    console.log(`  Network:  http://192.168.1.3:3001`);
 });
