@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const subscriptionController = require('../controllers/subscriptionController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 const adminMiddleware = subscriptionController.adminMiddleware; // Import admin check from controller (Assuming this exists in controller)
 
 // GET /api/subscription/status - Get current user's restaurant subscription status

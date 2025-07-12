@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const menuItemController = require('../controllers/menuItemController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 // const uploadMiddleware = require('../middleware/uploadMiddleware'); // For image uploads later
 
 // All menu item routes are protected

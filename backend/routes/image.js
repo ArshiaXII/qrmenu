@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const imageController = require('../controllers/imageController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 const { uploadSingle } = require('../middleware/uploadMiddleware'); // Updated import
 
 // POST /api/image/upload - Upload an image (logo or menu item)

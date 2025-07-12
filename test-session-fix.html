@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Session Management Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        .container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .user-section { background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        input { padding: 10px; width: 250px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.danger:hover { background: #c82333; }
+        button.success { background: #28a745; }
+        button.success:hover { background: #218838; }
+        .success { background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .error { background: #f8d7da; color: #721c24; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .info { background: #d1ecf1; color: #0c5460; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .warning { background: #fff3cd; color: #856404; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .current-session { background: #d4edda; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Session Management Fix Test</h1>
+    
+    <div class="current-session">
+        <h3>Current Session Status</h3>
+        <div id="sessionStatus">Loading...</div>
+        <button onclick="checkSession()">Refresh Session Status</button>
+        <button class="danger" onclick="forceLogout()">Force Clear All Sessions</button>
+    </div>
+
+    <div class="container">
+        <h2>Test User 1 - Registration & Login</h2>
+        <div class="user-section">
+            <h4>Register User 1</h4>
+            <input type="email" id="user1Email" placeholder="user1@test.com" value="user1@test.com" />
+            <input type="password" id="user1Password" placeholder="Password123!" value="Password123!" />
+            <input type="password" id="user1ConfirmPassword" placeholder="Confirm Password" value="Password123!" />
+            <br>
+            <button onclick="registerUser1()">Register User 1</button>
+        </div>
+        
+        <div class="user-section">
+            <h4>Login User 1</h4>
+            <input type="email" id="user1LoginEmail" placeholder="user1@test.com" value="user1@test.com" />
+            <input type="password" id="user1LoginPassword" placeholder="Password123!" value="Password123!" />
+            <br>
+            <button onclick="loginUser1()">Login User 1</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Test User 2 - Registration & Login</h2>
+        <div class="user-section">
+            <h4>Register User 2</h4>
+            <input type="email" id="user2Email" placeholder="user2@test.com" value="user2@test.com" />
+            <input type="password" id="user2Password" placeholder="Password123!" value="Password123!" />
+            <input type="password" id="user2ConfirmPassword" placeholder="Confirm Password" value="Password123!" />
+            <br>
+            <button onclick="registerUser2()">Register User 2</button>
+        </div>
+        
+        <div class="user-section">
+            <h4>Login User 2</h4>
+            <input type="email" id="user2LoginEmail" placeholder="user2@test.com" value="user2@test.com" />
+            <input type="password" id="user2LoginPassword" placeholder="Password123!" value="Password123!" />
+            <br>
+            <button onclick="loginUser2()">Login User 2</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Session Management Tests</h2>
+        <button onclick="testGetProfile()">Get Current Profile</button>
+        <button onclick="testGetRestaurant()">Get Current Restaurant</button>
+        <button onclick="logout()">Regular Logout</button>
+        <button class="danger" onclick="forceLogout()">Force Logout</button>
+        <button class="success" onclick="clearOutput()">Clear Output</button>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        function showMessage(message, type = 'info') {
+            const output = document.getElementById('output');
+            output.innerHTML = `<div class="${type}">${message}</div>` + output.innerHTML;
+        }
+
+        function showResponse(title, response) {
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <div class="container">
+                    <h3>${title}</h3>
+                    <pre>${JSON.stringify(response, null, 2)}</pre>
+                </div>
+            ` + output.innerHTML;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+        }
+
+        async function clearAllSessions() {
+            // Clear localStorage
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && (key.includes('auth') || key.includes('token') || key.includes('user') || key.includes('session'))) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            showMessage(`🧹 Cleared ${keysToRemove.length} storage keys`, 'info');
+        }
+
+        async function forceLogout() {
+            try {
+                showMessage('🔄 Force clearing all sessions...', 'warning');
+                
+                // Call backend clear-session
+                const response = await fetch(`${API_BASE}/auth/clear-session`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                showResponse('Force Logout Response', data);
+                
+                // Clear frontend storage
+                await clearAllSessions();
+                
+                showMessage('✅ All sessions cleared!', 'success');
+                checkSession();
+                
+            } catch (error) {
+                showMessage('❌ Force logout error: ' + error.message, 'error');
+            }
+        }
+
+        async function registerUser1() {
+            const email = document.getElementById('user1Email').value;
+            const password = document.getElementById('user1Password').value;
+            const confirmPassword = document.getElementById('user1ConfirmPassword').value;
+
+            try {
+                showMessage('🔄 Clearing sessions before registration...', 'info');
+                await forceLogout();
+                
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password, confirmPassword }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.clearStorage) await clearAllSessions();
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('authUser', JSON.stringify(data.user));
+                    showMessage('✅ User 1 registered successfully!', 'success');
+                } else {
+                    showMessage('❌ User 1 registration failed: ' + data.message, 'error');
+                }
+
+                showResponse('User 1 Registration Response', data);
+                checkSession();
+            } catch (error) {
+                showMessage('❌ User 1 registration error: ' + error.message, 'error');
+            }
+        }
+
+        async function loginUser1() {
+            const email = document.getElementById('user1LoginEmail').value;
+            const password = document.getElementById('user1LoginPassword').value;
+
+            try {
+                showMessage('🔄 Clearing sessions before login...', 'info');
+                await forceLogout();
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.clearStorage) await clearAllSessions();
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('authUser', JSON.stringify(data.user));
+                    showMessage('✅ User 1 login successful!', 'success');
+                } else {
+                    showMessage('❌ User 1 login failed: ' + data.message, 'error');
+                }
+
+                showResponse('User 1 Login Response', data);
+                checkSession();
+            } catch (error) {
+                showMessage('❌ User 1 login error: ' + error.message, 'error');
+            }
+        }
+
+        async function registerUser2() {
+            const email = document.getElementById('user2Email').value;
+            const password = document.getElementById('user2Password').value;
+            const confirmPassword = document.getElementById('user2ConfirmPassword').value;
+
+            try {
+                showMessage('🔄 Clearing sessions before registration...', 'info');
+                await forceLogout();
+                
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password, confirmPassword }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.clearStorage) await clearAllSessions();
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('authUser', JSON.stringify(data.user));
+                    showMessage('✅ User 2 registered successfully!', 'success');
+                } else {
+                    showMessage('❌ User 2 registration failed: ' + data.message, 'error');
+                }
+
+                showResponse('User 2 Registration Response', data);
+                checkSession();
+            } catch (error) {
+                showMessage('❌ User 2 registration error: ' + error.message, 'error');
+            }
+        }
+
+        async function loginUser2() {
+            const email = document.getElementById('user2LoginEmail').value;
+            const password = document.getElementById('user2LoginPassword').value;
+
+            try {
+                showMessage('🔄 Clearing sessions before login...', 'info');
+                await forceLogout();
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.clearStorage) await clearAllSessions();
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('authUser', JSON.stringify(data.user));
+                    showMessage('✅ User 2 login successful!', 'success');
+                } else {
+                    showMessage('❌ User 2 login failed: ' + data.message, 'error');
+                }
+
+                showResponse('User 2 Login Response', data);
+                checkSession();
+            } catch (error) {
+                showMessage('❌ User 2 login error: ' + error.message, 'error');
+            }
+        }
+
+        async function testGetProfile() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showMessage('❌ No token found. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+                showResponse('Get Profile Response', data);
+                
+                if (data.success) {
+                    showMessage('✅ Profile retrieved successfully!', 'success');
+                } else {
+                    showMessage('❌ Profile failed: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Profile error: ' + error.message, 'error');
+            }
+        }
+
+        async function testGetRestaurant() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showMessage('❌ No token found. Please login first.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/restaurants/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+                showResponse('Get Restaurant Response', data);
+                
+                if (response.ok) {
+                    showMessage('✅ Restaurant data retrieved successfully!', 'success');
+                } else {
+                    showMessage('❌ Restaurant failed: ' + (data.message || 'Unknown error'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Restaurant error: ' + error.message, 'error');
+            }
+        }
+
+        async function logout() {
+            const token = localStorage.getItem('authToken');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+                showResponse('Logout Response', data);
+                
+                await clearAllSessions();
+                showMessage('✅ Logout successful!', 'success');
+                checkSession();
+            } catch (error) {
+                showMessage('❌ Logout error: ' + error.message, 'error');
+            }
+        }
+
+        function checkSession() {
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('authUser');
+            
+            let status = '';
+            if (token && user) {
+                const userData = JSON.parse(user);
+                status = `
+                    <strong>✅ Logged In</strong><br>
+                    Email: ${userData.email}<br>
+                    User ID: ${userData.id}<br>
+                    Restaurant ID: ${userData.restaurant_id || 'None'}<br>
+                    Token: ${token.substring(0, 20)}...
+                `;
+            } else {
+                status = '<strong>❌ Not Logged In</strong><br>No valid session found.';
+            }
+            
+            document.getElementById('sessionStatus').innerHTML = status;
+        }
+
+        // Check session on load
+        window.addEventListener('load', checkSession);
+    </script>
+</body>
+</html>

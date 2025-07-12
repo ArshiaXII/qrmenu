@@ -1,10 +1,6 @@
-const db = require('../db/db'); // Knex instance
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-require('dotenv').config();
-
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1d';
+const db = require('../db/db');
+const { hashPassword, comparePassword, validatePassword, validateEmail } = require('../utils/hashPassword');
+const { generateToken, generateRefreshToken, setAuthCookies, clearAuthCookies } = require('../utils/jwtToken');
 
 // POST /register
 exports.register = async (req, res) => {
@@ -39,25 +35,70 @@ exports.register = async (req, res) => {
             return res.status(409).json({ message: 'Email already registered' }); // 409 Conflict
         }
 
-        // Hash password
+        // Hash password using utility
         console.log("[Auth Controller] Hashing password for email:", email);
-        const saltRounds = 10; // Standard practice
-        const password_hash = await bcrypt.hash(password, saltRounds);
+        const hashedPassword = await hashPassword(password);
         console.log("[Auth Controller] Password hashed.");
 
         // Create new user (default role is 'owner' as per migration)
         console.log("[Auth Controller] Email available, creating user:", email);
-        const [newUser] = await db('users').insert({
-            email,
-            password_hash
-        }).returning(['id', 'email', 'role', 'created_at']); // Return basic info
+        const insertResult = await db('users').insert({
+            email: email.toLowerCase(),
+            password_hash: hashedPassword,
+            role: 'owner',
+            created_at: new Date(),
+            updated_at: new Date()
+        });
+
+        // MySQL doesn't support .returning(), so we need to fetch the user manually
+        const newUserId = insertResult[0]; // MySQL returns the insert ID
+        const newUser = await db('users')
+            .select('id', 'email', 'role', 'created_at')
+            .where({ id: newUserId })
+            .first();
 
         console.log("[Auth Controller] User created successfully:", { userId: newUser.id, email: newUser.email });
-        // Optionally create restaurant profile and subscription trial here or require separate step
+
+        // CRITICAL: Clear any existing cookies/sessions before setting new ones
+        clearAuthCookies(res);
+
+        // Clear legacy cookies that might exist
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        };
+        res.clearCookie('authToken', cookieOptions);
+        res.clearCookie('token', cookieOptions);
+        res.clearCookie('jwt', cookieOptions);
+
+        // Generate NEW tokens for immediate login (no restaurant yet for new users)
+        const accessToken = generateToken(newUser, null);
+        const refreshToken = generateRefreshToken(newUser);
+
+        // Set NEW secure cookies
+        setAuthCookies(res, accessToken, refreshToken);
+
+        // Add cache control headers to prevent stale data
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
 
         res.status(201).json({
+            success: true,
             message: 'User registered successfully',
-            user: { id: newUser.id, email: newUser.email, role: newUser.role }
+            user: {
+                id: newUser.id,
+                email: newUser.email,
+                role: newUser.role,
+                created_at: newUser.created_at,
+                restaurant_id: null // Explicitly show no restaurant yet
+            },
+            token: accessToken,
+            clearStorage: true // Signal frontend to clear localStorage
         });
 
     } catch (error) {
@@ -87,13 +128,17 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' }); // Unauthorized
         }
 
-        // Compare password
+        // Compare password using utility
         console.log("[Auth Controller] User found, comparing password for email:", email);
-        const isMatch = await bcrypt.compare(password, user.password_hash);
+        const isMatch = await comparePassword(password, user.password_hash);
 
         if (!isMatch) {
             console.log("[Auth Controller] Login failed: Password mismatch for email:", email);
-            return res.status(401).json({ message: 'Invalid credentials' }); // Unauthorized
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid credentials',
+                code: 'INVALID_CREDENTIALS'
+            });
         }
 
         // Passwords match, fetch associated restaurant data
@@ -103,27 +148,56 @@ exports.login = async (req, res) => {
         const restaurantSlug = restaurant ? restaurant.slug : null;
         console.log("[Auth Controller] Found restaurant:", { id: restaurantId, slug: restaurantSlug });
 
-        // Import auth utilities for enhanced session management
-        const { generateToken, setAuthCookie } = require('../middleware/authMiddleware');
+        // CRITICAL: Clear any existing cookies/sessions before setting new ones
+        console.log("[Auth Controller] Clearing previous session for email:", email);
+        clearAuthCookies(res);
 
-        // Generate JWT token with enhanced security
-        console.log("[Auth Controller] Generating enhanced JWT for email:", email);
-        const token = generateToken(user.id, user.email, user.role);
+        // Clear legacy cookies that might exist
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        };
+        res.clearCookie('authToken', cookieOptions);
+        res.clearCookie('token', cookieOptions);
+        res.clearCookie('jwt', cookieOptions);
 
-        // Set secure HTTP-only cookie for persistent session
-        setAuthCookie(res, token);
+        // Generate NEW tokens with restaurant ID for data isolation
+        console.log("[Auth Controller] Generating NEW tokens for email:", email);
+        const accessToken = generateToken(user, restaurantId);
+        const refreshToken = generateRefreshToken(user);
 
-        console.log("[Auth Controller] Login successful with persistent session for email:", email);
+        // Set NEW secure HTTP-only cookies for persistent session
+        setAuthCookies(res, accessToken, refreshToken);
+
+        // Update last login time (remove last_login field since it doesn't exist)
+        await db('users')
+            .where({ id: user.id })
+            .update({
+                updated_at: new Date()
+            });
+
+        // Add cache control headers to prevent stale data
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+
+        console.log("[Auth Controller] Login successful with NEW session for email:", email);
         res.json({
+            success: true,
             message: 'Login successful',
-            token, // Also send token for client-side storage if needed
+            token: accessToken, // Send NEW token for client-side storage
             user: {
                 id: user.id,
                 email: user.email,
                 role: user.role,
                 restaurant_id: restaurantId,
                 restaurantSlug: restaurantSlug
-            }
+            },
+            clearStorage: true // Signal frontend to clear localStorage
         });
 
     } catch (error) {
@@ -132,26 +206,439 @@ exports.login = async (req, res) => {
     }
 };
 
-// POST /logout - Clear session and cookies
+// POST /logout - Clear session and cookies completely
 exports.logout = async (req, res) => {
     try {
         console.log("[Auth Controller] Logout request received");
 
-        // Import auth utilities
-        const { clearAuthCookie } = require('../middleware/authMiddleware');
+        // Clear ALL authentication cookies with multiple variations
+        clearAuthCookies(res);
 
-        // Clear the HTTP-only cookie
-        clearAuthCookie(res);
+        // Also clear any legacy cookie names that might exist
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            path: '/'
+        };
 
-        console.log("[Auth Controller] User logged out successfully");
+        // Clear multiple possible cookie names
+        res.clearCookie('accessToken', cookieOptions);
+        res.clearCookie('authToken', cookieOptions); // Legacy name
+        res.clearCookie('token', cookieOptions); // Another possible name
+        res.clearCookie('jwt', cookieOptions); // Another possible name
+
+        // If user is authenticated, log the logout
+        if (req.user) {
+            console.log(`[Auth Controller] User ${req.user.email} (ID: ${req.user.id}) logged out successfully`);
+
+            // Update user's logout time (remove last_logout field since it doesn't exist)
+            await db('users')
+                .where({ id: req.user.id })
+                .update({
+                    updated_at: new Date()
+                });
+        }
+
+        // Send response with explicit cache control headers
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+
         res.json({
+            success: true,
             message: 'Logged out successfully',
-            success: true
+            clearStorage: true // Signal frontend to clear localStorage
         });
 
     } catch (error) {
         console.error("[Auth Controller] Error during logout:", error);
-        res.status(500).json({ message: 'Error during logout', error: error.message });
+        res.status(500).json({
+            success: false,
+            message: 'Error during logout',
+            code: 'LOGOUT_ERROR'
+        });
+    }
+};
+
+// GET /me - Get current authenticated user's details
+exports.getMe = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Get user with restaurant data
+        const user = await db('users')
+            .select('id', 'email', 'role', 'created_at', 'updated_at', 'last_login')
+            .where({ id: userId })
+            .first();
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+
+        // Get associated restaurant
+        const restaurant = await db('restaurants')
+            .select('id', 'name', 'slug', 'description', 'logo_path')
+            .where({ user_id: userId })
+            .first();
+
+        res.json({
+            success: true,
+            user: {
+                ...user,
+                restaurant: restaurant || null
+            }
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error getting user profile:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error retrieving user profile',
+            code: 'PROFILE_ERROR'
+        });
+    }
+};
+
+// POST /refresh - Refresh access token using refresh token
+exports.refreshToken = async (req, res) => {
+    try {
+        const refreshToken = req.cookies?.refreshToken || req.body.refreshToken;
+
+        if (!refreshToken) {
+            return res.status(401).json({
+                success: false,
+                message: 'Refresh token required',
+                code: 'NO_REFRESH_TOKEN'
+            });
+        }
+
+        // Verify refresh token
+        const { verifyToken } = require('../utils/jwtToken');
+        const decoded = verifyToken(refreshToken);
+
+        if (decoded.type !== 'refresh') {
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid refresh token',
+                code: 'INVALID_REFRESH_TOKEN'
+            });
+        }
+
+        // Get user from database
+        const user = await db('users')
+            .select('id', 'email', 'role')
+            .where({ id: decoded.id })
+            .first();
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not found',
+                code: 'USER_NOT_FOUND'
+            });
+        }
+
+        // Generate new access token
+        const newAccessToken = generateToken(user);
+
+        // Set new access token cookie
+        setAuthCookies(res, newAccessToken);
+
+        res.json({
+            success: true,
+            message: 'Token refreshed successfully',
+            token: newAccessToken
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error refreshing token:", error);
+        res.status(401).json({
+            success: false,
+            message: 'Invalid refresh token',
+            code: 'REFRESH_ERROR'
+        });
+    }
+};
+
+// PUT /me - Update user profile
+exports.updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { email } = req.body;
+
+        // Validate email if provided
+        if (email && !validateEmail(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid email format',
+                code: 'INVALID_EMAIL'
+            });
+        }
+
+        // Check if email is already taken by another user
+        if (email) {
+            const existingUser = await db('users')
+                .where({ email: email.toLowerCase() })
+                .whereNot({ id: userId })
+                .first();
+
+            if (existingUser) {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Email already in use',
+                    code: 'EMAIL_EXISTS'
+                });
+            }
+        }
+
+        // Update user
+        const updateData = {
+            updated_at: new Date()
+        };
+
+        if (email) {
+            updateData.email = email.toLowerCase();
+        }
+
+        await db('users')
+            .where({ id: userId })
+            .update(updateData);
+
+        // Get updated user
+        const updatedUser = await db('users')
+            .select('id', 'email', 'role', 'created_at', 'updated_at')
+            .where({ id: userId })
+            .first();
+
+        res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            user: updatedUser
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error updating profile:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating profile',
+            code: 'UPDATE_ERROR'
+        });
+    }
+};
+
+// POST /change-password - Change user's password
+exports.changePassword = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Current password and new password are required',
+                code: 'MISSING_PASSWORDS'
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'New passwords do not match',
+                code: 'PASSWORD_MISMATCH'
+            });
+        }
+
+        // Validate new password strength
+        const passwordValidation = validatePassword(newPassword);
+        if (!passwordValidation.isValid) {
+            return res.status(400).json({
+                success: false,
+                message: 'New password does not meet requirements',
+                errors: passwordValidation.errors,
+                code: 'WEAK_PASSWORD'
+            });
+        }
+
+        // Get current user
+        const user = await db('users')
+            .select('password_hash')
+            .where({ id: userId })
+            .first();
+
+        // Verify current password
+        const isCurrentPasswordValid = await comparePassword(currentPassword, user.password_hash);
+        if (!isCurrentPasswordValid) {
+            return res.status(401).json({
+                success: false,
+                message: 'Current password is incorrect',
+                code: 'INVALID_CURRENT_PASSWORD'
+            });
+        }
+
+        // Hash new password
+        const newHashedPassword = await hashPassword(newPassword);
+
+        // Update password
+        await db('users')
+            .where({ id: userId })
+            .update({
+                password_hash: newHashedPassword,
+                updated_at: new Date()
+            });
+
+        res.json({
+            success: true,
+            message: 'Password changed successfully'
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error changing password:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error changing password',
+            code: 'PASSWORD_CHANGE_ERROR'
+        });
+    }
+};
+
+// POST /clear-session - Force clear all sessions (emergency logout)
+exports.clearSession = async (req, res) => {
+    try {
+        console.log("[Auth Controller] Force session clear requested");
+
+        // Clear ALL possible cookies with different configurations
+        const cookieConfigs = [
+            { httpOnly: true, secure: false, sameSite: 'strict', path: '/' },
+            { httpOnly: true, secure: true, sameSite: 'strict', path: '/' },
+            { httpOnly: false, secure: false, sameSite: 'strict', path: '/' },
+            { httpOnly: false, secure: true, sameSite: 'strict', path: '/' },
+            { path: '/' },
+            { path: '/api/auth/refresh' }
+        ];
+
+        const cookieNames = ['accessToken', 'refreshToken', 'authToken', 'token', 'jwt'];
+
+        // Clear cookies with all possible configurations
+        cookieNames.forEach(name => {
+            cookieConfigs.forEach(config => {
+                res.clearCookie(name, config);
+            });
+        });
+
+        // Set aggressive cache control headers
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'Clear-Site-Data': '"cache", "cookies", "storage"'
+        });
+
+        console.log("[Auth Controller] All sessions cleared forcefully");
+        res.json({
+            success: true,
+            message: 'All sessions cleared successfully',
+            clearStorage: true,
+            forceReload: true
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error clearing session:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error clearing session',
+            code: 'CLEAR_SESSION_ERROR'
+        });
+    }
+};
+
+// GET /debug-session - Debug current session (REMOVE IN PRODUCTION)
+exports.debugSession = async (req, res) => {
+    try {
+        console.log("[Auth Controller] Debug session request");
+
+        // Get token from different sources
+        const authHeader = req.headers.authorization;
+        const cookieToken = req.cookies?.accessToken;
+        const legacyCookieToken = req.cookies?.authToken;
+
+        // Extract token
+        let headerToken = null;
+        if (authHeader) {
+            const parts = authHeader.split(' ');
+            if (parts.length === 2 && parts[0] === 'Bearer') {
+                headerToken = parts[1];
+            }
+        }
+
+        // Decode tokens without verification for debugging
+        const jwt = require('jsonwebtoken');
+        let headerDecoded = null;
+        let cookieDecoded = null;
+        let legacyCookieDecoded = null;
+
+        try {
+            if (headerToken) headerDecoded = jwt.decode(headerToken);
+            if (cookieToken) cookieDecoded = jwt.decode(cookieToken);
+            if (legacyCookieToken) legacyCookieDecoded = jwt.decode(legacyCookieToken);
+        } catch (decodeError) {
+            console.log("Token decode error:", decodeError.message);
+        }
+
+        // Get user from database if available
+        let dbUser = null;
+        let dbRestaurant = null;
+        if (req.user) {
+            dbUser = await db('users')
+                .select('id', 'email', 'role', 'created_at')
+                .where({ id: req.user.id })
+                .first();
+
+            dbRestaurant = await db('restaurants')
+                .select('id', 'name', 'slug', 'user_id')
+                .where({ user_id: req.user.id })
+                .first();
+        }
+
+        res.json({
+            success: true,
+            debug: {
+                middleware_user: req.user || null,
+                tokens: {
+                    header_token: headerToken ? `${headerToken.substring(0, 20)}...` : null,
+                    cookie_token: cookieToken ? `${cookieToken.substring(0, 20)}...` : null,
+                    legacy_cookie_token: legacyCookieToken ? `${legacyCookieToken.substring(0, 20)}...` : null
+                },
+                decoded_tokens: {
+                    header: headerDecoded,
+                    cookie: cookieDecoded,
+                    legacy_cookie: legacyCookieDecoded
+                },
+                database: {
+                    user: dbUser,
+                    restaurant: dbRestaurant
+                },
+                cookies: req.cookies,
+                headers: {
+                    authorization: req.headers.authorization,
+                    'user-agent': req.headers['user-agent']
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error in debug session:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error debugging session',
+            error: error.message
+        });
     }
 };
 

@@ -53,6 +53,7 @@ app.use('/api/templates', require('./routes/templates'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/subscription', require('./routes/subscription'));
 app.use('/api/menu-items', require('./routes/menuItems')); // Add menu items routes
+app.use('/api/protected', require('./routes/protected')); // Add protected routes for testing
 
 // Simple route for testing
 app.get('/', (req, res) => {

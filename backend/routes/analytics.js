@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const analyticsController = require('../controllers/analyticsController');
-const authMiddleware = require('../middleware/authMiddleware');
+const { authMiddleware } = require('../middleware/authMiddleware');
 
 // --- Publicly Accessible Logging Endpoints ---
 // POST /api/analytics/log-visit - Log a visit to a public menu

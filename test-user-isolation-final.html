@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔒 User Isolation - FINAL TEST</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .user-panel { background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3; }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #28a745; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #dc3545; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #ffc107; }
+        input { padding: 10px; width: 200px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        button.success { background: #28a745; }
+        button.danger { background: #dc3545; }
+        .restaurant-info { background: #fff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin: 10px 0; }
+        .current-user { background: #d1ecf1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #17a2b8; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔒 User Isolation - FINAL VERIFICATION TEST</h1>
+    
+    <div class="current-user">
+        <h3>Current Session Status</h3>
+        <div id="currentUser">Not logged in</div>
+        <button onclick="checkCurrentUser()">Refresh Status</button>
+        <button class="danger" onclick="forceLogout()">Force Logout</button>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Test Scenario: Multiple Users with Different Restaurants</h2>
+        <p>This test will create 3 users, each with their own restaurant, and verify that each user only sees their own data.</p>
+        
+        <div class="user-panel">
+            <h4>👤 User A - Pizza Restaurant Owner</h4>
+            <input type="email" id="userA_email" placeholder="Email" value="pizza.owner@test.com" />
+            <input type="password" id="userA_password" placeholder="Password" value="TestPass123!" />
+            <br>
+            <button onclick="registerAndTestUser('A', 'Pizza Palace')">Register & Test User A</button>
+            <button onclick="loginAndTestUser('A')">Login & Test User A</button>
+            <div id="userA_result"></div>
+        </div>
+
+        <div class="user-panel">
+            <h4>👤 User B - Burger Restaurant Owner</h4>
+            <input type="email" id="userB_email" placeholder="Email" value="burger.owner@test.com" />
+            <input type="password" id="userB_password" placeholder="Password" value="TestPass123!" />
+            <br>
+            <button onclick="registerAndTestUser('B', 'Burger Kingdom')">Register & Test User B</button>
+            <button onclick="loginAndTestUser('B')">Login & Test User B</button>
+            <div id="userB_result"></div>
+        </div>
+
+        <div class="user-panel">
+            <h4>👤 User C - Sushi Restaurant Owner</h4>
+            <input type="email" id="userC_email" placeholder="Email" value="sushi.owner@test.com" />
+            <input type="password" id="userC_password" placeholder="Password" value="TestPass123!" />
+            <br>
+            <button onclick="registerAndTestUser('C', 'Sushi Zen')">Register & Test User C</button>
+            <button onclick="loginAndTestUser('C')">Login & Test User C</button>
+            <div id="userC_result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔍 Isolation Verification Results</h2>
+        <div id="isolationResults">
+            <p>Run the tests above to see isolation results here.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let testResults = {};
+
+        async function forceLogout() {
+            try {
+                await fetch(`${API_BASE}/auth/clear-session`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                // Clear localStorage
+                localStorage.clear();
+                sessionStorage.clear();
+                
+                showMessage('✅ All sessions cleared!', 'success');
+                checkCurrentUser();
+            } catch (error) {
+                showMessage('❌ Error clearing sessions: ' + error.message, 'error');
+            }
+        }
+
+        async function checkCurrentUser() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('currentUser').innerHTML = `
+                            <strong>✅ Logged in as:</strong> ${data.user.email}<br>
+                            <strong>User ID:</strong> ${data.user.id}<br>
+                            <strong>Restaurant:</strong> ${data.user.restaurant?.name || 'None'}
+                        `;
+                    } else {
+                        document.getElementById('currentUser').innerHTML = '❌ Not logged in';
+                    }
+                } else {
+                    document.getElementById('currentUser').innerHTML = '❌ Not logged in';
+                }
+            } catch (error) {
+                document.getElementById('currentUser').innerHTML = '❌ Error checking status';
+            }
+        }
+
+        async function registerAndTestUser(userLetter, restaurantName) {
+            const email = document.getElementById(`user${userLetter}_email`).value;
+            const password = document.getElementById(`user${userLetter}_password`).value;
+            const resultDiv = document.getElementById(`user${userLetter}_result`);
+            
+            try {
+                // Clear sessions first
+                await forceLogout();
+                
+                // Register user
+                const registerResponse = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password, confirmPassword: password }),
+                });
+
+                const registerData = await registerResponse.json();
+                
+                if (!registerData.success) {
+                    resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${registerData.message}</div>`;
+                    return;
+                }
+
+                // Create restaurant
+                const restaurantResponse = await fetch(`${API_BASE}/restaurants/me`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${registerData.token}`
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        name: restaurantName,
+                        description: `${restaurantName} - Test restaurant for User ${userLetter}`
+                    }),
+                });
+
+                const restaurantData = await restaurantResponse.json();
+                
+                if (restaurantData.restaurant) {
+                    testResults[userLetter] = {
+                        email: email,
+                        userId: registerData.user.id,
+                        restaurantId: restaurantData.restaurant.id,
+                        restaurantName: restaurantData.restaurant.name,
+                        token: registerData.token
+                    };
+
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ User ${userLetter} registered successfully!<br>
+                            <strong>User ID:</strong> ${registerData.user.id}<br>
+                            <strong>Restaurant:</strong> ${restaurantData.restaurant.name} (ID: ${restaurantData.restaurant.id})
+                        </div>
+                    `;
+                    
+                    updateIsolationResults();
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Failed to create restaurant</div>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loginAndTestUser(userLetter) {
+            const email = document.getElementById(`user${userLetter}_email`).value;
+            const password = document.getElementById(`user${userLetter}_password`).value;
+            const resultDiv = document.getElementById(`user${userLetter}_result`);
+            
+            try {
+                // Clear sessions first
+                await forceLogout();
+                
+                // Login user
+                const loginResponse = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const loginData = await loginResponse.json();
+                
+                if (!loginData.success) {
+                    resultDiv.innerHTML = `<div class="error">❌ Login failed: ${loginData.message}</div>`;
+                    return;
+                }
+
+                // Get restaurant data
+                const restaurantResponse = await fetch(`${API_BASE}/restaurants/me`, {
+                    headers: { 
+                        'Authorization': `Bearer ${loginData.token}`
+                    },
+                    credentials: 'include',
+                });
+
+                const restaurantData = await restaurantResponse.json();
+                
+                if (restaurantData.restaurant) {
+                    testResults[userLetter] = {
+                        email: email,
+                        userId: loginData.user.id,
+                        restaurantId: restaurantData.restaurant.id,
+                        restaurantName: restaurantData.restaurant.name,
+                        token: loginData.token
+                    };
+
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            ✅ User ${userLetter} logged in successfully!<br>
+                            <strong>User ID:</strong> ${loginData.user.id}<br>
+                            <strong>Restaurant:</strong> ${restaurantData.restaurant.name} (ID: ${restaurantData.restaurant.id})
+                        </div>
+                    `;
+                    
+                    updateIsolationResults();
+                    checkCurrentUser();
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ No restaurant found for user</div>`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function updateIsolationResults() {
+            const resultsDiv = document.getElementById('isolationResults');
+            const users = Object.keys(testResults);
+            
+            if (users.length === 0) {
+                resultsDiv.innerHTML = '<p>No test results yet.</p>';
+                return;
+            }
+
+            let html = '<h3>🔍 Isolation Test Results</h3>';
+            
+            // Show each user's data
+            users.forEach(userLetter => {
+                const user = testResults[userLetter];
+                html += `
+                    <div class="restaurant-info">
+                        <strong>👤 User ${userLetter}:</strong> ${user.email}<br>
+                        <strong>User ID:</strong> ${user.userId}<br>
+                        <strong>Restaurant:</strong> ${user.restaurantName} (ID: ${user.restaurantId})
+                    </div>
+                `;
+            });
+
+            // Check for isolation
+            if (users.length >= 2) {
+                html += '<h4>🔒 Isolation Verification:</h4>';
+                
+                const userIds = users.map(u => testResults[u].userId);
+                const restaurantIds = users.map(u => testResults[u].restaurantId);
+                const restaurantNames = users.map(u => testResults[u].restaurantName);
+                
+                const uniqueUserIds = [...new Set(userIds)];
+                const uniqueRestaurantIds = [...new Set(restaurantIds)];
+                const uniqueRestaurantNames = [...new Set(restaurantNames)];
+                
+                if (uniqueUserIds.length === users.length) {
+                    html += '<div class="success">✅ All users have unique User IDs</div>';
+                } else {
+                    html += '<div class="error">❌ CRITICAL BUG: Users share the same User ID!</div>';
+                }
+                
+                if (uniqueRestaurantIds.length === users.length) {
+                    html += '<div class="success">✅ All users have unique Restaurant IDs</div>';
+                } else {
+                    html += '<div class="error">❌ CRITICAL BUG: Users share the same Restaurant ID!</div>';
+                }
+                
+                if (uniqueRestaurantNames.length === users.length) {
+                    html += '<div class="success">✅ All users have unique Restaurant Names</div>';
+                } else {
+                    html += '<div class="error">❌ CRITICAL BUG: Users share the same Restaurant Name!</div>';
+                }
+                
+                if (uniqueUserIds.length === users.length && 
+                    uniqueRestaurantIds.length === users.length && 
+                    uniqueRestaurantNames.length === users.length) {
+                    html += '<div class="success"><h4>🎉 USER ISOLATION IS WORKING PERFECTLY!</h4></div>';
+                } else {
+                    html += '<div class="error"><h4>🚨 USER ISOLATION HAS CRITICAL BUGS!</h4></div>';
+                }
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function showMessage(message, type) {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = message;
+            document.body.insertBefore(div, document.body.firstChild);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        // Check current user on load
+        window.addEventListener('load', checkCurrentUser);
+    </script>
+</body>
+</html>

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const menuController = require('../controllers/menuController');
-const authMiddleware = require('../middleware/authMiddleware'); // Adjust path if needed
+const { authMiddleware } = require('../middleware/authMiddleware'); // Import the specific function
 
 // All menu routes are protected
-router.use(authMiddleware); // Or your specific auth protection function
+router.use(authMiddleware); // Use the destructured function
 
 // GET /api/menus - Get all menus for the user's restaurant
 router.get('/', menuController.getMenus);
