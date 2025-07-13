@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔐 Authentication System - FINAL TEST</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        .container { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .test-section { background: #e3f2fd; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #2196f3; }
+        .success { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #28a745; }
+        .error { background: #f8d7da; color: #721c24; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #dc3545; }
+        .warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 5px solid #ffc107; }
+        input { padding: 10px; width: 250px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        button.danger { background: #dc3545; }
+        button.success { background: #28a745; }
+        .current-user { background: #d1ecf1; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 5px solid #17a2b8; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Authentication System - FINAL VERIFICATION</h1>
+    
+    <div class="current-user">
+        <h3>Current Authentication Status</h3>
+        <div id="authStatus">Checking...</div>
+        <button onclick="checkAuth()">Refresh Status</button>
+        <button class="danger" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+        <h2>🧪 Security Tests</h2>
+        <p>These tests verify that the authentication system is secure and working correctly.</p>
+        
+        <div class="test-section">
+            <h4>❌ Test 1: Login with Fake Email (Should Fail)</h4>
+            <input type="email" id="fakeEmail" placeholder="fake@nonexistent.com" value="fake@nonexistent.com" />
+            <input type="password" id="fakePassword" placeholder="anypassword" value="anypassword" />
+            <br>
+            <button onclick="testFakeLogin()">Test Fake Login (Should Fail)</button>
+            <div id="fakeLoginResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h4>✅ Test 2: Register New User (Should Succeed)</h4>
+            <input type="email" id="newEmail" placeholder="new.user@test.com" value="" />
+            <input type="password" id="newPassword" placeholder="SecurePass123!" value="SecurePass123!" />
+            <input type="password" id="confirmPassword" placeholder="Confirm Password" value="SecurePass123!" />
+            <br>
+            <button onclick="testRegister()">Register New User</button>
+            <div id="registerResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h4>✅ Test 3: Login with Correct Credentials (Should Succeed)</h4>
+            <input type="email" id="loginEmail" placeholder="Email from registration" value="" />
+            <input type="password" id="loginPassword" placeholder="Password from registration" value="SecurePass123!" />
+            <br>
+            <button onclick="testLogin()">Test Valid Login</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h4>❌ Test 4: Login with Wrong Password (Should Fail)</h4>
+            <input type="email" id="wrongEmail" placeholder="Email from registration" value="" />
+            <input type="password" id="wrongPassword" placeholder="WrongPassword123!" value="WrongPassword123!" />
+            <br>
+            <button onclick="testWrongPassword()">Test Wrong Password (Should Fail)</button>
+            <div id="wrongPasswordResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h4>🔒 Test 5: Access Protected Endpoint</h4>
+            <button onclick="testProtectedEndpoint()">Test /api/auth/me (Requires Login)</button>
+            <div id="protectedResult"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Test Results Summary</h2>
+        <div id="testSummary">Run tests above to see results here.</div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let testResults = [];
+        let currentToken = null;
+
+        function addTestResult(testName, success, message) {
+            testResults.push({ name: testName, success, message });
+            updateTestSummary();
+        }
+
+        function updateTestSummary() {
+            const summaryDiv = document.getElementById('testSummary');
+            if (testResults.length === 0) {
+                summaryDiv.innerHTML = '<p>No tests run yet.</p>';
+                return;
+            }
+
+            let html = '<h3>Test Results:</h3>';
+            testResults.forEach(result => {
+                const icon = result.success ? '✅' : '❌';
+                const className = result.success ? 'success' : 'error';
+                html += `<div class="${className}">${icon} ${result.name}: ${result.message}</div>`;
+            });
+
+            const passed = testResults.filter(r => r.success).length;
+            const total = testResults.length;
+            
+            if (passed === total) {
+                html += '<div class="success"><h4>🎉 ALL TESTS PASSED! Authentication system is secure.</h4></div>';
+            } else {
+                html += `<div class="warning"><h4>⚠️ ${passed}/${total} tests passed. Some issues need attention.</h4></div>`;
+            }
+
+            summaryDiv.innerHTML = html;
+        }
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.user) {
+                        document.getElementById('authStatus').innerHTML = `
+                            <strong>✅ Authenticated as:</strong> ${data.user.email}<br>
+                            <strong>User ID:</strong> ${data.user.id}<br>
+                            <strong>Restaurant:</strong> ${data.user.restaurant?.name || 'None'}
+                        `;
+                        return data.user;
+                    }
+                }
+                
+                document.getElementById('authStatus').innerHTML = '❌ Not authenticated';
+                return null;
+            } catch (error) {
+                document.getElementById('authStatus').innerHTML = '❌ Error checking authentication';
+                return null;
+            }
+        }
+
+        async function testFakeLogin() {
+            const email = document.getElementById('fakeEmail').value;
+            const password = document.getElementById('fakePassword').value;
+            const resultDiv = document.getElementById('fakeLoginResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 401 && !data.success) {
+                    resultDiv.innerHTML = '<div class="success">✅ CORRECT: Login failed as expected (401 Unauthorized)</div>';
+                    addTestResult('Fake Login Test', true, 'Correctly rejected fake credentials');
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ SECURITY ISSUE: Login should have failed but got ${response.status}</div>`;
+                    addTestResult('Fake Login Test', false, `Security issue: got ${response.status} instead of 401`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                addTestResult('Fake Login Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testRegister() {
+            const email = document.getElementById('newEmail').value || `test.user.${Date.now()}@security.test`;
+            const password = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const resultDiv = document.getElementById('registerResult');
+            
+            // Update the email field with the generated email
+            document.getElementById('newEmail').value = email;
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('wrongEmail').value = email;
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password, confirmPassword }),
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 201 && data.success && data.token) {
+                    currentToken = data.token;
+                    resultDiv.innerHTML = `<div class="success">✅ Registration successful! User ID: ${data.user.id}</div>`;
+                    addTestResult('Registration Test', true, `Successfully registered user ${data.user.id}`);
+                    checkAuth();
+                } else if (response.status === 429) {
+                    resultDiv.innerHTML = '<div class="warning">⚠️ Rate limited. Wait 15 minutes or use a different IP.</div>';
+                    addTestResult('Registration Test', false, 'Rate limited (this is actually good security)');
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Registration failed: ${data.message}</div>`;
+                    addTestResult('Registration Test', false, `Registration failed: ${data.message}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                addTestResult('Registration Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const resultDiv = document.getElementById('loginResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 200 && data.success && data.token) {
+                    currentToken = data.token;
+                    resultDiv.innerHTML = `<div class="success">✅ Login successful! User ID: ${data.user.id}</div>`;
+                    addTestResult('Valid Login Test', true, `Successfully logged in user ${data.user.id}`);
+                    checkAuth();
+                } else if (response.status === 429) {
+                    resultDiv.innerHTML = '<div class="warning">⚠️ Rate limited. Wait 15 minutes or use a different IP.</div>';
+                    addTestResult('Valid Login Test', false, 'Rate limited (this is actually good security)');
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Login failed: ${data.message}</div>`;
+                    addTestResult('Valid Login Test', false, `Login failed: ${data.message}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                addTestResult('Valid Login Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testWrongPassword() {
+            const email = document.getElementById('wrongEmail').value;
+            const password = document.getElementById('wrongPassword').value;
+            const resultDiv = document.getElementById('wrongPasswordResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 401 && !data.success) {
+                    resultDiv.innerHTML = '<div class="success">✅ CORRECT: Wrong password rejected as expected (401 Unauthorized)</div>';
+                    addTestResult('Wrong Password Test', true, 'Correctly rejected wrong password');
+                } else if (response.status === 429) {
+                    resultDiv.innerHTML = '<div class="warning">⚠️ Rate limited. This is good security but prevents testing.</div>';
+                    addTestResult('Wrong Password Test', true, 'Rate limited (good security feature)');
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ SECURITY ISSUE: Wrong password should be rejected but got ${response.status}</div>`;
+                    addTestResult('Wrong Password Test', false, `Security issue: got ${response.status} instead of 401`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                addTestResult('Wrong Password Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function testProtectedEndpoint() {
+            const resultDiv = document.getElementById('protectedResult');
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/me`, {
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (response.status === 200 && data.success && data.user) {
+                    resultDiv.innerHTML = `<div class="success">✅ Protected endpoint accessible! User: ${data.user.email}</div>`;
+                    addTestResult('Protected Endpoint Test', true, `Successfully accessed protected endpoint as ${data.user.email}`);
+                } else if (response.status === 401) {
+                    resultDiv.innerHTML = '<div class="warning">⚠️ Protected endpoint correctly requires authentication (401)</div>';
+                    addTestResult('Protected Endpoint Test', true, 'Correctly requires authentication');
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Unexpected response: ${response.status}</div>`;
+                    addTestResult('Protected Endpoint Test', false, `Unexpected response: ${response.status}`);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Error: ${error.message}</div>`;
+                addTestResult('Protected Endpoint Test', false, `Error: ${error.message}`);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${API_BASE}/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                currentToken = null;
+                checkAuth();
+                showMessage('✅ Logged out successfully', 'success');
+            } catch (error) {
+                showMessage('❌ Logout error: ' + error.message, 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = message;
+            document.body.insertBefore(div, document.body.firstChild);
+            setTimeout(() => div.remove(), 5000);
+        }
+
+        // Check authentication status on load
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>

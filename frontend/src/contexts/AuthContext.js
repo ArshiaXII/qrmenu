@@ -72,45 +72,58 @@ export const AuthProvider = ({ children }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Added logout to dependency array if it were used inside, but it's defined outside effect scope
 
-    // Development Login Function (Bypasses API for testing)
+    // Production Login Function (Uses Real API)
     const login = async (email, password) => {
         try {
-            // For development: allow any email/password combination
-            if (email && password) {
-                console.log('[AuthContext] Development login - bypassing API');
+            console.log(`[AuthContext] Making login request to ${api.defaults.baseURL}/auth/login`);
 
-                const mockUser = {
-                    id: 1,
-                    email: email,
-                    name: email.split('@')[0],
-                    role: 'user'
-                };
+            // Use the api instance to call the real backend
+            const response = await api.post('/auth/login', { email, password });
+            console.log('[AuthContext] Raw login response:', response);
 
-                const mockToken = 'dev-token-' + Date.now();
+            if (response.data && response.data.token) {
+                const { token: receivedToken, user: userData } = response.data;
 
-                // Initialize restaurant data for the user
-                const menuService = await import('../services/menuService');
-                const restaurantSlug = `restaurant-${mockUser.id}`;
+                // Store token and user data
+                safeLocalStorage.setItem('authToken', receivedToken);
+                safeLocalStorage.setItem('authUser', JSON.stringify(userData));
+                setToken(receivedToken);
+                setUser(userData);
 
-                // Add restaurant slug to user data
-                mockUser.restaurantSlug = restaurantSlug;
-
-                // Ensure restaurant data exists
-                menuService.default.ensureRestaurantDataExists(restaurantSlug, mockUser);
-
-                setUser(mockUser);
-                setToken(mockToken);
-                safeLocalStorage.setItem('authUser', JSON.stringify(mockUser));
-                safeLocalStorage.setItem('authToken', mockToken);
-
-                console.log('[AuthContext] Development login successful with restaurant data initialized');
-                return { success: true, user: mockUser };
+                console.log('[AuthContext] Login successful for user:', userData.email);
+                return { success: true, user: userData };
             } else {
-                throw new Error('Email and password are required');
+                console.error('[AuthContext] Invalid response format:', response.data);
+                return { success: false, message: 'Invalid response from server' };
             }
         } catch (error) {
             console.error('[AuthContext] Login error:', error);
-            return { success: false, error: error.message };
+
+            // Handle different types of errors
+            if (error.response) {
+                // Server responded with error status
+                console.error('  Status:', error.response.status);
+                console.error('  Data:', error.response.data);
+
+                return {
+                    success: false,
+                    message: error.response.data?.message || 'Login failed. Please check your credentials.'
+                };
+            } else if (error.request) {
+                // Request was made but no response received
+                console.error('  No response received:', error.request);
+                return {
+                    success: false,
+                    message: 'Unable to connect to server. Please check your internet connection.'
+                };
+            } else {
+                // Something happened in setting up the request
+                console.error('  Error message:', error.message);
+                return {
+                    success: false,
+                    message: 'An unexpected error occurred during login.'
+                };
+            }
         }
     };
 
@@ -188,19 +201,56 @@ export const AuthProvider = ({ children }) => {
     };
     */
 
-    // Development Signup Function (Bypasses API for testing)
+    // Production Signup Function (Uses Real API)
     const signup = async (email, password) => {
         try {
-            // For development: allow any email/password combination
-            if (email && password) {
-                console.log('[AuthContext] Development signup - bypassing API');
-                return { success: true, message: 'Signup successful! Please log in.' };
+            console.log(`[AuthContext] Making signup request to ${api.defaults.baseURL}/auth/register`);
+
+            // Use the api instance to call the real backend
+            const response = await api.post('/auth/register', { email, password });
+            console.log('[AuthContext] Raw signup response:', response);
+
+            if (response.data && response.data.success) {
+                console.log('[AuthContext] Signup successful for user:', email);
+                return {
+                    success: true,
+                    message: response.data.message || 'Registration successful! Please log in.'
+                };
             } else {
-                throw new Error('Email and password are required');
+                console.error('[AuthContext] Invalid signup response format:', response.data);
+                return {
+                    success: false,
+                    message: response.data?.message || 'Registration failed'
+                };
             }
         } catch (error) {
             console.error('[AuthContext] Signup error:', error);
-            return { success: false, message: error.message };
+
+            // Handle different types of errors
+            if (error.response) {
+                // Server responded with error status
+                console.error('  Status:', error.response.status);
+                console.error('  Data:', error.response.data);
+
+                return {
+                    success: false,
+                    message: error.response.data?.message || 'Registration failed. Please try again.'
+                };
+            } else if (error.request) {
+                // Request was made but no response received
+                console.error('  No response received:', error.request);
+                return {
+                    success: false,
+                    message: 'Unable to connect to server. Please check your internet connection.'
+                };
+            } else {
+                // Something happened in setting up the request
+                console.error('  Error message:', error.message);
+                return {
+                    success: false,
+                    message: 'An unexpected error occurred during registration.'
+                };
+            }
         }
     };
 

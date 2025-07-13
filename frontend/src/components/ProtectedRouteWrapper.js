@@ -87,15 +87,10 @@ const ProtectedRouteWrapper = () => {
      return <div className="p-4 text-red-600">Error: {profileError}</div>; 
   }
 
-  // If user exists but restaurant profile doesn't OR onboarding isn't complete
-  if (user && (!restaurantProfile || !restaurantProfile.onboarding_completed)) {
-    console.log("[ProtectedRouteWrapper] Condition MET: Show Onboarding Wizard. Profile onboarding_completed:", restaurantProfile?.onboarding_completed);
-    return <OnboardingWizard onComplete={handleOnboardingComplete} />;
-  }
-
-  // If user exists and onboarding is complete, render the main dashboard layout
-  if (user && restaurantProfile && restaurantProfile.onboarding_completed) {
-    console.log("[ProtectedRouteWrapper] Condition MET: Show Outlet. Profile onboarding_completed:", restaurantProfile.onboarding_completed);
+  // TEMPORARY FIX: Skip onboarding wizard and go directly to dashboard
+  // TODO: Implement proper restaurant profile creation flow later
+  if (user) {
+    console.log("[ProtectedRouteWrapper] User authenticated, showing dashboard directly");
     return <Outlet />; // Renders the nested routes (DashboardLayout etc.)
   }
 
