@@ -115,13 +115,15 @@ const extractTokenFromHeader = (authHeader) => {
  */
 const setAuthCookies = (res, token, refreshToken = null) => {
     const isProduction = process.env.NODE_ENV === 'production';
-    
-    // Set access token cookie
+
+    console.log('[JWT] Setting authentication cookies. Production:', isProduction);
+
+    // Set access token cookie with proper settings for development
     res.cookie('accessToken', token, {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        secure: false, // Set to false for development (localhost)
+        sameSite: 'Lax', // Use 'Lax' for better compatibility
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
         path: '/'
     });
 
@@ -129,12 +131,14 @@ const setAuthCookies = (res, token, refreshToken = null) => {
     if (refreshToken) {
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: isProduction,
-            sameSite: 'strict',
-            maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-            path: '/api/auth/refresh'
+            secure: false, // Set to false for development
+            sameSite: 'Lax',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            path: '/'
         });
     }
+
+    console.log('[JWT] Authentication cookies set successfully');
 };
 
 /**
@@ -142,21 +146,25 @@ const setAuthCookies = (res, token, refreshToken = null) => {
  * @param {object} res - Express response object
  */
 const clearAuthCookies = (res) => {
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    res.clearCookie('accessToken', {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
-        path: '/'
+    console.log('[JWT] Clearing authentication cookies');
+
+    // Clear with multiple configurations to ensure removal
+    const cookieConfigs = [
+        { httpOnly: true, secure: false, sameSite: 'Lax', path: '/' },
+        { httpOnly: true, secure: true, sameSite: 'strict', path: '/' },
+        { httpOnly: true, secure: false, sameSite: 'strict', path: '/' },
+        { path: '/' }
+    ];
+
+    const cookieNames = ['accessToken', 'refreshToken', 'authToken', 'token', 'jwt'];
+
+    cookieNames.forEach(name => {
+        cookieConfigs.forEach(config => {
+            res.clearCookie(name, config);
+        });
     });
-    
-    res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: 'strict',
-        path: '/api/auth/refresh'
-    });
+
+    console.log('[JWT] Authentication cookies cleared');
 };
 
 module.exports = {

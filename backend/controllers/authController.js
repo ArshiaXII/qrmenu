@@ -2,46 +2,79 @@ const db = require('../db/db');
 const { hashPassword, comparePassword, validatePassword, validateEmail } = require('../utils/hashPassword');
 const { generateToken, generateRefreshToken, setAuthCookies, clearAuthCookies } = require('../utils/jwtToken');
 
-// POST /register
+// POST /register - COMPLETELY REBUILT FOR SECURITY
 exports.register = async (req, res) => {
-    console.log("[Auth Controller] Register request received.");
-    let { email, password } = req.body; // Use let to allow modification
-    console.log("[Auth Controller] Register Body:", { email, password: '[REDACTED]' });
+    console.log("[Auth Controller] 📝 REGISTRATION ATTEMPT STARTED");
+    const { email, password, confirmPassword } = req.body;
+    console.log("[Auth Controller] Registration attempt for email:", email);
 
-    // Trim email before validation
-    email = email ? email.trim() : '';
-
+    // Step 1: Validate input
     if (!email || !password) {
-        console.log("[Auth Controller] Register failed: Missing email or password.");
-        return res.status(400).json({ message: 'Email and password are required' });
+        console.log("[Auth Controller] ❌ REGISTRATION FAILED: Missing email or password");
+        return res.status(400).json({
+            success: false,
+            message: 'Email and password are required',
+            code: 'MISSING_CREDENTIALS'
+        });
     }
-    // Basic email format validation (more robust validation recommended for production)
-    if (!/\S+@\S+\.\S+/.test(email)) { // Validate trimmed email
-         console.log("[Auth Controller] Register failed: Invalid email format.");
-        return res.status(400).json({ message: 'Invalid email format' });
+
+    // Step 2: Validate email format
+    if (!validateEmail(email)) {
+        console.log("[Auth Controller] ❌ REGISTRATION FAILED: Invalid email format:", email);
+        return res.status(400).json({
+            success: false,
+            message: 'Please provide a valid email address',
+            code: 'INVALID_EMAIL'
+        });
     }
-    if (password.length < 6) {
-        console.log("[Auth Controller] Register failed: Password too short.");
-        return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+
+    // Step 3: Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+        console.log("[Auth Controller] ❌ REGISTRATION FAILED: Weak password");
+        return res.status(400).json({
+            success: false,
+            message: 'Password does not meet requirements',
+            errors: passwordValidation.errors,
+            code: 'WEAK_PASSWORD'
+        });
+    }
+
+    // Step 4: Check password confirmation if provided
+    if (confirmPassword && password !== confirmPassword) {
+        console.log("[Auth Controller] ❌ REGISTRATION FAILED: Passwords do not match");
+        return res.status(400).json({
+            success: false,
+            message: 'Passwords do not match',
+            code: 'PASSWORD_MISMATCH'
+        });
     }
 
     try {
-        // Check if user already exists
-        console.log("[Auth Controller] Finding user by email:", email);
-        const existingUser = await db('users').where({ email }).first();
+        // Step 5: Check if user already exists
+        console.log("[Auth Controller] 🔍 Checking if email already exists:", email);
+        const existingUser = await db('users')
+            .select('id', 'email')
+            .where({ email: email.toLowerCase() })
+            .first();
 
         if (existingUser) {
-            console.log("[Auth Controller] Register failed: Email already taken.");
-            return res.status(409).json({ message: 'Email already registered' }); // 409 Conflict
+            console.log("[Auth Controller] ❌ REGISTRATION FAILED: Email already exists:", email);
+            return res.status(409).json({
+                success: false,
+                message: 'An account with this email already exists',
+                code: 'EMAIL_EXISTS'
+            });
         }
 
-        // Hash password using utility
-        console.log("[Auth Controller] Hashing password for email:", email);
-        const hashedPassword = await hashPassword(password);
-        console.log("[Auth Controller] Password hashed.");
+        console.log("[Auth Controller] ✅ Email is available for registration");
 
-        // Create new user (default role is 'owner' as per migration)
-        console.log("[Auth Controller] Email available, creating user:", email);
+        // Step 6: Hash password with bcrypt (12 salt rounds)
+        console.log("[Auth Controller] 🔐 Hashing password with bcrypt");
+        const hashedPassword = await hashPassword(password);
+
+        // Step 7: Insert new user into database
+        console.log("[Auth Controller] 💾 Creating new user in database");
         const insertResult = await db('users').insert({
             email: email.toLowerCase(),
             password_hash: hashedPassword,
@@ -50,159 +83,178 @@ exports.register = async (req, res) => {
             updated_at: new Date()
         });
 
-        // MySQL doesn't support .returning(), so we need to fetch the user manually
-        const newUserId = insertResult[0]; // MySQL returns the insert ID
+        // Step 8: Fetch the newly created user (MySQL doesn't support .returning())
+        const newUserId = insertResult[0];
         const newUser = await db('users')
             .select('id', 'email', 'role', 'created_at')
             .where({ id: newUserId })
             .first();
 
-        console.log("[Auth Controller] User created successfully:", { userId: newUser.id, email: newUser.email });
+        if (!newUser) {
+            console.log("[Auth Controller] ❌ REGISTRATION FAILED: Could not fetch created user");
+            return res.status(500).json({
+                success: false,
+                message: 'Error creating user account',
+                code: 'USER_CREATION_ERROR'
+            });
+        }
 
-        // CRITICAL: Clear any existing cookies/sessions before setting new ones
+        console.log("[Auth Controller] ✅ User created successfully. ID:", newUser.id, "Email:", newUser.email);
+
+        // Step 9: Clear any existing sessions/cookies
+        console.log("[Auth Controller] 🧹 Clearing previous sessions");
         clearAuthCookies(res);
 
-        // Clear legacy cookies that might exist
-        const cookieOptions = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/'
-        };
-        res.clearCookie('authToken', cookieOptions);
-        res.clearCookie('token', cookieOptions);
-        res.clearCookie('jwt', cookieOptions);
-
-        // Generate NEW tokens for immediate login (no restaurant yet for new users)
-        const accessToken = generateToken(newUser, null);
+        // Step 10: Generate JWT token for immediate login
+        console.log("[Auth Controller] 🎫 Generating JWT token for new user");
+        const accessToken = generateToken(newUser, null); // No restaurant yet
         const refreshToken = generateRefreshToken(newUser);
 
-        // Set NEW secure cookies
+        // Step 11: Set secure HTTP-only cookies
+        console.log("[Auth Controller] 🍪 Setting secure authentication cookies");
         setAuthCookies(res, accessToken, refreshToken);
 
-        // Add cache control headers to prevent stale data
-        res.set({
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        });
-
+        // Step 12: Send successful response
+        console.log("[Auth Controller] ✅ REGISTRATION SUCCESSFUL for user:", newUser.email, "ID:", newUser.id);
         res.status(201).json({
             success: true,
-            message: 'User registered successfully',
+            message: 'Account created successfully',
+            token: accessToken,
             user: {
                 id: newUser.id,
                 email: newUser.email,
                 role: newUser.role,
                 created_at: newUser.created_at,
-                restaurant_id: null // Explicitly show no restaurant yet
-            },
-            token: accessToken,
-            clearStorage: true // Signal frontend to clear localStorage
+                restaurant_id: null // No restaurant yet
+            }
         });
 
     } catch (error) {
-        console.error("[Auth Controller] Error during registration:", error);
-        res.status(500).json({ message: 'Error registering user', error: error.message });
+        console.error("[Auth Controller] ❌ REGISTRATION ERROR:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error during registration',
+            code: 'REGISTRATION_ERROR'
+        });
     }
 };
 
-// POST /login
+// POST /login - COMPLETELY REBUILT FOR SECURITY
 exports.login = async (req, res) => {
-    console.log("[Auth Controller] Login request received.");
+    console.log("[Auth Controller] 🔐 LOGIN ATTEMPT STARTED");
     const { email, password } = req.body;
-    console.log("[Auth Controller] Login Body:", { email, password: '[REDACTED]' });
+    console.log("[Auth Controller] Login attempt for email:", email);
 
+    // Step 1: Validate input
     if (!email || !password) {
-        console.log("[Auth Controller] Login failed: Missing email or password.");
-        return res.status(400).json({ message: 'Email and password are required' });
+        console.log("[Auth Controller] ❌ LOGIN FAILED: Missing email or password");
+        return res.status(400).json({
+            success: false,
+            message: 'Email and password are required',
+            code: 'MISSING_CREDENTIALS'
+        });
+    }
+
+    // Step 2: Validate email format
+    if (!validateEmail(email)) {
+        console.log("[Auth Controller] ❌ LOGIN FAILED: Invalid email format:", email);
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid email format',
+            code: 'INVALID_EMAIL_FORMAT'
+        });
     }
 
     try {
-        // Find user by email
-        console.log("[Auth Controller] Finding user by email:", email);
-        const user = await db('users').where({ email }).first();
+        // Step 3: Check if user exists in database
+        console.log("[Auth Controller] 🔍 Checking if user exists in database:", email);
+        const user = await db('users')
+            .select('id', 'email', 'password_hash', 'role', 'created_at')
+            .where({ email: email.toLowerCase() })
+            .first();
 
         if (!user) {
-            console.log("[Auth Controller] Login failed: User not found.");
-            return res.status(401).json({ message: 'Invalid credentials' }); // Unauthorized
-        }
-
-        // Compare password using utility
-        console.log("[Auth Controller] User found, comparing password for email:", email);
-        const isMatch = await comparePassword(password, user.password_hash);
-
-        if (!isMatch) {
-            console.log("[Auth Controller] Login failed: Password mismatch for email:", email);
+            console.log("[Auth Controller] ❌ LOGIN FAILED: User does not exist in database:", email);
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials',
+                message: 'Invalid email or password',
                 code: 'INVALID_CREDENTIALS'
             });
         }
 
-        // Passwords match, fetch associated restaurant data
-        console.log("[Auth Controller] Password matched, fetching restaurant data for user:", user.id);
-        const restaurant = await db('restaurants').where({ user_id: user.id }).first();
+        console.log("[Auth Controller] ✅ User found in database. User ID:", user.id);
+
+        // Step 4: Verify password using bcrypt
+        console.log("[Auth Controller] 🔐 Verifying password for user:", user.id);
+        const isPasswordValid = await comparePassword(password, user.password_hash);
+
+        if (!isPasswordValid) {
+            console.log("[Auth Controller] ❌ LOGIN FAILED: Password is incorrect for user:", user.id);
+            return res.status(401).json({
+                success: false,
+                message: 'Invalid email or password',
+                code: 'INVALID_CREDENTIALS'
+            });
+        }
+
+        console.log("[Auth Controller] ✅ Password verified successfully for user:", user.id);
+
+        // Step 5: Fetch user's restaurant data
+        console.log("[Auth Controller] 🏪 Fetching restaurant data for user:", user.id);
+        const restaurant = await db('restaurants')
+            .select('id', 'name', 'slug')
+            .where({ user_id: user.id })
+            .first();
+
         const restaurantId = restaurant ? restaurant.id : null;
         const restaurantSlug = restaurant ? restaurant.slug : null;
-        console.log("[Auth Controller] Found restaurant:", { id: restaurantId, slug: restaurantSlug });
+        console.log("[Auth Controller] Restaurant data:", {
+            id: restaurantId,
+            name: restaurant?.name || 'None',
+            slug: restaurantSlug
+        });
 
-        // CRITICAL: Clear any existing cookies/sessions before setting new ones
-        console.log("[Auth Controller] Clearing previous session for email:", email);
+        // Step 6: Clear any existing sessions/cookies
+        console.log("[Auth Controller] 🧹 Clearing previous sessions");
         clearAuthCookies(res);
 
-        // Clear legacy cookies that might exist
-        const cookieOptions = {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            path: '/'
-        };
-        res.clearCookie('authToken', cookieOptions);
-        res.clearCookie('token', cookieOptions);
-        res.clearCookie('jwt', cookieOptions);
-
-        // Generate NEW tokens with restaurant ID for data isolation
-        console.log("[Auth Controller] Generating NEW tokens for email:", email);
+        // Step 7: Generate NEW JWT token with user and restaurant data
+        console.log("[Auth Controller] 🎫 Generating new JWT token for user:", user.id);
         const accessToken = generateToken(user, restaurantId);
         const refreshToken = generateRefreshToken(user);
 
-        // Set NEW secure HTTP-only cookies for persistent session
+        // Step 8: Set secure HTTP-only cookies
+        console.log("[Auth Controller] 🍪 Setting secure authentication cookies");
         setAuthCookies(res, accessToken, refreshToken);
 
-        // Update last login time (remove last_login field since it doesn't exist)
+        // Step 9: Update user's last activity
         await db('users')
             .where({ id: user.id })
-            .update({
-                updated_at: new Date()
-            });
+            .update({ updated_at: new Date() });
 
-        // Add cache control headers to prevent stale data
-        res.set({
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-        });
-
-        console.log("[Auth Controller] Login successful with NEW session for email:", email);
+        // Step 10: Send successful response
+        console.log("[Auth Controller] ✅ LOGIN SUCCESSFUL for user:", user.email, "ID:", user.id);
         res.json({
             success: true,
             message: 'Login successful',
-            token: accessToken, // Send NEW token for client-side storage
+            token: accessToken,
             user: {
                 id: user.id,
                 email: user.email,
                 role: user.role,
                 restaurant_id: restaurantId,
-                restaurantSlug: restaurantSlug
-            },
-            clearStorage: true // Signal frontend to clear localStorage
+                restaurant_name: restaurant?.name || null,
+                restaurant_slug: restaurantSlug
+            }
         });
 
     } catch (error) {
-        console.error("[Auth Controller] Error during login:", error);
-        res.status(500).json({ message: 'Error during login', error: error.message });
+        console.error("[Auth Controller] ❌ LOGIN ERROR:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error during login',
+            code: 'LOGIN_ERROR'
+        });
     }
 };
 
@@ -637,6 +689,42 @@ exports.debugSession = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error debugging session',
+            error: error.message
+        });
+    }
+};
+
+// GET /debug/me - Debug endpoint to verify authentication (REMOVE IN PRODUCTION)
+exports.debugMe = async (req, res) => {
+    try {
+        console.log("[Auth Controller] 🔍 DEBUG /me endpoint called");
+        console.log("[Auth Controller] req.user:", req.user);
+
+        if (!req.user || !req.user.id) {
+            console.log("[Auth Controller] ❌ No authenticated user found");
+            return res.status(401).json({
+                success: false,
+                message: 'Not authenticated',
+                user: null
+            });
+        }
+
+        // Return the authenticated user data
+        res.json({
+            success: true,
+            user_id: req.user.id,
+            restaurant_id: req.user.restaurant_id,
+            email: req.user.email,
+            role: req.user.role,
+            restaurant_name: req.user.restaurant_name,
+            restaurant_slug: req.user.restaurant_slug
+        });
+
+    } catch (error) {
+        console.error("[Auth Controller] Error in debug me:", error);
+        res.status(500).json({
+            success: false,
+            message: 'Error getting user data',
             error: error.message
         });
     }
