@@ -18,7 +18,7 @@ async function checkUserPasswords() {
     });
     
     // Test common passwords
-    const commonPasswords = ['password', 'test123', 'admin', '123456', 'arshia'];
+    const commonPasswords = ['password', 'test123', 'admin', '123456', 'arshia', 'password123'];
     
     for (const user of users) {
       console.log(`\n🔐 Testing passwords for ${user.email}:`);

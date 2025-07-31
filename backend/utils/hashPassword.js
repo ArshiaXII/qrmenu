@@ -24,7 +24,13 @@ const hashPassword = async (password) => {
  */
 const comparePassword = async (password, hashedPassword) => {
     try {
+        console.log('[DEBUG] Comparing password...');
+        console.log('[DEBUG] Plain password length:', password.length);
+        console.log('[DEBUG] Hashed password length:', hashedPassword.length);
+        console.log('[DEBUG] Hashed password starts with:', hashedPassword.substring(0, 10));
+
         const isMatch = await bcrypt.compare(password, hashedPassword);
+        console.log('[DEBUG] Password match result:', isMatch);
         return isMatch;
     } catch (error) {
         console.error('Error comparing password:', error);
