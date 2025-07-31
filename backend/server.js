@@ -14,17 +14,33 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({
-    origin: [
-        'http://45.131.0.36:3000',
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://192.168.1.3:3001', // Your computer's IP for mobile access
-        'http://127.0.0.1:3001'
-    ],
-    credentials: true
-}));
+// Whitelist of allowed origins for local development
+const whitelist = [
+  'http://localhost:3000',
+  'http://localhost:3001'
+  // Artık ngrok adreslerini buraya eklemeye gerek yok.
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Gelen isteğin adresi izin listesindeyse VEYA '.ngrok-free.app' ile bitiyorsa izin ver.
+    const isAllowed = whitelist.indexOf(origin) !== -1 || (origin && origin.endsWith('.ngrok-free.app'));
+
+    if (isAllowed || !origin) { // !origin, Postman gibi tarayıcı dışı araçlara izin verir
+      callback(null, true);
+    } else {
+      console.error(`CORS: Rejected origin: ${origin}`);
+      callback(new Error('This origin is not allowed by CORS.'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+};
+
+// Use the new, smarter CORS options
+app.use(cors(corsOptions));
+
 app.use(express.json());
 
 // Logging middleware

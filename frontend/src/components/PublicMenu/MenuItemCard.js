@@ -1,5 +1,6 @@
 import React from 'react';
 import { PhotoIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 // Utility function for multi-language support
 const getDisplayText = (multiLangValue, preferredLang = 'tr') => {
@@ -31,27 +32,76 @@ const MenuItemCard = ({
   };
 
   return (
-    <div className="menu-item-card" style={cardStyle}>
+    <motion.div
+      className="menu-item-card"
+      style={cardStyle}
+      whileHover={{
+        scale: 1.03,
+        y: -5,
+        boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15)"
+      }}
+      whileTap={{ scale: 0.98 }}
+      transition={{
+        type: "spring",
+        stiffness: 300,
+        damping: 20
+      }}
+    >
       <div className="item-content">
-        <div className="item-details">
+        <motion.div
+          className="item-details"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           {showSection && sectionTitle && (
-            <div className="item-section-tag">
+            <motion.div
+              className="item-section-tag"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
               {sectionTitle}
-            </div>
+            </motion.div>
           )}
-          
-          <h3 className="item-title">{getDisplayText(item.title, selectedLanguage)}</h3>
+
+          <motion.h3
+            className="item-title"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            {getDisplayText(item.title, selectedLanguage)}
+          </motion.h3>
 
           {item.description && (
-            <p className="item-description">{getDisplayText(item.description, selectedLanguage)}</p>
+            <motion.p
+              className="item-description"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              {getDisplayText(item.description, selectedLanguage)}
+            </motion.p>
           )}
-          
-          <div className="item-price">
-            {currencySymbol}{parseFloat(item.price).toFixed(2)}
-          </div>
-        </div>
 
-        <div className="item-image-container">
+          <motion.div
+            className="item-price"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+          >
+            {currencySymbol}{parseFloat(item.price).toFixed(2)}
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          className="item-image-container"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          whileHover={{ scale: 1.05 }}
+        >
           {item.image ? (
             <>
               <img
@@ -72,9 +122,9 @@ const MenuItemCard = ({
               <PhotoIcon className="placeholder-icon" />
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

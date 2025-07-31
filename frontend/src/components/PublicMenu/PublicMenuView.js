@@ -9,6 +9,7 @@ import {
   PhoneIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
+import { motion, AnimatePresence } from 'framer-motion';
 import MenuItemCard from './MenuItemCard';
 import SectionTab from './SectionTab';
 import { useMenu } from '../../contexts/MenuContext';
@@ -47,9 +48,44 @@ const PublicMenuView = () => {
   const [filteredItems, setFilteredItems] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('tr'); // Use language codes
   const [menuUnavailable, setMenuUnavailable] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   const sectionRefs = useRef([]);
 
+  // Animation variants
 
+  const headerVariants = {
+    hidden: { opacity: 0, y: -30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: "easeOut"
+      }
+    }
+  };
+
+  const tabsVariants = {
+    hidden: { opacity: 0, x: -50 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.6,
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemsVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
 
   // Load menu data when component mounts or restaurantSlug changes
   useEffect(() => {
@@ -60,11 +96,17 @@ const PublicMenuView = () => {
 
     if (isPreview) {
       loadPreviewMenuData(restaurantSlug)
+        .then(() => {
+          setIsLoaded(true);
+        })
         .catch(() => {
           setMenuUnavailable(true);
         });
     } else {
       loadPublicMenuData(restaurantSlug)
+        .then(() => {
+          setIsLoaded(true);
+        })
         .catch((error) => {
           if (error.message === 'MENU_INACTIVE' || error.message === 'RESTAURANT_NOT_FOUND') {
             setMenuUnavailable(true);
@@ -257,12 +299,21 @@ const PublicMenuView = () => {
         )}
 
       {/* Header */}
-      <header className="menu-header" style={{ backgroundColor: currentBranding?.colors?.backgroundColor || '#ffffff' }}>
+      <motion.header
+        className="menu-header"
+        style={{ backgroundColor: currentBranding?.colors?.backgroundColor || '#ffffff' }}
+        variants={headerVariants}
+        initial="hidden"
+        animate={isLoaded ? "visible" : "hidden"}
+      >
         <div className="header-content">
-
-
           {/* Logo */}
-          <div className="restaurant-logo">
+          <motion.div
+            className="restaurant-logo"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={isLoaded ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
             {currentBranding?.logo ? (
               <img
                 src={currentBranding.logo}
@@ -279,10 +330,15 @@ const PublicMenuView = () => {
             >
               <PhotoIcon className="logo-icon" />
             </div>
-          </div>
+          </motion.div>
 
           {/* Restaurant Info */}
-          <div className="restaurant-info">
+          <motion.div
+            className="restaurant-info"
+            initial={{ opacity: 0, y: 20 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
             <h1 className="restaurant-name">{currentRestaurant?.name || 'Restaurant'}</h1>
             <div className="restaurant-details">
               <div className="detail-item">
@@ -298,10 +354,15 @@ const PublicMenuView = () => {
                 <span>{currentRestaurant?.phone || 'Phone not available'}</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Language Selector */}
-          <div className="language-selector">
+          <motion.div
+            className="language-selector"
+            initial={{ opacity: 0, x: 20 }}
+            animate={isLoaded ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
             <select
               value={selectedLanguage}
               onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -313,9 +374,9 @@ const PublicMenuView = () => {
               <option value="fr">🇫🇷 Français</option>
             </select>
             <ChevronDownIcon className="dropdown-icon" />
-          </div>
+          </motion.div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Search Bar */}
       <div className="search-section">
@@ -338,102 +399,173 @@ const PublicMenuView = () => {
 
       {/* Category Navigation */}
       {!searchQuery && (
-        <nav className="category-navigation">
-          <div className="category-tabs">
+        <motion.nav
+          className="category-navigation"
+          variants={tabsVariants}
+          initial="hidden"
+          animate={isLoaded ? "visible" : "hidden"}
+        >
+          <motion.div className="category-tabs">
             {currentMenu.sections.map((section, index) => (
-              <SectionTab
+              <motion.div
                 key={section.id}
-                section={section}
-                isActive={activeSection === index}
-                onClick={() => scrollToSection(index)}
-                accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
-                selectedLanguage={selectedLanguage}
-              />
+                variants={{
+                  hidden: { opacity: 0, x: -20 },
+                  visible: { opacity: 1, x: 0 }
+                }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+              >
+                <SectionTab
+                  section={section}
+                  isActive={activeSection === index}
+                  onClick={() => scrollToSection(index)}
+                  accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
+                  selectedLanguage={selectedLanguage}
+                />
+              </motion.div>
             ))}
-          </div>
-        </nav>
+          </motion.div>
+        </motion.nav>
       )}
 
       {/* Menu Content */}
       <main className="menu-content">
-        {searchQuery ? (
-          // Search Results
-          <div className="search-results">
-            <h2 className="search-title">
-              Arama Sonuçları ({filteredItems.length})
-            </h2>
-            {filteredItems.length > 0 ? (
-              <div className="search-items">
-                {filteredItems.map((item) => (
-                  <MenuItemCard
-                    key={item.id}
-                    item={item}
-                    showSection={true}
-                    sectionTitle={item.sectionTitle}
-                    textColor={currentBranding?.colors?.textColor || '#1f2937'}
-                    accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
-                    cardStyle={cardStyle}
-                    currencySymbol={currencySymbol}
-                    selectedLanguage={selectedLanguage}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="no-results">
-                <p>Aradığınız kriterlere uygun ürün bulunamadı.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          // Menu Sections
-          <div className="menu-sections">
-            {currentMenu.sections.map((section, index) => (
-              <section
-                key={section.id}
-                ref={el => sectionRefs.current[index] = el}
-                className="menu-section"
-                id={`section-${index}`}
-                style={cardStyle}
-              >
-                {/* Section Header */}
-                <div className="section-header">
-                  {section.image && (
-                    <div className="section-image">
-                      <img
-                        src={section.image}
-                        alt={getDisplayText(section.title, selectedLanguage)}
-                        onError={(e) => {
-                          e.target.parentElement.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                  <div className="section-info">
-                    <h2 className="section-title">{getDisplayText(section.title, selectedLanguage)}</h2>
-                    {section.description && (
-                      <p className="section-description">{getDisplayText(section.description, selectedLanguage)}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Section Items */}
-                <div className="section-items">
-                  {section.items.map((item) => (
-                    <MenuItemCard
+        <AnimatePresence mode="wait">
+          {searchQuery ? (
+            // Search Results
+            <motion.div
+              key="search-results"
+              className="search-results"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2 className="search-title">
+                Arama Sonuçları ({filteredItems.length})
+              </h2>
+              {filteredItems.length > 0 ? (
+                <motion.div
+                  className="search-items"
+                  variants={itemsVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {filteredItems.map((item, index) => (
+                    <motion.div
                       key={item.id}
-                      item={item}
-                      textColor={currentBranding?.colors?.textColor || '#1f2937'}
-                      accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
-                      cardStyle={cardStyle}
-                      currencySymbol={currencySymbol}
-                      selectedLanguage={selectedLanguage}
-                    />
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        visible: { opacity: 1, y: 0 }
+                      }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                    >
+                      <MenuItemCard
+                        item={item}
+                        showSection={true}
+                        sectionTitle={item.sectionTitle}
+                        textColor={currentBranding?.colors?.textColor || '#1f2937'}
+                        accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
+                        cardStyle={cardStyle}
+                        currencySymbol={currencySymbol}
+                        selectedLanguage={selectedLanguage}
+                      />
+                    </motion.div>
                   ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+                </motion.div>
+              ) : (
+                <motion.div
+                  className="no-results"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <p>Aradığınız kriterlere uygun ürün bulunamadı.</p>
+                </motion.div>
+              )}
+            </motion.div>
+          ) : (
+            // Menu Sections
+            <motion.div
+              key="menu-sections"
+              className="menu-sections"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {currentMenu.sections.map((section, index) => (
+                <motion.section
+                  key={section.id}
+                  ref={el => sectionRefs.current[index] = el}
+                  className="menu-section"
+                  id={`section-${index}`}
+                  style={cardStyle}
+                  initial={{ opacity: 0, y: 50 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-100px" }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  {/* Section Header */}
+                  <motion.div
+                    className="section-header"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
+                    {section.image && (
+                      <div className="section-image">
+                        <img
+                          src={section.image}
+                          alt={getDisplayText(section.title, selectedLanguage)}
+                          onError={(e) => {
+                            e.target.parentElement.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="section-info">
+                      <h2 className="section-title">{getDisplayText(section.title, selectedLanguage)}</h2>
+                      {section.description && (
+                        <p className="section-description">{getDisplayText(section.description, selectedLanguage)}</p>
+                      )}
+                    </div>
+                  </motion.div>
+
+                  {/* Section Items */}
+                  <motion.div
+                    className="section-items"
+                    variants={itemsVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-50px" }}
+                  >
+                    {section.items.map((item, itemIndex) => (
+                      <motion.div
+                        key={item.id}
+                        variants={{
+                          hidden: { opacity: 0, y: 30 },
+                          visible: { opacity: 1, y: 0 }
+                        }}
+                        transition={{ duration: 0.5, delay: itemIndex * 0.1 }}
+                      >
+                        <MenuItemCard
+                          item={item}
+                          textColor={currentBranding?.colors?.textColor || '#1f2937'}
+                          accentColor={currentBranding?.colors?.accentColor || currentBranding?.primaryColor || '#8b5cf6'}
+                          cardStyle={cardStyle}
+                          currencySymbol={currencySymbol}
+                          selectedLanguage={selectedLanguage}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </motion.section>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
         {/* Footer */}

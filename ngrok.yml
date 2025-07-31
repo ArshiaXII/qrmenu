@@ -1,0 +1,10 @@
+version: "2"
+# Siteden kopyaladığınız authtoken'ı aşağıdaki satıra yapıştırın
+authtoken: 2O8sR48nnnNKazAYFl7uv5D1tys_2zvmxcgjES1TorAQUdY67
+tunnels:
+  backend:
+    proto: http
+    addr: 5000
+  frontend:
+    proto: http
+    addr: 3001

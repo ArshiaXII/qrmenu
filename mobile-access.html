@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Menu Platform - Mobile Access</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: inline-block;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .info-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .url {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .step {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border-left-color: #FFC107;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 QR Menu Platform</h1>
+        <h2>Mobile Access Setup</h2>
+        
+        <div class="info-box">
+            <h3>🌐 Your Network URLs:</h3>
+            <div>
+                <strong>Frontend (Dashboard):</strong>
+                <div class="url" id="frontend-url">http://192.168.1.4:3000</div>
+            </div>
+            <div>
+                <strong>Backend API:</strong>
+                <div class="url" id="backend-url">http://192.168.1.4:5000</div>
+            </div>
+        </div>
+
+        <div class="qr-container">
+            <canvas id="qrcode"></canvas>
+        </div>
+
+        <div class="info-box">
+            <h3>📋 How to Access from Your Phone:</h3>
+            <div class="step">
+                <strong>Step 1:</strong> Make sure your phone is connected to the same WiFi network as this computer
+            </div>
+            <div class="step">
+                <strong>Step 2:</strong> Scan the QR code above with your phone's camera
+            </div>
+            <div class="step">
+                <strong>Step 3:</strong> Or manually type the URL in your phone's browser
+            </div>
+            <div class="step warning">
+                <strong>⚠️ Important:</strong> Both servers must be running for this to work!
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>🚀 Quick Actions:</h3>
+            <button onclick="copyUrl()">📋 Copy URL</button>
+            <button onclick="openApp()">🌐 Open App</button>
+            <button onclick="refreshQR()">🔄 Refresh QR</button>
+        </div>
+
+        <div class="info-box">
+            <h3>🔧 Troubleshooting:</h3>
+            <div class="step">
+                <strong>Can't access?</strong> Check if Windows Firewall is blocking the ports
+            </div>
+            <div class="step">
+                <strong>Different IP?</strong> Run <code>ipconfig</code> in command prompt to get your current IP
+            </div>
+            <div class="step">
+                <strong>Still not working?</strong> Try using your computer's IP address instead
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const frontendUrl = 'http://192.168.1.4:3000';
+        
+        function generateQR() {
+            const canvas = document.getElementById('qrcode');
+            QRCode.toCanvas(canvas, frontendUrl, {
+                width: 256,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function (error) {
+                if (error) console.error(error);
+                console.log('QR code generated successfully!');
+            });
+        }
+
+        function copyUrl() {
+            navigator.clipboard.writeText(frontendUrl).then(function() {
+                alert('URL copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+                prompt('Copy this URL:', frontendUrl);
+            });
+        }
+
+        function openApp() {
+            window.open(frontendUrl, '_blank');
+        }
+
+        function refreshQR() {
+            generateQR();
+        }
+
+        // Generate QR code when page loads
+        window.onload = function() {
+            generateQR();
+        };
+    </script>
+</body>
+</html>
