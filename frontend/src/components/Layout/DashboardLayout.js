@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from '../Dashboard/Sidebar'; // Use the new Dashboard Sidebar
 import Topbar from '../Dashboard/TopBar'; // Use the new Dashboard TopBar
@@ -7,10 +7,27 @@ import '../Dashboard/DashboardPage.css'; // Import dashboard styles
 const DashboardLayout = () => {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeMenuItem, setActiveMenuItem] = useState('Dashboard');
 
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMenuOpen(false); // Close mobile menu on desktop
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+    if (window.innerWidth < 768) {
+      setMobileMenuOpen(!mobileMenuOpen);
+    } else {
+      setCollapsed(!collapsed);
+    }
   };
 
   const handleMenuNavigation = (menuId) => {
@@ -46,23 +63,36 @@ const DashboardLayout = () => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar
         collapsed={collapsed}
+        mobileMenuOpen={mobileMenuOpen}
         activeMenuItem={activeMenuItem}
         setActiveMenuItem={setActiveMenuItem}
         onToggle={toggleSidebar}
         onMenuNavigation={handleMenuNavigation}
+        onMobileClose={() => setMobileMenuOpen(false)}
       />
 
       {/* Content area */}
-      <div className="dashboard-main">
+      <div className="flex-1 flex flex-col min-w-0 md:ml-0">
         {/* Topbar */}
-        <Topbar toggleSidebar={toggleSidebar} />
+        <Topbar
+          toggleSidebar={toggleSidebar}
+          mobileMenuOpen={mobileMenuOpen}
+        />
 
         {/* Main content */}
-        <main className="dashboard-content">
+        <main className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
           <Outlet />
         </main>
       </div>

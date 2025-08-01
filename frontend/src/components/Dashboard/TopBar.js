@@ -16,7 +16,7 @@ import {
   CogIcon
 } from '@heroicons/react/24/outline';
 
-const TopBar = ({ onToggleSidebar }) => {
+const TopBar = ({ toggleSidebar, mobileMenuOpen }) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { currentRestaurant } = useMenu();
@@ -116,143 +116,157 @@ const TopBar = ({ onToggleSidebar }) => {
   };
 
   return (
-    <div className="topbar">
+    <div className="flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4 md:px-6">
       {/* Left Section */}
-      <div className="topbar-left">
+      <div className="flex items-center space-x-4">
+        {/* Mobile Hamburger Menu */}
         <button
-          className="mobile-menu-toggle"
-          onClick={onToggleSidebar}
+          className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          onClick={toggleSidebar}
+          aria-label="Toggle menu"
         >
-          <Bars3Icon className="w-6 h-6" />
+          <Bars3Icon className="w-6 h-6 text-gray-600" />
         </button>
 
-        {/* Trial Banner */}
-        <div className="trial-banner">
-          <span className="trial-text">
+        {/* Desktop Sidebar Toggle */}
+        <button
+          className="hidden md:block p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          onClick={toggleSidebar}
+          aria-label="Toggle sidebar"
+        >
+          <Bars3Icon className="w-5 h-5 text-gray-600" />
+        </button>
+
+        {/* Trial Banner - Hidden on mobile */}
+        <div className="hidden lg:flex items-center bg-yellow-50 border border-yellow-200 rounded-lg px-3 py-2">
+          <span className="text-sm text-yellow-800">
             {translate('topbar.trial_message', 'Deneme sürümünüzün sona ermesine 7 gün kaldı.')}
           </span>
-          <button className="upgrade-btn">
+          <button className="ml-3 bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-1 rounded font-medium transition-colors">
             {translate('topbar.upgrade', 'YÜKSELT')}
           </button>
         </div>
       </div>
 
       {/* Right Section */}
-      <div className="topbar-right">
-        {/* Search */}
-        <div className="search-container">
-          <MagnifyingGlassIcon className="search-icon" />
+      <div className="flex items-center space-x-2 md:space-x-4">
+        {/* Search - Hidden on mobile */}
+        <div className="hidden md:flex relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             placeholder={translate('topbar.search_placeholder', 'Ara...')}
-            className="search-input"
+            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent w-64"
           />
         </div>
 
         {/* Action Icons */}
-        <div className="action-icons">
-          {/* Language Selector */}
-          <div className="language-selector">
+        <div className="flex items-center space-x-1 md:space-x-2">
+          {/* Language Selector - Hidden on mobile */}
+          <div className="hidden md:block relative">
             <button
-              className="action-btn language-btn"
+              className="flex items-center space-x-1 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
             >
-              <LanguageIcon className="w-5 h-5" />
-              <span className="language-text">{getCurrentLanguage()}</span>
-              <ChevronDownIcon className="w-4 h-4" />
+              <LanguageIcon className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">{getCurrentLanguage()}</span>
+              <ChevronDownIcon className="w-4 h-4 text-gray-600" />
             </button>
 
             {showLanguageDropdown && (
-              <div className="language-dropdown">
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                 <button
-                  className={`language-option ${i18n.language === 'tr' ? 'active' : ''}`}
+                  className={`w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-gray-50 ${i18n.language === 'tr' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
                   onClick={() => changeLanguage('tr')}
                 >
-                  <span className="flag">🇹🇷</span>
+                  <span>🇹🇷</span>
                   <span>Türkçe</span>
                 </button>
                 <button
-                  className={`language-option ${i18n.language === 'en' ? 'active' : ''}`}
+                  className={`w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-gray-50 ${i18n.language === 'en' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
                   onClick={() => changeLanguage('en')}
                 >
-                  <span className="flag">🇺🇸</span>
+                  <span>🇺🇸</span>
                   <span>English</span>
                 </button>
               </div>
             )}
           </div>
 
-          <button className="action-btn">
-            <Squares2X2Icon className="w-6 h-6" />
+          {/* Apps Button - Hidden on mobile */}
+          <button className="hidden md:block p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <Squares2X2Icon className="w-6 h-6 text-gray-600" />
           </button>
 
-          <button className="action-btn notification-btn">
-            <BellIcon className="w-6 h-6" />
-            <span className="notification-badge">3</span>
+          {/* Notifications */}
+          <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <BellIcon className="w-6 h-6 text-gray-600" />
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
           </button>
 
-          <button className="action-btn">
-            <QuestionMarkCircleIcon className="w-6 h-6" />
+          {/* Help Button - Hidden on mobile */}
+          <button className="hidden md:block p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <QuestionMarkCircleIcon className="w-6 h-6 text-gray-600" />
           </button>
 
           {/* Profile Dropdown */}
-          <div className="profile-container">
+          <div className="relative">
             <button
-              className="action-btn profile-btn"
+              className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
             >
-              <div className="profile-avatar">
+              <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
                 <span>{getUserInitials()}</span>
               </div>
-              <ChevronDownIcon className="w-4 h-4" />
+              <ChevronDownIcon className="w-4 h-4 text-gray-600 hidden md:block" />
             </button>
 
             {showProfileDropdown && (
-              <div className="profile-dropdown">
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                 {/* User Info Header */}
-                <div className="profile-header">
-                  <div className="profile-info">
-                    <div className="profile-avatar-large">
+                <div className="p-4 border-b border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-purple-600 text-white rounded-full flex items-center justify-center text-lg font-medium">
                       <span>{getUserInitials()}</span>
                     </div>
-                    <div className="profile-details">
-                      <div className="profile-name">{getUserDisplayName()}</div>
-                      <div className="profile-restaurant">{restaurantName}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-gray-900 truncate">{getUserDisplayName()}</div>
+                      <div className="text-sm text-gray-500 truncate">{restaurantName}</div>
                       {user?.email && (
-                        <div className="profile-email">{user.email}</div>
+                        <div className="text-xs text-gray-400 truncate">{user.email}</div>
                       )}
                     </div>
                   </div>
                 </div>
 
                 {/* Profile Options */}
-                <div className="profile-options">
+                <div className="py-2">
                   <button
-                    className="profile-option"
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
                     onClick={() => {
                       setShowProfileDropdown(false);
                       navigate('/dashboard/settings/restaurant');
                     }}
                   >
-                    <UserIcon className="w-5 h-5" />
-                    <span>{translate('profile.settings', 'Hesap Ayarları')}</span>
+                    <UserIcon className="w-5 h-5 text-gray-600" />
+                    <span className="text-gray-700">{translate('profile.settings', 'Hesap Ayarları')}</span>
                   </button>
 
                   <button
-                    className="profile-option"
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-left hover:bg-gray-50 transition-colors"
                     onClick={() => {
                       setShowProfileDropdown(false);
                       navigate('/dashboard/settings');
                     }}
                   >
-                    <CogIcon className="w-5 h-5" />
-                    <span>{translate('sidebar.settings', 'Ayarlar')}</span>
+                    <CogIcon className="w-5 h-5 text-gray-600" />
+                    <span className="text-gray-700">{translate('sidebar.settings', 'Ayarlar')}</span>
                   </button>
 
-                  <hr className="profile-divider" />
+                  <hr className="my-2 border-gray-200" />
 
                   <button
-                    className="profile-option logout-option"
+                    className="w-full flex items-center space-x-3 px-4 py-2 text-left hover:bg-red-50 transition-colors text-red-600"
                     onClick={handleLogout}
                   >
                     <ArrowRightStartOnRectangleIcon className="w-5 h-5" />

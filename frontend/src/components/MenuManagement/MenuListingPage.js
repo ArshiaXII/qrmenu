@@ -125,13 +125,13 @@ const MenuListingPage = ({ onEditMenu, onCreateMenu, restaurantData }) => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Menu Management</h1>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 space-y-4 sm:space-y-0">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Menu Management</h1>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 md:px-6 py-2 rounded-lg font-medium transition-colors w-full sm:w-auto"
         >
           Create Menu
         </button>
@@ -145,10 +145,10 @@ const MenuListingPage = ({ onEditMenu, onCreateMenu, restaurantData }) => {
 
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex space-x-8">
+        <nav className="-mb-px flex space-x-4 md:space-x-8 overflow-x-auto">
           <button
             onClick={() => setActiveTab('active')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'active'
                 ? 'border-purple-500 text-purple-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -158,7 +158,7 @@ const MenuListingPage = ({ onEditMenu, onCreateMenu, restaurantData }) => {
           </button>
           <button
             onClick={() => setActiveTab('archive')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+            className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
               activeTab === 'archive'
                 ? 'border-purple-500 text-purple-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -169,9 +169,9 @@ const MenuListingPage = ({ onEditMenu, onCreateMenu, restaurantData }) => {
         </nav>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Menu List */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-2">
           {filteredMenus.length === 0 ? (
             <div className="text-center py-12">
               <div className="text-gray-400 text-6xl mb-4">📋</div>
@@ -213,7 +213,7 @@ const MenuListingPage = ({ onEditMenu, onCreateMenu, restaurantData }) => {
         </div>
 
         {/* Selected Menu Preview */}
-        <div className="lg:col-span-1">
+        <div className="xl:col-span-1">
           {selectedMenu && (
             <SelectedMenuCard
               menu={selectedMenu}
@@ -246,35 +246,35 @@ const MenuCard = ({ menu, isSelected, onSelect, onEdit, onToggleArchive, onDupli
       }`}
       onClick={onSelect}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-3 space-y-3 md:space-y-0">
+        <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900">{menu.name}</h3>
           {menu.description && (
             <p className="text-gray-600 text-sm mt-1">{menu.description}</p>
           )}
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-wrap gap-2 md:space-x-2 md:flex-nowrap">
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            className="text-blue-600 hover:text-blue-800 text-sm font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
           >
             Edit
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-            className="text-green-600 hover:text-green-800 text-sm font-medium"
+            className="text-green-600 hover:text-green-800 text-sm font-medium px-2 py-1 rounded hover:bg-green-50 transition-colors"
           >
             Duplicate
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onToggleArchive(); }}
-            className="text-yellow-600 hover:text-yellow-800 text-sm font-medium"
+            className="text-yellow-600 hover:text-yellow-800 text-sm font-medium px-2 py-1 rounded hover:bg-yellow-50 transition-colors"
           >
             {menu.is_active ? 'Archive' : 'Activate'}
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
+            className="text-red-600 hover:text-red-800 text-sm font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors"
           >
             Delete
           </button>

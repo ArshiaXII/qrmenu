@@ -1829,6 +1829,19 @@
   font-weight: 500;
 }
 
+/* Data Tables - Mobile Responsive */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.table-container table {
+  min-width: 600px; /* Minimum width to trigger horizontal scroll */
+  width: 100%;
+}
+
 /* Menu Management Responsive Design */
 @media (max-width: 1024px) {
   .share-card {

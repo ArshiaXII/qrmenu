@@ -20,7 +20,15 @@ import {
   Bars3Icon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMenuNavigation }) => {
+const Sidebar = ({
+  collapsed,
+  mobileMenuOpen,
+  activeMenuItem,
+  setActiveMenuItem,
+  onToggle,
+  onMenuNavigation,
+  onMobileClose
+}) => {
   // Safe translation hook with fallback
   let t;
   try {
@@ -127,6 +135,11 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
     setActiveMenuItem(menuItem.id);
     if (menuItem.hasSubmenu) {
       toggleSubmenu(menuItem.id);
+    } else {
+      // Close mobile menu when item is selected
+      if (onMobileClose && window.innerWidth < 768) {
+        onMobileClose();
+      }
     }
 
     // Handle navigation for specific menu items
@@ -136,7 +149,13 @@ const Sidebar = ({ collapsed, activeMenuItem, setActiveMenuItem, onToggle, onMen
   };
 
   return (
-    <div className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
+    <div className={`
+      fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50 transition-transform duration-300 ease-in-out
+      ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+      md:translate-x-0 md:static md:z-auto
+      ${collapsed ? 'md:w-20' : 'md:w-70'}
+      w-70 shadow-lg md:shadow-none
+    `}>
       {/* Sidebar Header */}
       <div className="sidebar-header">
         <div className="sidebar-logo">

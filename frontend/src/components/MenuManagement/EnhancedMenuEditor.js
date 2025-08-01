@@ -12,6 +12,24 @@ const EnhancedMenuEditor = ({ menu, onBack, restaurantData }) => {
   const [error, setError] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'active', 'passive'
 
+  // Mobile view state management
+  const [mobileView, setMobileView] = useState('categories'); // 'categories', 'items', 'edit'
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMobileView('categories'); // Reset mobile view on desktop
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     if (menu) {
       fetchCategories();
@@ -52,22 +70,7 @@ const EnhancedMenuEditor = ({ menu, onBack, restaurantData }) => {
     }
   };
 
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    setSelectedItem(null);
-    setEditMode('category');
-  };
 
-  const handleItemSelect = (item) => {
-    setSelectedItem(item);
-    setEditMode('item');
-  };
-
-  const handleCreateCategory = () => {
-    setSelectedCategory(null);
-    setSelectedItem(null);
-    setEditMode('category');
-  };
 
   const handleCreateItem = () => {
     if (!selectedCategory) {
@@ -215,6 +218,49 @@ const EnhancedMenuEditor = ({ menu, onBack, restaurantData }) => {
     return true;
   });
 
+  // Navigation functions (handles both mobile and desktop)
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    setSelectedItem(null);
+    setEditMode('category');
+    if (isMobile) {
+      setMobileView('items');
+    }
+  };
+
+  const handleItemSelect = (item) => {
+    setSelectedItem(item);
+    setEditMode('item');
+    if (isMobile) {
+      setMobileView('edit');
+    }
+  };
+
+  const handleCreateCategory = () => {
+    setSelectedCategory(null);
+    setSelectedItem(null);
+    setEditMode('category');
+    if (isMobile) {
+      setMobileView('edit');
+    }
+  };
+
+  const handleNewItem = () => {
+    setSelectedItem(null);
+    setEditMode('item');
+    if (isMobile) {
+      setMobileView('edit');
+    }
+  };
+
+  const handleMobileBack = () => {
+    if (mobileView === 'edit') {
+      setMobileView(editMode === 'category' ? 'categories' : 'items');
+    } else if (mobileView === 'items') {
+      setMobileView('categories');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -226,31 +272,48 @@ const EnhancedMenuEditor = ({ menu, onBack, restaurantData }) => {
   return (
     <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {/* Mobile Back Button */}
+            {isMobile && mobileView !== 'categories' && (
+              <button
+                onClick={handleMobileBack}
+                className="p-2 text-gray-600 hover:text-gray-800 lg:hidden"
+              >
+                ← Geri
+              </button>
+            )}
+
+            {/* Desktop Back Button */}
             <button
               onClick={onBack}
-              className="text-gray-600 hover:text-gray-800"
+              className="text-gray-600 hover:text-gray-800 hidden lg:block"
             >
               ← Back to Menus
             </button>
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Edit Menu: {menu.name}
+
+            <h1 className="text-lg md:text-2xl font-semibold text-gray-900 truncate">
+              {isMobile && mobileView === 'items' ? selectedCategory?.name :
+               isMobile && mobileView === 'edit' ? (editMode === 'category' ? 'Edit Category' : 'Edit Item') :
+               `Edit Menu: ${menu.name}`}
             </h1>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="all">All</option>
-              <option value="active">Active</option>
-              <option value="passive">Passive</option>
-            </select>
-          </div>
+          {/* Filter - Hidden on mobile edit view */}
+          {(!isMobile || mobileView !== 'edit') && (
+            <div className="flex items-center space-x-3">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-2 md:px-3 py-2 border border-gray-300 rounded-lg text-xs md:text-sm"
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="passive">Passive</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -261,7 +324,9 @@ const EnhancedMenuEditor = ({ menu, onBack, restaurantData }) => {
       )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex-1 flex overflow-hidden">
+        {/* Desktop Three-Panel Layout */}
+        {!isMobile && (
+          <div className="flex-1 flex overflow-hidden">
           {/* Left Panel: Categories & Filters */}
           <div className="w-1/4 bg-gray-50 border-r border-gray-200 overflow-y-auto">
             <div className="p-4">
@@ -421,7 +486,124 @@ const EnhancedMenuEditor = ({ menu, onBack, restaurantData }) => {
               )}
             </div>
           </div>
-        </div>
+          </div>
+        )}
+
+        {/* Mobile Single-Column Drill-Down Layout */}
+        {isMobile && (
+          <div className="flex-1 overflow-hidden">
+            {/* Categories View */}
+            {mobileView === 'categories' && (
+              <div className="h-full bg-gray-50 overflow-y-auto">
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Categories</h2>
+                    <button
+                      onClick={handleCreateCategory}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm"
+                    >
+                      + Add Category
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {filteredCategories.map((category) => (
+                      <div
+                        key={category.id}
+                        className="bg-white border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                        onClick={() => handleCategorySelect(category)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">{category.name}</h3>
+                            {category.description && (
+                              <p className="text-sm text-gray-600 mt-1">{category.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-2 ml-2">
+                            <span className={`w-2 h-2 rounded-full ${
+                              category.is_visible ? 'bg-green-400' : 'bg-gray-400'
+                            }`}></span>
+                            <span className="text-gray-400">→</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Items View */}
+            {mobileView === 'items' && selectedCategory && (
+              <div className="h-full bg-white overflow-y-auto">
+                <div className="p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900">Items</h2>
+                    <button
+                      onClick={handleNewItem}
+                      className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm"
+                    >
+                      + Add Item
+                    </button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {filteredItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="bg-gray-50 border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => handleItemSelect(item)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">{item.name}</h3>
+                            {item.description && (
+                              <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                            )}
+                            <p className="text-sm font-medium text-purple-600 mt-2">
+                              {item.price ? `$${item.price}` :
+                               (item.price_min && item.price_max) ? `$${item.price_min} - $${item.price_max}` :
+                               'Price not set'}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2 ml-2">
+                            <span className={`w-2 h-2 rounded-full ${
+                              item.is_available ? 'bg-green-400' : 'bg-gray-400'
+                            }`}></span>
+                            <span className="text-gray-400">→</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Edit Form View */}
+            {mobileView === 'edit' && (
+              <div className="h-full bg-gray-50 overflow-y-auto">
+                <div className="p-4">
+                  {editMode === 'category' ? (
+                    <CategoryEditForm
+                      category={selectedCategory}
+                      onSave={handleCategorySave}
+                      onCancel={handleMobileBack}
+                    />
+                  ) : (
+                    <ItemEditForm
+                      item={selectedItem}
+                      categoryId={selectedCategory?.id}
+                      onSave={handleItemSave}
+                      onCancel={handleMobileBack}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </DragDropContext>
     </div>
   );
